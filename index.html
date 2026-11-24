@@ -393,7 +393,7 @@ if (typeof module !== "undefined") module.exports = { TAX, GRID, mecenat, isTax,
 (() => {
 "use strict";
 /* ═════════ CONFIGURATION ═════════ */
-const CONFIG = { name:"Partenarium CRM", key:"partcrm", version:"1.1.0", // à garder identique à VERSION dans sw.js (partcrm-1.1.0)
+const CONFIG = { name:"Partenarium CRM", key:"partcrm", version:"1.1.1", // à garder identique à VERSION dans sw.js (partcrm-1.1.1)
   gh:{ owner:"bastienvidal26-creator", privateRepo:"partenarium-crm-perso" } };
 
 /* ═════════ outils ═════════ */
@@ -720,8 +720,9 @@ function vHome() {
   const rgpd = rgpdAlerts(t);
   const rec = (lsGet(CONFIG.key + ":recent") || []).map(get).filter(Boolean).slice(0, 6), fv = favs().map(get).filter(Boolean);
   const day = new Date().getDate();
+  const offAt = Math.max(BK.last, !BK.can && GH.token ? SYNC.last : 0);
   const bkAlert = !Object.keys(S.items).length ? "" : BK.dir && BK.perm !== "granted" ? `<div class="alert" style="--c:var(--orange);margin-top:14px"><div style="flex:1"><b>Sauvegarde automatique en pause.</b> Le navigateur demande à nouveau l'autorisation d'écrire dans le dossier « ${esc(BK.dirName)} ».</div><button class="btn sm pri" data-bkresume="1">Reprendre</button></div>`
-    : !BK.dir && Date.now() - BK.last > 7 * 86400000 ? `<div class="alert" style="--c:var(--orange);margin-top:14px"><div style="flex:1"><b>${BK.last ? `Dernière sauvegarde il y a ${Math.floor((Date.now() - BK.last) / 86400000)} jours.` : "Aucune sauvegarde pour l'instant."}</b> Vos données ne sont que dans ce navigateur. ${BK.can ? "Activez la sauvegarde automatique dans Google Drive." : "Exportez une sauvegarde et rangez-la dans Google Drive."}</div>${BK.can ? `<a class="btn sm pri" href="#/reglages">Activer</a>` : `<button class="btn sm pri" id="exp">Sauvegarder</button>`}</div>` : "";
+    : !BK.dir && Date.now() - offAt > 7 * 86400000 ? `<div class="alert" style="--c:var(--orange);margin-top:14px"><div style="flex:1"><b>${offAt ? `Aucune copie hors de cet appareil depuis ${Math.floor((Date.now() - offAt) / 86400000)} jours.` : "Aucune sauvegarde pour l'instant."}</b> ${BK.can ? "Vos données ne sont que dans ce navigateur. Activez la sauvegarde automatique dans Google Drive." : GH.token ? "La synchronisation ne fonctionne plus : vérifiez le jeton dans Réglages, ou exportez une sauvegarde." : "Vos données ne sont que sur cet appareil. Ajoutez le jeton GitHub dans Réglages : elles seront copiées vers le PC, qui les sauvegarde dans Google Drive."}</div>${BK.can ? `<a class="btn sm pri" href="#/reglages">Activer</a>` : `<a class="btn sm" href="#/reglages">Réglages</a><button class="btn sm pri" id="exp">Sauvegarder</button>`}</div>` : "";
   const h = new Date().getHours();
   return `<div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap"><h1>${h < 18 ? "Bonjour" : "Bonsoir"} Bastien</h1><span class="muted">${new Date().toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long", year:"numeric" })}</span></div>
   ${bkAlert}
@@ -1111,7 +1112,9 @@ function vSettings() {
     <div class="kv"><span>Dernière sauvegarde</span><b>${BK.last ? new Date(BK.last).toLocaleString("fr-FR") : "jamais"}</b></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn pri" data-bkchoose="1">${BK.dir ? "Changer de dossier" : "Choisir le dossier"}</button>${BK.dir && BK.perm !== "granted" ? `<button class="btn pri" data-bkresume="1">Reprendre</button>` : ""}${BK.dir && BK.perm === "granted" ? `<button class="btn" data-bknow="1">Sauvegarder maintenant</button>` : ""}${BK.dir ? `<button class="btn danger" data-bkstop="1">Arrêter</button>` : ""}</div>
     <p class="tiny">Installez Google Drive pour ordinateur avec votre compte Partenarium, puis choisissez un dossier dans Google Drive (ex. <b>G:\\Mon Drive\\Partenarium\\Sauvegardes CRM</b>). Le CRM y écrit tout seul, quelques secondes après chaque modification : <b>partenarium-crm-derniere.json</b>, une copie par jour (gardée 90 jours) et une copie par mois (gardée sans limite). Drive conserve en plus l'historique des versions de chaque fichier.</p>`
-    : `<p class="small muted" style="margin-top:0">Ce navigateur ne permet pas la sauvegarde automatique dans un dossier (seuls Chrome et Edge sur ordinateur le permettent). Utilisez « Exporter une sauvegarde », puis rangez le fichier dans Google Drive.</p>`}
+    : `<p class="small muted" style="margin-top:0">Ce navigateur ne permet pas la sauvegarde automatique dans un dossier (seuls Chrome et Edge sur ordinateur le permettent).</p>
+    <div class="kv"><span>Copie hors de cet appareil</span><b style="color:${GH.token && SYNC.last && !SYNC.err ? "var(--green)" : "var(--orange)"}">${!GH.token ? "aucune (jeton manquant)" : SYNC.err ? "synchronisation en erreur" : SYNC.last ? `synchronisée le ${new Date(SYNC.last).toLocaleString("fr-FR")}` : "pas encore synchronisée"}</b></div>
+    <p class="tiny">Ici, la sauvegarde passe par le PC : chaque modification part en quelques secondes dans votre dépôt GitHub privé (qui garde l'historique des versions) ; le CRM installé sur le PC (Edge) la récupère à l'ouverture, puis toutes les 10 minutes tant qu'il est ouvert, et l'écrit dans Google Drive. Pour une copie immédiate dans Drive sans le PC : « Exporter une sauvegarde », puis Partager › Drive.</p>`}
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn" id="exp">${svg("download")}Exporter une sauvegarde</button><label class="btn filebtn" tabindex="0" role="button">Restaurer un fichier<input type="file" accept="application/json,.json" class="vh-file" id="imp" tabindex="-1"></label></div>
     <p class="tiny">Restaurer fusionne le fichier avec les données présentes : pour chaque fiche, la version la plus récente est gardée. Sur un appareil vide (nouveau PC, navigateur effacé), tout est retrouvé.</p></div></div>
   <div class="card"><div class="ch"><h2>Données</h2></div><div class="cb">
@@ -1519,7 +1522,7 @@ function loadDemo() {
 /* ═════════ synchronisation (dépôt GitHub privé) ═════════ */
 const GH = { token: lsGet(CONFIG.key + ":gh") || "" };
 const SYNC = { busy:false, last: lsGet(CONFIG.key + ":lastsync") || 0, err:"", dirty:false };
-let syncT;
+let syncT; const SYNC_EVERY = window.__SYNC_EVERY || 10 * 60000;
 function syncSoon() { SYNC.dirty = true; clearTimeout(syncT); syncT = setTimeout(syncNow, 5000); }
 async function gh(path, opts = {}, raw) {
   const res = await fetch(`https://api.github.com/repos/${CONFIG.gh.owner}/${CONFIG.gh.privateRepo}${path}`, { ...opts, cache:"no-store", headers:{ "Accept": raw ? "application/vnd.github.raw+json" : "application/vnd.github+json", "Authorization":`Bearer ${GH.token}`, "X-GitHub-Api-Version":"2022-11-28", ...(opts.body ? { "Content-Type":"application/json" } : {}) } });
@@ -1545,7 +1548,7 @@ async function syncNow(manual, retry) {
   try {
     const rem = await getRemote("crm.json"), R = rem.data || {}, fl = { local:false, remote:!rem.sha };
     const m = merge(S.items, R.items || {}, S.del, R.del || {}, fl);
-    if (fl.local) { S.items = m.out; S.del = m.del; save("items"); save("del"); if (!FORM && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || "")) render(); }
+    if (fl.local) { S.items = m.out; S.del = m.del; save("items"); save("del"); bkSoon(3000); if (!FORM && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || "")) render(); }
     if (fl.remote || SYNC.dirty) await putRemote("crm.json", { v:1, updated:Date.now(), items:m.out, del:m.del }, rem.sha);
     SYNC.dirty = false; SYNC.last = Date.now(); lsSet(CONFIG.key + ":lastsync", SYNC.last); if (manual) toast("Synchronisé.");
   } catch (e) {
@@ -1556,7 +1559,9 @@ async function syncNow(manual, retry) {
   }
   SYNC.busy = false; if (route().p[0] === "reglages" && !/INPUT/.test(document.activeElement?.tagName || "")) render();
 }
-document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && Date.now() - SYNC.last > 60000) syncNow(); });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && Date.now() - SYNC.last > 60000) syncNow(); else if (document.visibilityState === "hidden" && SYNC.dirty) { clearTimeout(syncT); syncNow(); } });
+setInterval(() => { if (document.visibilityState === "visible" && Date.now() - SYNC.last > 9 * 60000) syncNow(); }, SYNC_EVERY);
+window.addEventListener("online", () => syncNow());
 
 /* ═════════ démarrage ═════════ */
 async function boot() {
