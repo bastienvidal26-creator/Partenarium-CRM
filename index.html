@@ -393,7 +393,7 @@ if (typeof module !== "undefined") module.exports = { TAX, GRID, mecenat, isTax,
 (() => {
 "use strict";
 /* ═════════ CONFIGURATION ═════════ */
-const CONFIG = { name:"Partenarium CRM", key:"partcrm", version:"1.1.1", // à garder identique à VERSION dans sw.js (partcrm-1.1.1)
+const CONFIG = { name:"Partenarium CRM", key:"partcrm", version:"1.1.2", // à garder identique à VERSION dans sw.js (partcrm-1.1.2)
   gh:{ owner:"bastienvidal26-creator", privateRepo:"partenarium-crm-perso" } };
 
 /* ═════════ outils ═════════ */
@@ -726,6 +726,7 @@ function vHome() {
   const h = new Date().getHours();
   return `<div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap"><h1>${h < 18 ? "Bonjour" : "Bonsoir"} Bastien</h1><span class="muted">${new Date().toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long", year:"numeric" })}</span></div>
   ${bkAlert}
+  ${!bkAlert && BK.dir && BK.perm === "granted" && Object.keys(S.items).length && lsGet(CONFIG.key + ":offline") !== today().slice(0, 7) ? `<div class="alert" style="--c:var(--blue);margin-top:14px"><div style="flex:1"><b>Copie hors ligne du mois.</b> Copiez <b>partenarium-crm-mois-${today().slice(0, 7)}.json</b> du dossier « ${esc(BK.dirName)} » sur votre clé USB, puis débranchez-la. Sur la clé, gardez les 12 derniers fichiers.</div><button class="btn sm pri" data-offline="1">C'est fait</button></div>` : ""}
   ${!Object.keys(S.items).length ? `<div class="alert" style="--c:var(--blue);margin-top:14px"><div><b>Bienvenue dans votre CRM.</b> Commencez par créer un porteur de projet ou une entreprise avec le bouton <b>+</b>, ou chargez des données d'exemple pour découvrir l'outil : <a href="#/reglages">Réglages › Données d'exemple</a>.</div></div>` : ""}
   ${day <= 5 && all("porteur").some(p => ["Mandat signé", "Actif"].includes(p.relation)) ? `<div class="alert" style="--c:var(--yellow);margin-top:14px"><div><b>Avant le 5 du mois :</b> envoyez à chaque porteur sous mandat la liste des entreprises présentées le mois dernier (preuve du droit de suite). <a href="#/rapports/presentations">Ouvrir le registre</a></div></div>` : ""}
   <div class="kpis">
@@ -1111,7 +1112,7 @@ function vSettings() {
     <div class="kv"><span>État</span><b style="color:${!BK.dir ? "var(--tx3)" : BK.err ? "var(--red)" : BK.perm === "granted" ? "var(--green)" : "var(--orange)"}">${!BK.dir ? "inactive" : BK.err ? esc(BK.err) : BK.perm === "granted" ? "active" : "en pause (autorisation à redonner)"}</b></div>
     <div class="kv"><span>Dernière sauvegarde</span><b>${BK.last ? new Date(BK.last).toLocaleString("fr-FR") : "jamais"}</b></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn pri" data-bkchoose="1">${BK.dir ? "Changer de dossier" : "Choisir le dossier"}</button>${BK.dir && BK.perm !== "granted" ? `<button class="btn pri" data-bkresume="1">Reprendre</button>` : ""}${BK.dir && BK.perm === "granted" ? `<button class="btn" data-bknow="1">Sauvegarder maintenant</button>` : ""}${BK.dir ? `<button class="btn danger" data-bkstop="1">Arrêter</button>` : ""}</div>
-    <p class="tiny">Installez Google Drive pour ordinateur avec votre compte Partenarium, puis choisissez un dossier dans Google Drive (ex. <b>G:\\Mon Drive\\Partenarium\\Sauvegardes CRM</b>). Le CRM y écrit tout seul, quelques secondes après chaque modification : <b>partenarium-crm-derniere.json</b>, une copie par jour (gardée 90 jours) et une copie par mois (gardée sans limite). Drive conserve en plus l'historique des versions de chaque fichier.</p>`
+    <p class="tiny">Installez Google Drive pour ordinateur avec votre compte Partenarium, puis choisissez un dossier dans Google Drive (ex. <b>G:\\Mon Drive\\Partenarium\\Sauvegardes CRM</b>). Le CRM y écrit tout seul, quelques secondes après chaque modification : <b>partenarium-crm-derniere.json</b>, une copie par jour (gardée 90 jours) et une copie par mois (les 12 derniers mois). Chaque mois, copiez la copie du mois sur une clé USB débranchée ensuite (copie hors ligne, règle 3-2-1). Drive conserve en plus l'historique des versions de chaque fichier.</p>`
     : `<p class="small muted" style="margin-top:0">Ce navigateur ne permet pas la sauvegarde automatique dans un dossier (seuls Chrome et Edge sur ordinateur le permettent).</p>
     <div class="kv"><span>Copie hors de cet appareil</span><b style="color:${GH.token && SYNC.last && !SYNC.err ? "var(--green)" : "var(--orange)"}">${!GH.token ? "aucune (jeton manquant)" : SYNC.err ? "synchronisation en erreur" : SYNC.last ? `synchronisée le ${new Date(SYNC.last).toLocaleString("fr-FR")}` : "pas encore synchronisée"}</b></div>
     <p class="tiny">Ici, la sauvegarde passe par le PC : chaque modification part en quelques secondes dans votre dépôt GitHub privé (qui garde l'historique des versions) ; le CRM installé sur le PC (Edge) la récupère à l'ouverture, puis toutes les 10 minutes tant qu'il est ouvert, et l'écrit dans Google Drive. Pour une copie immédiate dans Drive sans le PC : « Exporter une sauvegarde », puis Partager › Drive.</p>`}
@@ -1299,6 +1300,7 @@ document.addEventListener("click", e => {
   if (el.id === "exp") { exportData(); return; }
   if (d.bkchoose) { bkChoose(); return; }
   if (d.bkresume) { bkResume(); return; }
+  if (d.offline) { lsSet(CONFIG.key + ":offline", today().slice(0, 7)); toast("Copie hors ligne notée pour ce mois."); render(); return; }
   if (d.bknow) { bkWrite(true).then(render); return; }
   if (d.bkstop) {
     if (el.dataset.armed !== "1") { el.dataset.armed = "1"; el.textContent = "Confirmer l'arrêt"; return; }
@@ -1424,7 +1426,7 @@ async function bkChoose() {
 }
 async function bkResume() { if (!BK.dir) return; try { BK.perm = await BK.dir.requestPermission({ mode:"readwrite" }); if (BK.perm === "granted") await bkWrite(true); } catch {} render(); }
 async function bkFile(name, txt) { const fh = await BK.dir.getFileHandle(name, { create:true }); const w = await fh.createWritable(); await w.write(txt); await w.close(); }
-let bkT, bkBusy = false;
+let bkT, bkBusy = false; const BK_MONTHS = 12;
 function bkSoon(ms = 8000) { if (!BK.dir || BK.perm !== "granted") return; clearTimeout(bkT); bkT = setTimeout(() => bkWrite(false), ms); }
 async function bkWrite(manual) {
   if (!BK.dir || BK.perm !== "granted") return false;
@@ -1435,8 +1437,13 @@ async function bkWrite(manual) {
     await bkFile("partenarium-crm-derniere.json", txt);
     await bkFile(`partenarium-crm-${d}.json`, txt);                       // copie du jour (la dernière version de la journée)
     try { await BK.dir.getFileHandle(month); } catch { await bkFile(month, txt); } // copie du mois : écrite une seule fois
-    const lim = addDays(d, -90);
-    for await (const [name, h] of BK.dir.entries()) { const m = /^partenarium-crm-(\d{4}-\d{2}-\d{2})\.json$/.exec(name); if (h.kind === "file" && m && m[1] < lim) await BK.dir.removeEntry(name); }
+    const lim = addDays(d, -90), mNow = +d.slice(0, 4) * 12 + +d.slice(5, 7), old = [];
+    for await (const [name, h] of BK.dir.entries()) {
+      if (h.kind !== "file") continue;
+      const m = /^partenarium-crm-(\d{4}-\d{2}-\d{2})\.json$/.exec(name), mm = /^partenarium-crm-mois-(\d{4})-(\d{2})\.json$/.exec(name);
+      if ((m && m[1] < lim) || (mm && mNow - (+mm[1] * 12 + +mm[2]) >= BK_MONTHS)) old.push(name);   // copies du jour : 90 jours ; copies du mois : les 12 derniers mois
+    }
+    for (const name of old) await BK.dir.removeEntry(name);
     BK.err = ""; markBackup(); if (manual) toast(`Sauvegarde écrite dans « ${BK.dirName} ».`);
     return true;
   } catch (e) {
