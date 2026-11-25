@@ -297,6 +297,89 @@ textarea.inp{min-height:64px;resize:vertical}
   #toast{bottom:calc(env(safe-area-inset-bottom) + 84px)}
   .replist{display:flex;overflow-x:auto;gap:4px}.replist a{white-space:nowrap}
 }
+/* ── Guide d'entretien ── */
+.ent{max-width:1100px;margin:0 auto}
+.ent-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--panel);border:.5px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.ent-top .t{flex:1;min-width:220px;display:flex;align-items:center;gap:12px}
+.ent-top h1{font-size:24px;line-height:30px;overflow-wrap:anywhere}
+.ent-top .acts{display:flex;gap:8px;flex-wrap:wrap}
+.elogo{width:40px;height:40px;border-radius:10px;object-fit:contain;background:#fff}
+.chrono{display:flex;gap:16px;align-items:baseline;font-size:15px}
+.chrono .over b{color:var(--orange)}
+.ent-path button{min-width:96px}
+.ent-path button.over{box-shadow:inset 0 -4px 0 var(--orange)}
+.ent-path button.cur.over{background:var(--orange)}
+.ent-path button:disabled{opacity:.4;cursor:not-allowed}
+.ent-rules{margin-bottom:12px}
+.ent-rules summary,.gsec summary{cursor:pointer;padding:12px 16px;font-weight:600}
+.ent-rules ul{margin:0;padding-left:18px;font-size:14px;line-height:20px}.ent-rules ul.rgpd{margin-top:8px;color:var(--tx2)}
+.ent-phase .ch h2 .letter{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;background:var(--indigo);color:#fff;font-size:16px;margin-right:4px}
+.q{padding:14px 0;border-bottom:.5px solid var(--line)}.q:last-child{border-bottom:0}
+.q-dire{margin:0 0 10px;font-size:20px;line-height:28px;font-weight:600;letter-spacing:-.015em;border-left:4px solid var(--acc);padding:2px 0 2px 14px}
+.q-intro{margin:0 0 6px;color:var(--tx2);font-size:14px}
+.q-rel{margin:0 0 10px}.q-rel summary{cursor:pointer;color:var(--link);font-size:14px;font-weight:500;min-height:30px}.q-rel p{margin:6px 0 0;font-size:16px;color:var(--tx2);font-style:italic}
+.chipbtn{border:.5px solid var(--line);background:var(--panel2);color:var(--tx);border-radius:99px;padding:8px 14px;min-height:40px;font-weight:500;cursor:pointer}
+.chipbtn.on{background:var(--acc);color:var(--on-acc);border-color:var(--acc);font-weight:600}
+.chipbtn.box{border-radius:10px}
+.dot{color:var(--orange);font-style:normal;font-size:10px;vertical-align:middle}
+.casebox{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px}
+.pers{display:flex;flex-direction:column;gap:6px}
+.prow{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) auto auto auto;gap:6px;align-items:center}
+.prow input:not([type=checkbox]){width:100%;background:var(--panel2);border:.5px solid var(--line);border-radius:9px;padding:9px 11px;min-height:40px;color:var(--tx);outline:none}
+.prow input:focus{border-color:var(--acc)}
+.ent-nav{position:sticky;bottom:0;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;background:linear-gradient(transparent,var(--bg) 35%);z-index:5}
+.ent-nav .btn{min-height:44px;padding:10px 18px}
+.fab{display:none}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(440px,100vw);z-index:55;background:var(--panel);border-left:.5px solid var(--line);box-shadow:var(--shadow);display:flex;flex-direction:column}
+.drawer header{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:.5px solid var(--line)}.drawer header h2{flex:1}
+.drawer .db{overflow:auto;padding:12px 16px 40px}
+.drawer .lsearch input{width:100%}
+.obj{padding:10px 0;border-bottom:.5px solid var(--line)}.obj p{margin:6px 0;font-size:14px;line-height:20px}
+.raised .ro{padding:8px 0;border-bottom:.5px solid var(--line)}
+.up{text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+.grille .gl{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:.5px solid var(--line);flex-wrap:wrap}
+.grille .gq{flex:1;min-width:200px;display:flex;flex-direction:column;gap:2px}
+.grille .seg button{min-width:44px;min-height:40px}
+.grille .seg button.sugg{outline:2px dashed var(--acc);outline-offset:-3px}
+.upd{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:.5px solid var(--line);font-size:14px;cursor:pointer}
+.upd input{margin-top:3px;accent-color:var(--acc);width:18px;height:18px;flex:none}
+.pts{margin:0;padding-left:18px;line-height:22px}
+.gpick{width:100%;background:transparent;border:0;color:var(--tx);text-align:left;border-radius:10px}
+.gpick.sug{background:var(--fill)}
+.gq-ed{border-left:3px solid var(--line);padding-left:10px;margin:8px 0 14px}
+.gsec+.gsec{margin-top:12px}
+.recap{max-width:880px}
+.recap section{padding:10px 0;border-bottom:.5px solid var(--line)}.recap section:last-child{border-bottom:0}
+.recap h3{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--tx3);margin:0 0 6px}
+.recap p{margin:4px 0;line-height:21px}
+.recap ul{margin:4px 0;padding-left:18px;line-height:21px}
+.rc-head{padding-bottom:10px;border-bottom:.5px solid var(--line)}.rc-head h2{font-size:22px;margin-bottom:4px}
+.rc-one p{font-size:17px;line-height:25px;font-weight:500}
+.rc-ind{padding:10px 0;border-bottom:.5px solid var(--line)}
+.rc-kv{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px}.rc-kv div{display:flex;justify-content:space-between;gap:10px;font-size:14px;border-bottom:.5px dashed var(--line);padding:3px 0}.rc-kv span{color:var(--tx2)}
+.rc-print{display:none}
+@media (max-width:1023px){
+  .ent-top .acts{width:100%}.ent-top .acts .btn{flex:1}
+  .ent-top .acts [data-eobj]{display:none}
+  .chrono{width:100%;justify-content:space-between}
+  .q-dire{font-size:18px;line-height:25px}
+  .chipbtn{min-height:44px}
+  .prow{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .fab{display:flex;position:fixed;right:14px;bottom:calc(env(safe-area-inset-bottom) + 142px);z-index:40;align-items:center;gap:6px;border:0;border-radius:99px;padding:12px 16px;background:var(--acc);color:var(--on-acc);font-weight:600;box-shadow:var(--shadow);min-height:48px}
+  .ent-nav{bottom:calc(env(safe-area-inset-bottom) + 64px)}
+  .drawer{top:auto;height:85vh;width:100vw;border-radius:16px 16px 0 0;border-left:0}
+  .rc-kv{grid-template-columns:minmax(0,1fr)}
+}
+@media print{
+  :root,:root[data-theme]{--bg:#fff;--bg2:#fff;--panel:#fff;--panel2:#f2f2f7;--panel3:#e5e5ea;--line:rgba(0,0,0,.2);--fill:rgba(0,0,0,.06);--tx:#000;--tx2:#333;--tx3:#555;--link:#000;color-scheme:light}
+  header.top,nav.objnav,nav.tabbar,.noprint,#toast,.fab,.drawer{display:none!important}
+  main{padding:0;max-width:none}
+  .recap{border:0;max-width:none}
+  .rc-print{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid #000}.rc-print img{width:34px;height:34px;border-radius:8px}.rc-print span{margin-left:auto;font-size:12px;color:#555}
+  .pill{border:1px solid currentColor}
+  a{color:#000}
+  @page{size:A4;margin:14mm}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -386,14 +469,71 @@ function contratCalc(c, G, P) {
     reconduction: isMandat && c.fin ? addDays(c.fin, -60) : "", renouvellement: !isMandat && !FEE_TYPES.includes(type) && c.fin ? addMonths(c.fin, -3) : "",
     droitSuite: isMandat && c.fin ? addMonths(c.fin, 12) : "", nonContournement: isMandat && c.fin ? addMonths(c.fin, 24) : "" };
 }
-if (typeof module !== "undefined") module.exports = { TAX, GRID, mecenat, isTax, parrainage, commission, oppCalc, contratCalc, addMonths, addDays, daysBetween, ymd, parseYmd };
+/* ═════════ GUIDE D'ENTRETIEN : règles de calcul (testées automatiquement) ═════════ */
+/* Éligibilité au mécénat d'un porteur (indication seulement : vérifiée pendant l'audit du Pack, rescrit éventuel) */
+function eligMecenat(x) {
+  x = x || {};
+  if (["Société", "Athlète individuel"].includes(x.statut) || x.sportPro) return "Non";
+  if (x.statut === "Association loi 1901" && x.benevoles === "Oui" && x.ouvert === "Oui" && x.lucratif === "Non") return "Probable";
+  return "À vérifier";
+}
+/* Porteur prêt pour une proposition : 4 critères (besoin chiffré, décideur présent, capacité à payer le Pack, échéance à 9 mois au plus) */
+function qualifPorteur(rep, dateEnt) {
+  rep = rep || {};
+  const lim = addMonths(dateEnt, 9);
+  const crit = {
+    besoin: +rep.montantRecherche > 0,
+    decideur: rep.decideur === "Oui",
+    capacite: rep.capacitePack === "Oui",
+    echeance: !!rep.echeance && !!lim && rep.echeance <= lim
+  };
+  return { crit, score: Object.values(crit).filter(Boolean).length };
+}
+/* Grille de qualification entreprise : 6 lignes notées 0, 1 ou 2 (total sur 12) */
+function grilleTotal(notes) { return Object.values(notes || {}).reduce((s, v) => s + (v === null || v === undefined || v === "" ? 0 : Math.max(0, Math.min(2, +v || 0))), 0); }
+function grilleNiveau(total) { return total >= 8 ? "vert" : total >= 5 ? "orange" : "rouge"; }
+/* Suggestions de la grille à partir des réponses déjà saisies (null = pas de suggestion) */
+function grilleSuggest(rep, contactsCompte) {
+  rep = rep || {};
+  const pers = Array.isArray(rep.interlocuteurs) ? rep.interlocuteurs : [];
+  const decConnu = pers.some(p => p.decideur) || (contactsCompte || []).some(c => c.role === "Décideur" || c.role === "Signataire");
+  return {
+    M: +rep.objectifNombre > 0 ? 2 : rep.objectifTexte ? 1 : null,
+    E: rep.decideur === "Oui" ? 2 : decConnu ? 1 : rep.decideur === "Non" ? 0 : null,
+    D1: null,
+    D2: rep.moisBudget && rep.circuit ? 2 : (rep.moisBudget || rep.circuit) ? 1 : null,
+    I: rep.probleme ? 1 : null,
+    C: null
+  };
+}
+/* Niveau de Pack suggéré selon le montant recherché (seuils modifiables ; suggestion seulement) */
+function packSuggere(montant, pack) {
+  if (!pack || !pack.actif || !(+montant > 0)) return null;
+  const n = pack.niveaux || [];
+  return +montant < +pack.seuil1 ? n[0] : +montant <= +pack.seuil2 ? n[1] : n[2];
+}
+/* Score de sponsorabilité : 5 critères sur 20 */
+function sponsoTotal(notes) { return Object.values(notes || {}).reduce((s, v) => s + Math.max(0, Math.min(20, +v || 0)), 0); }
+/* Coût net pour l'entreprise d'un montant envisagé (mêmes formules que les opportunités et le calculateur) */
+const ENT_TYPES = { "Parrainage":"Parrainage", "Mécénat":"Mécénat", "Mixte":"Mixte", "En nature":"Dotation en nature" };
+const ENT_IMPOS = { "IS 15 %":"is15", "IS 25 %":"is25", "IR":"ir", "Micro-entreprise":"micro" };
+function coutNetEntretien(montant, type, ent, G, P) {
+  const t = ENT_TYPES[type] || "Parrainage", m = Math.max(0, +montant || 0);
+  const o = t === "Dotation en nature" ? { type:"Parrainage", montant:0, nature:m } : { type:t, montant:m, partMec:0.5 };
+  const k = oppCalc(o, ent || {}, G, P, 0);
+  return { brut: m, cout: k.cout, economie: k.economie };
+}
+/* Remplit un modèle de phrase « {champ} » ; un champ vide reste visible pour être complété */
+function fillTpl(tpl, vals, empty) { empty = empty === undefined ? "[…]" : empty; return String(tpl || "").replace(/\{(\w+)\}/g, (_, k) => vals && vals[k] !== undefined && vals[k] !== null && vals[k] !== "" ? String(vals[k]) : empty); }
+
+if (typeof module !== "undefined") module.exports = { TAX, GRID, mecenat, isTax, parrainage, commission, oppCalc, contratCalc, addMonths, addDays, daysBetween, ymd, parseYmd, eligMecenat, qualifPorteur, grilleTotal, grilleNiveau, grilleSuggest, packSuggere, sponsoTotal, coutNetEntretien, fillTpl };
 </script>
 
 <script>
 (() => {
 "use strict";
 /* ═════════ CONFIGURATION ═════════ */
-const CONFIG = { name:"Partenarium CRM", key:"partcrm", version:"1.1.3", // à garder identique à VERSION dans sw.js (partcrm-1.1.3)
+const CONFIG = { name:"Partenarium CRM", key:"partcrm", version:"1.2.0", // à garder identique à VERSION dans sw.js (partcrm-1.2.0)
   gh:{ owner:"bastienvidal26-creator", privateRepo:"partenarium-crm-perso" } };
 
 /* ═════════ outils ═════════ */
@@ -442,11 +582,28 @@ const IC = {
 const svg = (k, sw = 1.7) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${IC[k] || ""}</svg>`;
 
 /* ═════════ SCHÉMA : objets et champs (formulaires, fiches, listes, import CSV en découlent) ═════════ */
+/* Tunnels de vente du document « Offres et stratégie commerciale 2027 » (alignés le 25/11/2026), avec « Perdu » et « En pause ».
+   p = probabilité par défaut (modifiable dans Réglages). Entreprises : les étapes « Payé » et « Activé et mesuré » se suivent sur le contrat. */
 const STAGES = [
-  { v:"À contacter", c:"var(--gray)", p:0.05 }, { v:"Première approche", c:"var(--blue)", p:0.10 }, { v:"Rendez-vous", c:"var(--indigo)", p:0.25 },
-  { v:"Proposition envoyée", c:"var(--purple)", p:0.40 }, { v:"Négociation", c:"var(--orange)", p:0.60 }, { v:"En cours de contractualisation", c:"var(--yellow)", p:0.80 },
-  { v:"Signé", c:"var(--green)", p:1, won:1 }, { v:"Perdu", c:"var(--red)", p:0, closed:1 }, { v:"En pause", c:"var(--brown)", p:0, closed:1 }];
-const REL = [{ v:"Prospect", c:"var(--gray)" }, { v:"En discussion", c:"var(--blue)" }, { v:"Mandat signé", c:"var(--purple)" }, { v:"Actif", c:"var(--green)" }, { v:"Terminé", c:"var(--brown)" }, { v:"Perdu", c:"var(--red)", closed:1 }];
+  { v:"Ciblée", c:"var(--gray)", p:0.05 }, { v:"Contactée", c:"var(--blue)", p:0.10 }, { v:"Rendez-vous réalisé", c:"var(--indigo)", p:0.25 },
+  { v:"Proposition envoyée", c:"var(--purple)", p:0.40 }, { v:"Négociation", c:"var(--orange)", p:0.70 },
+  { v:"Signé", c:"var(--green)", p:1, won:1 }, { v:"Perdu", c:"var(--red)", p:0, closed:1, lost:1 }, { v:"En pause", c:"var(--brown)", p:0, closed:1 }];
+const REL = [{ v:"Identifié", c:"var(--gray)", p:0.05 }, { v:"Contacté", c:"var(--blue)", p:0.10 }, { v:"Échange réalisé", c:"var(--indigo)", p:0.25 }, { v:"Proposition envoyée", c:"var(--purple)", p:0.50 },
+  { v:"Pack en cours", c:"var(--orange)", p:1, won:1 }, { v:"Mandat signé", c:"var(--green)", p:1, won:1 }, { v:"Terminé", c:"var(--teal)", p:0, done:1 }, { v:"Perdu", c:"var(--red)", p:0, closed:1, lost:1 }, { v:"En pause", c:"var(--brown)", p:0, closed:1 }];
+const REL0 = REL[0].v, STAGE0 = STAGES[0].v, MANDAT = ["Mandat signé"], PROSPECTS = ["Identifié", "Contacté", "Échange réalisé", "Proposition envoyée"];
+const PROBA0 = { opp:Object.fromEntries(STAGES.map(s => [s.v, s.p])), porteur:Object.fromEntries(REL.map(s => [s.v, s.p])) };
+/* Migration des anciennes étapes (versions ≤ 1.1.3) : appliquée au chargement, à la synchronisation et à la restauration */
+const OLD_STAGE = { "À contacter":"Ciblée", "Première approche":"Contactée", "Rendez-vous":"Rendez-vous réalisé", "En cours de contractualisation":"Négociation" };
+const OLD_REL = { "Prospect":"Identifié", "En discussion":"Échange réalisé", "Actif":"Mandat signé" };
+const OLD_P = { "À contacter":0.05, "Première approche":0.10, "Rendez-vous":0.25, "Négociation":0.60, "En cours de contractualisation":0.80 };
+function migrateItem(r) {
+  if (!r || typeof r !== "object") return false;
+  if (r.o === "opp" && OLD_STAGE[r.etape]) { const old = r.etape; r.etape = OLD_STAGE[old]; if (r.proba === undefined || r.proba === null || r.proba === "" || Math.abs(+r.proba - OLD_P[old]) < 1e-9) r.proba = PROBA0.opp[r.etape]; return true; }
+  if (r.o === "opp" && r.etape === "Négociation" && Math.abs(+r.proba - 0.6) < 1e-9 && !r.v12) { r.proba = PROBA0.opp["Négociation"]; r.v12 = 1; return true; }
+  if (r.o === "porteur" && OLD_REL[r.relation]) { r.relation = OLD_REL[r.relation]; return true; }
+  return false;
+}
+function migrateAll(items) { let n = 0; for (const r of Object.values(items || {})) if (migrateItem(r)) { r.updated = Date.now(); n++; } return n; }
 const CST = [{ v:"Brouillon", c:"var(--gray)" }, { v:"Envoyé", c:"var(--blue)" }, { v:"Signé", c:"var(--purple)" }, { v:"Actif", c:"var(--green)" }, { v:"Terminé", c:"var(--brown)" }, { v:"Résilié", c:"var(--red)", closed:1 }];
 const ACT_ST = [{ v:"À faire", c:"var(--orange)" }, { v:"Fait", c:"var(--green)" }];
 const PATHS = { opp:["etape", STAGES], porteur:["relation", REL], contrat:["statut", CST] };
@@ -459,7 +616,8 @@ const OBJ = {
   contact:{ l:"Contact", lp:"Contacts", nav:"Contacts", c:"var(--purple)", ic:"contact" },
   opp:{ l:"Opportunité", lp:"Opportunités", nav:"Opportunités", c:"var(--pink)", ic:"opp" },
   contrat:{ l:"Contrat", lp:"Contrats", nav:"Contrats", c:"var(--green)", ic:"contrat" },
-  act:{ l:"Activité", lp:"Activités", nav:"Activités", c:"var(--teal)", ic:"act" }
+  act:{ l:"Activité", lp:"Activités", nav:"Activités", c:"var(--teal)", ic:"act" },
+  entretien:{ l:"Entretien", lp:"Entretiens", nav:"Entretiens", c:"var(--indigo)", ic:"meet", hidden:1 }
 };
 const F = {
   porteur:[
@@ -474,7 +632,7 @@ const F = {
     { k:"reseaux", l:"Réseaux sociaux", t:"text", s:"Identité", help:"Ex. Instagram @club" },
     { k:"logo", l:"Logo", t:"image", s:"Identité" },
     { k:"description", l:"Présentation", t:"textarea", s:"Identité", wide:1 },
-    { k:"mecenat", l:"Éligible au mécénat", t:"select", s:"Fiscalité", o:["À vérifier", "Oui (intérêt général)", "Non"], def:"À vérifier", help:"Intérêt général : gestion désintéressée, activité non lucrative, pas de cercle restreint. Une société sportive n'est pas éligible." },
+    { k:"mecenat", l:"Éligible au mécénat", t:"select", s:"Fiscalité", o:["À vérifier", "Probable (à confirmer)", "Oui (intérêt général)", "Non"], def:"À vérifier", help:"Intérêt général : gestion désintéressée, activité non lucrative, pas de cercle restreint. Une société sportive n'est pas éligible." },
     { k:"rescrit", l:"Rescrit fiscal obtenu", t:"bool", s:"Fiscalité" },
     { k:"tva", l:"Facture la TVA", t:"select", s:"Fiscalité", o:["Non", "Oui"] },
     { k:"projet", l:"Projet à financer", t:"textarea", s:"Projet et objectifs", wide:1 },
@@ -489,7 +647,8 @@ const F = {
     { k:"spectateurs", l:"Spectateurs par an", t:"number", s:"Audience" },
     { k:"abonnes", l:"Abonnés sur les réseaux", t:"number", s:"Audience" },
     { k:"medias", l:"Couverture médias", t:"text", s:"Audience" },
-    { k:"relation", l:"Relation", t:"select", s:"Mandat Partenarium", o:REL.map(x => x.v), def:"Prospect", list:1 },
+    { k:"relation", l:"Relation", t:"select", s:"Mandat Partenarium", o:REL.map(x => x.v), def:"Identifié", list:1 },
+    { k:"motifPerte", l:"Motif de la perte", t:"select", s:"Mandat Partenarium", o:["Prix du Pack", "Pas de budget", "Pas prioritaire", "Bénévoles ou autre agence", "Non éligible ou peu sponsorisable", "Sans réponse", "Autre"], show:r => r.relation === "Perdu", help:"Obligatoire pour passer à « Perdu »." },
     { k:"offre", l:"Offre souscrite", t:"select", s:"Mandat Partenarium", o:["Pack Lancement", "Partenaires+", "Commission seule", "Mécénat (forfait)"] },
     { k:"prixPack", l:"Prix du pack HT", t:"money", s:"Mandat Partenarium" },
     { k:"abo", l:"Abonnement mensuel HT", t:"money", s:"Mandat Partenarium" },
@@ -538,7 +697,7 @@ const F = {
     { k:"entreprise", l:"Entreprise", t:"ref", ref:["entreprise"], s:"Opportunité", req:1, list:1 },
     { k:"contact", l:"Contact principal", t:"ref", ref:["contact"], s:"Opportunité" },
     { k:"type", l:"Type", t:"select", s:"Opportunité", o:["Parrainage", "Mécénat", "Mixte", "Dotation en nature", "Mécénat de compétences", "Ambassadeur / influence", "Business club"], def:"Parrainage", list:1 },
-    { k:"etape", l:"Étape", t:"select", s:"Opportunité", o:STAGES.map(x => x.v), def:"À contacter", list:1 },
+    { k:"etape", l:"Étape", t:"select", s:"Opportunité", o:STAGES.map(x => x.v), def:"Ciblée", list:1 },
     { k:"montant", l:"Montant HT (numéraire)", t:"money", s:"Montant", list:1 },
     { k:"nature", l:"Dont dotations en nature HT", t:"money", s:"Montant" },
     { k:"partMec", l:"Part en mécénat", t:"pct", s:"Montant", def:0.5, show:r => r.type === "Mixte" },
@@ -549,7 +708,7 @@ const F = {
     { k:"prochaine", l:"Prochaine étape", t:"text", s:"Suivi" },
     { k:"relance", l:"Date de relance", t:"date", s:"Suivi", list:1 },
     { k:"presente", l:"Présentée au porteur le", t:"date", s:"Suivi", help:"Pour le registre des présentations (droit de suite)." },
-    { k:"raisonPerte", l:"Raison de la perte", t:"select", s:"Suivi", o:["Budget", "Calendrier", "Concurrent", "Pas d'intérêt", "Sans réponse", "Autre"], show:r => r.etape === "Perdu" },
+    { k:"raisonPerte", l:"Raison de la perte", t:"select", s:"Suivi", o:["Budget", "Calendrier", "Concurrent", "Pas d'intérêt", "Sans réponse", "Autre"], show:r => r.etape === "Perdu", help:"Obligatoire pour passer à « Perdu »." },
     { k:"contreparties", l:"Contreparties proposées", t:"lines", s:"Contreparties proposées", wide:1, noLivre:1 },
     { k:"notes", l:"Notes", t:"textarea", s:"Notes", wide:1 }],
   contrat:[
@@ -578,7 +737,10 @@ const F = {
     { k:"statut", l:"Statut", t:"select", s:"Activité", o:["À faire", "Fait"], def:"À faire", list:1 },
     { k:"priorite", l:"Priorité", t:"select", s:"Activité", o:["Normale", "Haute"], def:"Normale" },
     { k:"lie", l:"Lié à", t:"ref", ref:["opp", "entreprise", "porteur", "contact", "contrat"], s:"Activité", list:1 },
-    { k:"description", l:"Description", t:"textarea", s:"Activité", wide:1 }]
+    { k:"description", l:"Description", t:"textarea", s:"Activité", wide:1 }],
+  /* Entretien : guide (A, B, C), statut (brouillon, terminé), date, durée, compte (porteur ou entreprise), opportunité, rep (réponses, clé → valeur selon le contenu des guides),
+     objections, scores, reformulation, points à vérifier, prochaine action. Saisi par le guide d'entretien, pas par ce formulaire. */
+  entretien:[{ k:"titre", l:"Guide", t:"text", s:"Entretien", list:1 }, { k:"date", l:"Date", t:"date", s:"Entretien", list:1 }, { k:"statut", l:"Statut", t:"text", s:"Entretien", list:1 }]
 };
 const fdef = (o, k) => F[o].find(f => f.k === k);
 
@@ -592,7 +754,7 @@ const store = (() => {
 })();
 
 /* ═════════ état ═════════ */
-const CFG0 = { grid:{ ...GRID }, tax:{ ...TAX }, objectif:16240 };
+const CFG0 = { grid:{ ...GRID }, tax:{ ...TAX }, objectif:16240, packDefaut:890, proba:{ opp:{}, porteur:{} } };
 const S = { items:{}, del:{}, cfg:JSON.parse(JSON.stringify(CFG0)), ui:{ sort:{}, view:{}, q:{}, kanban:matchMedia("(min-width:1024px)").matches, tab:{}, report:"pipeline", repMonth:"", repPorteur:"", repYear:"" } };
 const saveT = {};
 function save(key) { clearTimeout(saveT[key]); saveT[key] = setTimeout(() => store.set(key, S[key]), 200); }
@@ -609,10 +771,13 @@ function rname(r) {
   if (r.o === "contact") return [r.prenom, r.nom].filter(Boolean).join(" ");
   if (r.o === "contrat") return r.numero || "Contrat";
   if (r.o === "act") return r.sujet || "Activité";
+  if (r.o === "entretien") return `${gTitle(r)} · ${rname(get(r.compte))}`;
   if (r.o === "opp" && !r.nom) return [get(r.entreprise)?.nom, get(r.porteur)?.nom].filter(Boolean).join(" · ") || "Opportunité";
   return r.nom || "Sans nom";
 }
 const stageOf = v => STAGES.find(s => s.v === v) || STAGES[0];
+const relOf = v => REL.find(s => s.v === v) || REL[0];
+function applyProba() { const pr = S.cfg.proba || {}; STAGES.forEach(s => { const v = pr.opp?.[s.v]; s.p = v === undefined || v === null ? PROBA0.opp[s.v] : +v; }); REL.forEach(s => { const v = pr.porteur?.[s.v]; s.p = v === undefined || v === null ? PROBA0.porteur[s.v] : +v; }); }
 const probaOf = r => r.proba === undefined || r.proba === null || r.proba === "" ? stageOf(r.etape).p : +r.proba;
 const isOpen = r => { const s = stageOf(r.etape); return !s.won && !s.closed; };
 const oc = r => oppCalc(r, get(r.entreprise), G(), P(), probaOf(r));
@@ -671,6 +836,7 @@ function currentNav() {
   if (p[0] === "l") return "#/l/" + p[1];
   if (p[0] === "r") { const r = get(p[1]); return r ? "#/l/" + r.o : "#/"; }
   if (p[0] === "rapports") return "#/rapports";
+  if (p[0] === "entretien") return "";
   return "#/" + p[0];
 }
 function renderNav() {
@@ -686,10 +852,12 @@ function render() {
   let html;
   try {
     if (!p.length) html = vHome();
+    else if (p[0] === "l" && p[1] === "entretien") { location.replace("#/rapports/entretiens"); return; }
     else if (p[0] === "l" && OBJ[p[1]]) html = vList(p[1]);
+    else if (p[0] === "entretien") html = vEntretien(p[1], p[2]);
     else if (p[0] === "r") html = vRecord(p[1]);
     else if (p[0] === "rapports") html = vReports(p[1]);
-    else if (p[0] === "reglages") html = vSettings();
+    else if (p[0] === "reglages") html = p[1] === "guides" ? vGuidesEdit() : vSettings();
     else if (p[0] === "plus") html = vPlus();
     else html = vHome();
   } catch (e) { console.error(e); html = `<div class="alert" style="--c:var(--red)">Erreur d'affichage : ${esc(e.message)}</div>`; }
@@ -697,7 +865,7 @@ function render() {
   if (location.hash !== lastRoute) { scrollTo(0, 0); lastRoute = location.hash; }
   afterRender();
 }
-window.addEventListener("hashchange", () => { closeModal(); render(); });
+window.addEventListener("hashchange", () => { closeModal(); if (ENT && !(route().p[0] === "entretien" && route().p[1] === ENT.id)) { entSave(); ENT = null; } else if (ENT) ENT.mark = null; render(); });
 function rememberRecent(id) { let r = lsGet(CONFIG.key + ":recent") || []; r = [id, ...r.filter(x => x !== id)].slice(0, 12); lsSet(CONFIG.key + ":recent", r); }
 const favs = () => lsGet(CONFIG.key + ":favs") || [];
 
@@ -726,9 +894,10 @@ function vHome() {
   const h = new Date().getHours();
   return `<div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap"><h1>${h < 18 ? "Bonjour" : "Bonsoir"} Bastien</h1><span class="muted">${new Date().toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long", year:"numeric" })}</span></div>
   ${bkAlert}
+  ${homeReactivite()}
   ${!bkAlert && BK.dir && BK.perm === "granted" && Object.keys(S.items).length && lsGet(CONFIG.key + ":offline") !== today().slice(0, 7) ? `<div class="alert" style="--c:var(--blue);margin-top:14px"><div style="flex:1"><b>Copie hors ligne du mois.</b> Copiez <b>partenarium-crm-mois-${today().slice(0, 7)}.json</b> du dossier « ${esc(BK.dirName)} » sur votre clé USB, puis débranchez-la. Sur la clé, gardez les 12 derniers fichiers.</div><button class="btn sm pri" data-offline="1">C'est fait</button></div>` : ""}
   ${!Object.keys(S.items).length ? `<div class="alert" style="--c:var(--blue);margin-top:14px"><div><b>Bienvenue dans votre CRM.</b> Commencez par créer un porteur de projet ou une entreprise avec le bouton <b>+</b>, ou chargez des données d'exemple pour découvrir l'outil : <a href="#/reglages">Réglages › Données d'exemple</a>.</div></div>` : ""}
-  ${day <= 5 && all("porteur").some(p => ["Mandat signé", "Actif"].includes(p.relation)) ? `<div class="alert" style="--c:var(--yellow);margin-top:14px"><div><b>Avant le 5 du mois :</b> envoyez à chaque porteur sous mandat la liste des entreprises présentées le mois dernier (preuve du droit de suite). <a href="#/rapports/presentations">Ouvrir le registre</a></div></div>` : ""}
+  ${day <= 5 && all("porteur").some(p => MANDAT.includes(p.relation)) ? `<div class="alert" style="--c:var(--yellow);margin-top:14px"><div><b>Avant le 5 du mois :</b> envoyez à chaque porteur sous mandat la liste des entreprises présentées le mois dernier (preuve du droit de suite). <a href="#/rapports/presentations">Ouvrir le registre</a></div></div>` : ""}
   <div class="kpis">
     <div class="kpi"><div class="k">Revenus signés ${year}</div><div class="v">${eur(comSign)}</div><div class="progress" style="margin:6px 0 4px"><i style="width:${Math.min(100, obj ? comSign / obj * 100 : 0)}%;background:var(--acc)"></i></div><div class="s">Objectif ${eur(obj)} · ${obj ? pct(comSign / obj) : "—"}</div></div>
     <div class="kpi"><div class="k">Ventes en cours</div><div class="v">${keur(pipe)}</div><div class="s">${open.length} opportunité${open.length > 1 ? "s" : ""}</div></div>
@@ -738,6 +907,7 @@ function vHome() {
   </div>
   <div class="grid3">
     <div class="col">
+      ${homeEntretiens()}
       <div class="card"><div class="ch"><h2>${svg("task")} Mes tâches</h2><button class="btn sm" data-new="act">Nouvelle</button></div><div class="cb">
         ${late.length || soon.length ? `<ul class="tl">${[...late, ...soon].slice(0, 10).map(a => actLi(a, true)).join("")}</ul>` : `<div class="empty">Aucune tâche à faire.</div>`}</div></div>
       <div class="card"><div class="ch"><h2>${svg("opp")} Relances des 7 prochains jours</h2></div><div class="cb">
@@ -765,7 +935,7 @@ function echeances(t) {
     if (c.fin && c.fin >= addDays(t, -30) && c.fin <= lim) out.push({ id:c.id, date:c.fin, what:`Fin du contrat · ${rname(c)}`, sub:who });
     if (k.nbCp && k.livrees < k.nbCp && c.debut && c.debut <= lim) out.push({ id:c.id, date:c.debut, what:`Contreparties à livrer : ${k.nbCp - k.livrees}/${k.nbCp} · ${rname(c)}`, sub:who });
   });
-  all("porteur").filter(p => p.mandatFin && ["Mandat signé", "Actif"].includes(p.relation)).forEach(p => {
+  all("porteur").filter(p => p.mandatFin && MANDAT.includes(p.relation)).forEach(p => {
     const d = addDays(p.mandatFin, -60); if (d <= lim) out.push({ id:p.id, date:d, what:`Reconduction du mandat · ${p.nom}`, sub:`Fin du mandat le ${dfr(p.mandatFin)}` });
   });
   return out.sort((a, b) => a.date.localeCompare(b.date));
@@ -792,7 +962,7 @@ function actLi(a, showLink) {
 
 /* ═════════ LISTES ═════════ */
 const VIEWS = {
-  porteur:[["Tous les porteurs", () => true], ["Sous mandat", r => ["Mandat signé", "Actif"].includes(r.relation)], ["Prospects", r => ["Prospect", "En discussion"].includes(r.relation || "Prospect")], ["Associations et clubs", r => r.type === "Association / club"], ["Athlètes", r => r.type === "Athlète"]],
+  porteur:[["Tous les porteurs", () => true], ["Sous mandat", r => MANDAT.includes(r.relation)], ["Pack en cours", r => r.relation === "Pack en cours"], ["Prospects", r => PROSPECTS.includes(r.relation || REL0)], ["Perdus ou en pause", r => ["Perdu", "En pause"].includes(r.relation)], ["Associations et clubs", r => r.type === "Association / club"], ["Athlètes", r => r.type === "Athlète"]],
   entreprise:[["Toutes les entreprises", () => true], ["Avec opportunité ouverte", r => all("opp").some(o => o.entreprise === r.id && isOpen(o))], ["Partenaires signés", r => all("opp").some(o => o.entreprise === r.id && stageOf(o.etape).won)], ["Opposées à la prospection", r => !!r.opposition]],
   contact:[["Tous les contacts", () => true], ["Décideurs", r => r.role === "Décideur"], ["Opposition RGPD", r => !!r.opposition]],
   opp:[["Opportunités ouvertes", isOpen], ["Toutes les opportunités", () => true], ["Signées", r => stageOf(r.etape).won], ["Perdues ou en pause", r => stageOf(r.etape).closed], ["Relances en retard", r => isOpen(r) && r.relance && r.relance < today()]],
@@ -840,7 +1010,7 @@ function vList(o) {
 }
 function lcard(r) {
   const o = r.o; let sub = "", right = "";
-  if (o === "porteur") { sub = [r.type, r.discipline, r.ville].filter(Boolean).join(" · "); right = pill(r.relation || "Prospect", pathColor("porteur", r.relation || "Prospect")); }
+  if (o === "porteur") { sub = [r.type, r.discipline, r.ville].filter(Boolean).join(" · "); right = pill(r.relation || REL0, pathColor("porteur", r.relation || REL0)); }
   if (o === "entreprise") { sub = [r.secteur, r.ville].filter(Boolean).join(" · "); right = r.caHT ? `<span class="small num muted">CA ${keur(r.caHT)}</span>` : ""; }
   if (o === "contact") { sub = [r.fonction, rname(get(r.compte))].filter(Boolean).join(" · "); right = r.tel ? `<a class="small" href="tel:${esc(r.tel)}">${esc(r.tel)}</a>` : ""; }
   if (o === "opp") { sub = [get(r.porteur)?.nom, r.type].filter(Boolean).join(" · "); right = `<b class="num">${eur(r.montant || 0)}</b>${pill(r.etape, stageOf(r.etape).c)}`; }
@@ -860,6 +1030,8 @@ function vKanban(rows) {
 function vRecord(id) {
   const r = get(id);
   if (!r) return `<div class="card"><div class="empty">Cet enregistrement n'existe plus. <a href="#/">Retour à l'accueil</a></div></div>`;
+  if (r.o === "entretien") return vEntretienRecap(r);
+  if (!OBJ[r.o]) return `<div class="card"><div class="empty">Enregistrement de réglages. <a href="#/reglages">Réglages</a></div></div>`;
   rememberRecent(id);
   const o = r.o, fav = favs().includes(id);
   const tabKey = S.ui.tab[o] || (["porteur", "entreprise"].includes(o) ? "rel" : "det");
@@ -882,15 +1054,16 @@ function vRecord(id) {
 }
 function newActions(r) {
   const o = r.o, pre = k => esc(JSON.stringify(k));
-  if (o === "porteur") return `<button class="btn" data-new="opp" data-pre="${pre({ porteur:r.id })}">${svg("plus", 2)}Opportunité</button><button class="btn" data-new="contact" data-pre="${pre({ compte:r.id })}">${svg("plus", 2)}Contact</button>`;
-  if (o === "entreprise") return `<button class="btn" data-new="opp" data-pre="${pre({ entreprise:r.id })}">${svg("plus", 2)}Opportunité</button><button class="btn" data-new="contact" data-pre="${pre({ compte:r.id })}">${svg("plus", 2)}Contact</button>`;
-  if (o === "opp") return `<button class="btn" data-mkcontrat="${r.id}">${svg("plus", 2)}Contrat</button>`;
+  const eg = `<button class="btn pri" data-eguide="${r.id}">${svg("meet", 2)}Mener un entretien</button>`;
+  if (o === "porteur") return eg + `<button class="btn" data-new="opp" data-pre="${pre({ porteur:r.id })}">${svg("plus", 2)}Opportunité</button><button class="btn" data-new="contact" data-pre="${pre({ compte:r.id })}">${svg("plus", 2)}Contact</button>`;
+  if (o === "entreprise") return eg + `<button class="btn" data-new="opp" data-pre="${pre({ entreprise:r.id })}">${svg("plus", 2)}Opportunité</button><button class="btn" data-new="contact" data-pre="${pre({ compte:r.id })}">${svg("plus", 2)}Contact</button>`;
+  if (o === "opp") return eg + `<button class="btn" data-mkcontrat="${r.id}">${svg("plus", 2)}Contrat</button>`;
   if (o === "contact") return `<button class="btn" data-export-person="${r.id}" title="Droit d'accès RGPD">${svg("download")}Ses données</button>`;
   return "";
 }
 function highlights(r) {
   const o = r.o;
-  if (o === "porteur") { const sig = signedFor(r), ob = +r.objectif || 0; return [["Type", esc(r.type || "—")], ["Discipline", esc(r.discipline || "—")], ["Ville", esc(r.ville || "—")], ["Relation", pill(r.relation || "Prospect", pathColor("porteur", r.relation || "Prospect"))], ["Objectif de financement", ob ? eur(ob) : "—"], ["Signé", `${eur(sig)}${ob ? ` <span class="tiny">(${pct(sig / ob)})</span>` : ""}`]]; }
+  if (o === "porteur") { const sig = signedFor(r), ob = +r.objectif || 0; return [["Type", esc(r.type || "—")], ["Discipline", esc(r.discipline || "—")], ["Ville", esc(r.ville || "—")], ["Relation", pill(r.relation || REL0, pathColor("porteur", r.relation || REL0))], ["Objectif de financement", ob ? eur(ob) : "—"], ["Signé", `${eur(sig)}${ob ? ` <span class="tiny">(${pct(sig / ob)})</span>` : ""}`]]; }
   if (o === "entreprise") { const op = all("opp").filter(x => x.entreprise === r.id); return [["Secteur", esc(r.secteur || "—")], ["Ville", esc(r.ville || "—")], ["CA HT", r.caHT ? eur(r.caHT) : "—"], ["Imposition", esc(REGIMES[r.imposition || "is25"])], ["Opportunités", `${op.filter(isOpen).length} ouvertes · ${op.filter(x => stageOf(x.etape).won).length} signées`], ["Engagé (signé)", eur(op.filter(x => stageOf(x.etape).won).reduce((s, x) => s + (+x.montant || 0), 0))]]; }
   if (o === "contact") return [["Rattaché à", link(get(r.compte))], ["Fonction", esc(r.fonction || "—")], ["E-mail", fmt(fdef("contact", "email"), r.email)], ["Téléphone", fmt(fdef("contact", "tel"), r.tel)], ["Rôle", esc(r.role || "—")]];
   if (o === "opp") { const k = oc(r); return [["Entreprise", link(get(r.entreprise))], ["Porteur", link(get(r.porteur))], ["Type", esc(r.type || "—")], ["Montant HT", eur(k.montant)], ["Commission Partenarium", eur(k.com)], ["Clôture prévue", dfr(r.cloture) || "—"]]; }
@@ -911,7 +1084,7 @@ function alertsFor(r) {
     if (k.partMec > 0 && por && por.mecenat !== "Oui (intérêt général)") out.push(["var(--orange)", `<b>Mécénat :</b> l'éligibilité de ${esc(por.nom)} au mécénat est « ${esc(por.mecenat || "À vérifier")} ». Sans organisme d'intérêt général, pas de réduction d'impôt ni de reçu 2041-MEC-SD.`]);
     const cv = (r.contreparties || []).reduce((s, l) => s + (+l.valeur || 0), 0);
     if (k.partMec > 0 && cv > P().ctr * (k.montant * k.partMec + (k.partMec === 1 ? k.nature : 0))) out.push(["var(--orange)", `<b>Contreparties trop élevées pour un mécénat :</b> ${eur(cv)}, soit plus de ${pct(P().ctr)} du don. Risque de requalification en parrainage.`]);
-    if (r.etape === "En cours de contractualisation") out.push(["var(--yellow)", `<b>Contrôles avant signature :</b> pas d'alcool ni de tabac (loi Évin) ; opérateur de paris : règles ANJ ; autorisations de droit à l'image ; jamais le titre « agent sportif » ; modèle de contrat adapté (tripartite, convention de mécénat…).`]);
+    if (r.etape === "Négociation") out.push(["var(--yellow)", `<b>Contrôles avant signature :</b> pas d'alcool ni de tabac (loi Évin) ; opérateur de paris : règles ANJ ; autorisations de droit à l'image ; jamais le titre « agent sportif » ; modèle de contrat adapté (tripartite, convention de mécénat…).`]);
     if (isOpen(r) && r.relance && r.relance < t) out.push(["var(--red)", `<b>Relance en retard</b> depuis le ${dfr(r.relance)}.`]);
   }
   if (r.o === "contrat") {
@@ -947,6 +1120,7 @@ function relatedHtml(r) {
       ${ob ? `<div class="kv"><span>Objectif de financement</span><b>${eur(ob)}</b></div><div class="progress" style="margin:4px 0 6px"><i style="width:${Math.min(100, sig / ob * 100)}%;background:var(--green)"></i><i style="width:${Math.min(100 - Math.min(100, sig / ob * 100), pond / ob * 100)}%;background:color-mix(in srgb,var(--green) 40%,transparent)"></i></div><div class="tiny" style="margin-bottom:10px">Signé ${eur(sig)} (${pct(sig / ob)}) · ventes probables ${eur(pond)} · reste à trouver ${eur(Math.max(0, ob - sig))}</div>` : ""}
       ${opps.length ? stageBar(opps) + `<div class="rel"><table><thead><tr><th>Entreprise</th><th class="hm">Type</th><th class="n">Montant</th><th>Étape</th><th class="hm">Relance</th></tr></thead><tbody>${opps.map(x => `<tr data-href="#/r/${x.id}"><td><b>${esc(get(x.entreprise)?.nom || "—")}</b><div class="tiny">${esc(x.prochaine || "")}</div></td><td class="hm">${esc(x.type || "")}</td><td class="n num">${eur(x.montant || 0)}</td><td>${pill(x.etape, stageOf(x.etape).c)}</td><td class="hm ${isOpen(x) && x.relance && x.relance < t ? "late" : ""}">${dfr(x.relance)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">Aucune entreprise rattachée pour l'instant.</div>`}</div></div>
     <div class="card"><div class="ch"><h2>${oico("contrat", 24)} Contrats et contreparties</h2><button class="btn sm" data-new="contrat" data-pre="${esc(JSON.stringify({ porteur:r.id }))}">Ajouter</button></div><div class="cb">${contratCards(all("contrat").filter(c => c.porteur === r.id))}</div></div>
+    ${entretiensCard(r)}
     ${contactsCard(r)}
     <div class="card"><div class="ch"><h2>Contreparties disponibles</h2></div><div class="cb">${cpChips(r.inventaire, false)}</div></div>`;
   }
@@ -954,6 +1128,7 @@ function relatedHtml(r) {
     const opps = all("opp").filter(x => x.entreprise === r.id);
     return `<div class="card"><div class="ch"><h2>${oico("porteur", 24)} Porteurs de projet rattachés (${opps.length})</h2><button class="btn sm" data-new="opp" data-pre="${esc(JSON.stringify({ entreprise:r.id }))}">Ajouter</button></div><div class="cb">
       ${opps.length ? stageBar(opps) + `<div class="rel"><table><thead><tr><th>Porteur</th><th class="hm">Type</th><th class="n">Montant</th><th class="n hm">Coût net</th><th>Étape</th></tr></thead><tbody>${opps.map(x => `<tr data-href="#/r/${x.id}"><td><b>${esc(get(x.porteur)?.nom || "—")}</b></td><td class="hm">${esc(x.type || "")}</td><td class="n num">${eur(x.montant || 0)}</td><td class="n num hm">${eur(oc(x).cout)}</td><td>${pill(x.etape, stageOf(x.etape).c)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">Aucun porteur rattaché pour l'instant.</div>`}</div></div>
+    ${entretiensCard(r)}
     <div class="card"><div class="ch"><h2>${oico("contrat", 24)} Contrats et contreparties</h2></div><div class="cb">${contratCards(all("contrat").filter(c => c.entreprise === r.id))}</div></div>
     ${contactsCard(r)}`;
   }
@@ -961,7 +1136,7 @@ function relatedHtml(r) {
     const opps = all("opp").filter(x => x.contact === r.id);
     return opps.length ? `<div class="card"><div class="ch"><h2>Opportunités</h2></div><div class="cb">${opps.map(x => `<div class="item" data-href="#/r/${x.id}"><div class="t"><b>${esc(rname(x))}</b><span>${eur(x.montant || 0)}</span></div>${pill(x.etape, stageOf(x.etape).c)}</div>`).join("")}</div></div>` : "";
   }
-  if (o === "opp") { const cs = all("contrat").filter(c => c.opp === r.id); return cs.length ? `<div class="card"><div class="ch"><h2>Contrats</h2></div><div class="cb">${contratCards(cs)}</div></div>` : ""; }
+  if (o === "opp") { const cs = all("contrat").filter(c => c.opp === r.id); return entretiensCard(r) + (cs.length ? `<div class="card"><div class="ch"><h2>Contrats</h2></div><div class="cb">${contratCards(cs)}</div></div>` : ""); }
   return "";
 }
 function contactsCard(r) {
@@ -1003,6 +1178,7 @@ function activityPanel(r) {
   const hist = acts.filter(a => a.statut === "Fait" || a.type === "Note").sort((a, b) => (b.date || "").localeCompare(a.date || "") || (b.created || 0) - (a.created || 0));
   return `<div class="card" style="margin-bottom:16px"><div class="ch"><h2>${svg("act")} Activité</h2></div><div class="cb">
     <form class="composer" id="composer" data-for="${r.id}">
+      ${["porteur", "entreprise", "opp", "contact"].includes(r.o) ? `<button type="button" class="btn sm" data-eguide="${r.id}" style="align-self:flex-start">${svg("meet", 2)}Mener un entretien</button>` : ""}
       <div class="seg" role="group">${["Tâche", "Appel", "E-mail", "Rendez-vous", "Note"].map((x, i) => `<button type="button" data-ctype="${x}" aria-pressed="${i === 0}">${x === "Rendez-vous" ? "RDV" : x}</button>`).join("")}</div>
       <input type="hidden" name="type" value="Tâche">
       <input class="inp" name="sujet" placeholder="Sujet (ex. Relancer le directeur)" autocomplete="off" required>
@@ -1018,7 +1194,7 @@ function activityPanel(r) {
 }
 
 /* ═════════ RAPPORTS ═════════ */
-const REPORTS = [["pipeline", "Cycle de vente par étape"], ["objectifs", "Objectifs des porteurs"], ["mois", "Signé par mois"], ["secteurs", "Opportunités par secteur"], ["revenus", "Revenus Partenarium"], ["presentations", "Registre des présentations (droit de suite)"], ["contreparties", "Contreparties à livrer"], ["pertes", "Raisons des pertes"]];
+const REPORTS = [["pipeline", "Cycle de vente par étape"], ["objectifs", "Objectifs des porteurs"], ["mois", "Signé par mois"], ["secteurs", "Opportunités par secteur"], ["revenus", "Revenus Partenarium"], ["presentations", "Registre des présentations (droit de suite)"], ["contreparties", "Contreparties à livrer"], ["pertes", "Raisons des pertes"], ["entretiens", "Entretiens"]];
 let REP_DATA = null;
 function vReports(id) {
   id = id || S.ui.report; S.ui.report = id;
@@ -1057,7 +1233,8 @@ function buildReport(id) {
   if (id === "revenus") {
     const cs = all("contrat").filter(c => !["Brouillon", "Résilié"].includes(c.statut)).map(c => ({ c, k:cc(c) }));
     const pipeCom = opps.filter(isOpen).reduce((s, o) => s + oc(o).comPond, 0);
-    return { title, html:`<div class="kv"><span>Revenus signés (contrats)</span><b>${eur(cs.reduce((s, x) => s + x.k.due, 0))}</b></div><div class="kv"><span>Encaissé</span><b>${eur(cs.reduce((s, x) => s + x.k.encaisse, 0))}</b></div><div class="kv"><span>Reste à encaisser</span><b>${eur(cs.reduce((s, x) => s + x.k.reste, 0))}</b></div><div class="kv"><span>Commissions probables des ventes en cours</span><b>${eur(pipeCom)}</b></div><div style="height:12px"></div>` +
+    const packs = all("porteur").filter(p => PROSPECTS.includes(p.relation || REL0)).reduce((s, p) => s + (+p.prixPack || +S.cfg.packDefaut || 0) * relOf(p.relation || REL0).p, 0);
+    return { title, html:`<div class="kv"><span>Revenus signés (contrats)</span><b>${eur(cs.reduce((s, x) => s + x.k.due, 0))}</b></div><div class="kv"><span>Encaissé</span><b>${eur(cs.reduce((s, x) => s + x.k.encaisse, 0))}</b></div><div class="kv"><span>Reste à encaisser</span><b>${eur(cs.reduce((s, x) => s + x.k.reste, 0))}</b></div><div class="kv"><span>Commissions probables des ventes en cours</span><b>${eur(pipeCom)}</b></div><div class="kv"><span>Packs probables (porteurs en prospection)</span><b>${eur(packs)}</b></div><div style="height:12px"></div>` +
       tableHtml(["Contrat", "Type", "Statut", "Revenu", "Encaissé", "Reste"], cs.map(x => ({ _href:"#/r/" + x.c.id, cells:[esc(rname(x.c)), esc(x.c.type || ""), pill(x.c.statut, pathColor("contrat", x.c.statut)), eur(x.k.due), eur(x.k.encaisse), eur(x.k.reste)] })), [3, 4, 5]),
       rows:[["Contrat", "Type", "Statut", "Revenu", "Encaissé", "Reste"], ...cs.map(x => [rname(x.c), x.c.type, x.c.statut, Math.round(x.k.due), x.k.encaisse, Math.round(x.k.reste)])], note:"Les revenus comprennent les commissions (grille), les forfaits de mécénat et les honoraires (packs, business club, activation). À rapprocher du livre des recettes." };
   }
@@ -1078,10 +1255,14 @@ function buildReport(id) {
     return { title, html:tableHtml(["Contrat", "Porteur", "Entreprise", "Contrepartie", "Qté", "Valeur", "Fin"], rows.map(x => ({ _href:"#/r/" + x.c.id, cells:[esc(rname(x.c)), esc(get(x.c.porteur)?.nom || ""), esc(get(x.c.entreprise)?.nom || ""), `<b>${esc(x.l.type || "")}</b> ${esc(x.l.desc || "")}`, nb(x.l.qte || 0), eur(x.l.valeur || 0), dfr(x.c.fin)] })), [4, 5]),
       rows:[["Contrat", "Porteur", "Entreprise", "Contrepartie", "Description", "Qté", "Valeur", "Fin"], ...rows.map(x => [rname(x.c), get(x.c.porteur)?.nom || "", get(x.c.entreprise)?.nom || "", x.l.type, x.l.desc || "", x.l.qte || "", x.l.valeur || "", x.c.fin || ""])] };
   }
+  if (id === "entretiens") return reportEntretiens(title);
   if (id === "pertes") {
     const lost = opps.filter(o => o.etape === "Perdu"), m = {}; lost.forEach(o => { const k = o.raisonPerte || "Non renseignée"; m[k] = m[k] || { n:0, v:0 }; m[k].n++; m[k].v += +o.montant || 0; });
     const rows = Object.entries(m).sort((a, b) => b[1].n - a[1].n);
-    return { title, html:tableHtml(["Raison", "Nombre", "Montant perdu"], rows.map(([k, x]) => ({ cells:[esc(k), nb(x.n), eur(x.v)] })), [1, 2]), rows:[["Raison", "Nombre", "Montant"], ...rows.map(([k, x]) => [k, x.n, x.v])] };
+    const lp = all("porteur").filter(p => p.relation === "Perdu"), mp = {}; lp.forEach(p => { const k = p.motifPerte || "Non renseigné"; mp[k] = (mp[k] || 0) + 1; });
+    const rp = Object.entries(mp).sort((a, b) => b[1] - a[1]);
+    return { title, html:`<h3 class="tiny up" style="margin:0 0 6px">Opportunités (entreprises)</h3>` + tableHtml(["Raison", "Nombre", "Montant perdu"], rows.map(([k, x]) => ({ cells:[esc(k), nb(x.n), eur(x.v)] })), [1, 2]) + `<h3 class="tiny up" style="margin:16px 0 6px">Porteurs (vente du Pack)</h3>` + tableHtml(["Motif", "Nombre"], rp.map(([k, n]) => ({ cells:[esc(k), nb(n)] })), [1]),
+      rows:[["Objet", "Raison", "Nombre", "Montant"], ...rows.map(([k, x]) => ["Opportunité", k, x.n, x.v]), ...rp.map(([k, n]) => ["Porteur", k, n, ""])] };
   }
   const st = STAGES.map(s => { const l = opps.filter(o => o.etape === s.v); return { s, n:l.length, m:l.reduce((x, o) => x + (+o.montant || 0), 0), p:l.reduce((x, o) => x + oc(o).pondere, 0), c:l.reduce((x, o) => x + oc(o).com, 0) }; });
   const max = Math.max(1, ...st.map(x => x.m));
@@ -1099,12 +1280,16 @@ const SET_F = [["grid.t1", "Fin de la 1re tranche", "€", 1], ["grid.r1", "Taux
   ["tax.r1", "Mécénat : réduction", "%", 100], ["tax.r2", "Mécénat au-delà de 2 M€", "%", 100], ["tax.floor", "Plafond mécénat minimal", "€", 1], ["tax.caRatio", "Plafond mécénat (‰ du CA)", "‰", 1000], ["tax.ctr", "Contreparties de mécénat admises", "%", 100], ["tax.isn", "IS taux normal", "%", 100], ["tax.isr", "IS taux réduit PME", "%", 100], ["tax.iscap", "Plafond du taux réduit IS", "€", 1]];
 const cfgGet = p => p.split(".").reduce((o, k) => o?.[k], S.cfg), cfgSet = (p, v) => { const ks = p.split("."); let o = S.cfg; while (ks.length > 1) o = o[ks.shift()]; o[ks[0]] = v; };
 function vSettings() {
-  const th = lsGet(CONFIG.key + ":theme") || "dark", n = Object.keys(S.items).length, demo = Object.values(S.items).filter(r => r.demo).length;
+  const th = lsGet(CONFIG.key + ":theme") || "dark", n = Object.values(S.items).filter(r => OBJ[r.o]).length, demo = Object.values(S.items).filter(r => r.demo).length;
   const st = !GH.token ? "Jeton manquant" : SYNC.busy ? "Synchronisation…" : SYNC.err || (SYNC.last ? `Dernière synchro : ${new Date(SYNC.last).toLocaleString("fr-FR")}` : "Pas encore synchronisé");
   const fld = ([p, l, u, m]) => `<div class="fld"><label for="c-${p}">${l} (${u})</label><input id="c-${p}" data-cfg="${p}" data-m="${m}" inputmode="decimal" value="${String(Math.round(cfgGet(p) * m * 100) / 100).replace(".", ",")}"></div>`;
   return `<h1 style="margin-bottom:16px">Réglages</h1><div class="grid2"><div class="col">
   <div class="card"><div class="ch"><h2>Apparence</h2></div><div class="cb"><div class="seg">${[["dark", "Sombre"], ["light", "Clair"], ["auto", "Automatique"]].map(([v, l]) => `<button data-theme-set="${v}" aria-pressed="${th === v}">${l}</button>`).join("")}</div></div></div>
   <div class="card"><div class="ch"><h2>Grille de commission et objectif</h2></div><div class="cb"><div class="ff">${SET_F.slice(0, 10).map(fld).join("")}</div><p class="tiny">Grille du dossier de référence : 20 % jusqu'à 10 000 €, 15 % de 10 000 à 50 000 €, 10 % au-delà, minimum 500 €, nature 10 %, renouvellement 50 %. Objectif par défaut : CA 2027 du prévisionnel (16 240 €), qui regroupe commissions, packs, abonnements et forfaits de mécénat.</p></div></div>
+  <div class="card"><div class="ch"><h2>Probabilités par étape</h2></div><div class="cb">
+    <h3 class="tiny" style="text-transform:uppercase;font-weight:600;margin:0 0 6px">Opportunités (entreprises)</h3><div class="ff">${STAGES.filter(s => !s.closed).map(s => `<div class="fld"><label for="pr-o-${esc(s.v)}">${esc(s.v)} (%)</label><input id="pr-o-${esc(s.v)}" data-proba="opp|${esc(s.v)}" inputmode="decimal" value="${String(Math.round(s.p * 1000) / 10).replace(".", ",")}"></div>`).join("")}</div>
+    <h3 class="tiny" style="text-transform:uppercase;font-weight:600;margin:16px 0 6px">Porteurs (vente du Pack)</h3><div class="ff">${REL.filter(s => !s.closed && !s.done).map(s => `<div class="fld"><label for="pr-p-${esc(s.v)}">${esc(s.v)} (%)</label><input id="pr-p-${esc(s.v)}" data-proba="porteur|${esc(s.v)}" inputmode="decimal" value="${String(Math.round(s.p * 1000) / 10).replace(".", ",")}"></div>`).join("")}<div class="fld"><label for="c-packDefaut">Prix du Pack par défaut (€)</label><input id="c-packDefaut" data-cfg="packDefaut" data-m="1" inputmode="decimal" value="${esc(S.cfg.packDefaut ?? 890)}"></div></div>
+    <p class="tiny">« Ventes probables » = montant × probabilité de l'étape (modifiable sur chaque opportunité). Porteurs : « Packs probables » du rapport Revenus = prix du Pack (ou prix par défaut) × probabilité. Les nouvelles valeurs s'appliquent aux opportunités qui changent d'étape. <button class="btn sm" data-reset-proba="1">Probabilités par défaut</button></p></div></div>
   <div class="card"><div class="ch"><h2>Taux fiscaux (coût net des sponsors)</h2></div><div class="cb"><div class="ff">${SET_F.slice(10).map(fld).join("")}</div><p class="tiny">Taux vérifiés le 24/11/2026 (art. 238 bis et 219 CGI). <button class="btn sm" data-reset-tax="1">Revenir aux taux par défaut</button></p></div></div>
   </div><div class="col">
   <div class="card" id="bkcard"><div class="ch"><h2>Sauvegarde dans Google Drive</h2></div><div class="cb">
@@ -1118,6 +1303,7 @@ function vSettings() {
     <p class="tiny">Ici, la sauvegarde passe par le PC : chaque modification part en quelques secondes dans votre dépôt GitHub privé (qui garde l'historique des versions) ; le CRM installé sur le PC (Edge) la récupère à l'ouverture, puis toutes les 10 minutes tant qu'il est ouvert, et l'écrit dans Google Drive. Pour une copie immédiate dans Drive sans le PC : « Exporter une sauvegarde », puis Partager › Drive.</p>`}
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn" id="exp">${svg("download")}Exporter une sauvegarde</button><label class="btn filebtn" tabindex="0" role="button">Restaurer un fichier<input type="file" accept="application/json,.json" class="vh-file" id="imp" tabindex="-1"></label></div>
     <p class="tiny">Restaurer fusionne le fichier avec les données présentes : pour chaque fiche, la version la plus récente est gardée. Sur un appareil vide (nouveau PC, navigateur effacé), tout est retrouvé.</p></div></div>
+  ${guidesCard()}
   <div class="card"><div class="ch"><h2>Données</h2></div><div class="cb">
     <div class="kv"><span>Enregistrements sur cet appareil</span><b>${nb(n)}</b></div>
     <h3 class="tiny" style="text-transform:uppercase;font-weight:600;margin:16px 0 6px">Import CSV</h3>
@@ -1207,6 +1393,8 @@ function dupOf(r) {
 function submitForm() {
   const r = collectForm(), o = FORM.o, err = [];
   F[o].forEach(f => { if (f.req && (r[f.k] === undefined || r[f.k] === null || r[f.k] === "")) err.push(f.l); });
+  if (o === "opp" && r.etape === "Perdu" && !r.raisonPerte) err.push("Raison de la perte");
+  if (o === "porteur" && r.relation === "Perdu" && !r.motifPerte) err.push("Motif de la perte");
   if (err.length) { $("#ferr").textContent = "À compléter : " + err.join(", ") + "."; return; }
   const d = dupOf(r);
   if (d && !FORM.confirmDup) { FORM.confirmDup = true; $("#ferr").innerHTML = `Doublon possible : <a href="#/r/${d.id}">${esc(rname(d))}</a> existe déjà (même nom ou même SIREN). Touchez encore « Enregistrer » pour créer quand même.`; return; }
@@ -1229,18 +1417,29 @@ function nextNumero(r) {
   const max = all("contrat").map(c => c.numero || "").filter(n => n.startsWith(pre)).map(n => parseInt(n.slice(pre.length), 10) || 0).reduce((a, b) => Math.max(a, b), 0);
   return pre + String(max + 1).padStart(3, "0");
 }
+function askLoss(id, k) {
+  const r = get(id), lk = LOSS_K[r.o], f = fdef(r.o, lk);
+  $("#modal").innerHTML = `<form class="dlg" id="lossform" data-id="${esc(id)}" data-k="${esc(k)}" style="max-width:480px" novalidate><header><h2>Motif de la perte</h2><button type="button" class="iconbtn" data-close="1" aria-label="Fermer">✕</button></header>
+    <div class="db"><div class="fld" style="margin:12px 0"><label for="lossmotif">Pourquoi passer « ${esc(rname(r))} » à « Perdu » ? <i>*</i></label><select id="lossmotif" name="motif"><option value="">—</option>${f.o.map(x => `<option${r[lk] === x ? " selected" : ""}>${esc(x)}</option>`).join("")}</select><div class="help">Le motif est obligatoire : il alimente le rapport « Raisons des pertes ».</div></div><div id="ferr" class="ferr"></div></div>
+    <footer><button type="button" class="btn" data-close="1">Annuler</button><button class="btn pri">Passer à « Perdu »</button></footer></form>`;
+  $("#modal").hidden = false; setTimeout(() => $("#lossmotif")?.focus(), 30);
+}
 function contratFromOpp(o) {
   const typeMap = { "Parrainage":"Tripartite (délégation de paiement)", "Mécénat":"Convention de mécénat", "Mécénat de compétences":"Convention de mécénat", "Mixte":"Tripartite (délégation de paiement)", "Dotation en nature":"Tripartite (délégation de paiement)", "Ambassadeur / influence":"Ambassadeur / influence", "Business club":"Business club" };
   openForm("contrat", null, { type:typeMap[o.type] || "Contrat de parrainage", porteur:o.porteur, entreprise:o.entreprise, opp:o.id, montant:o.montant, nature:o.nature, renouv:o.renouv, statut:"Brouillon", contreparties:(o.contreparties || []).map(l => ({ ...l, livre:false })), commission:["Mécénat", "Mécénat de compétences"].includes(o.type) && o.forfait ? o.forfait : null });
 }
 
 /* ═════════ changements rapides (Path, Kanban, tâches, contreparties) ═════════ */
-function setPath(id, k, v) {
+const LOSS_K = { opp:"raisonPerte", porteur:"motifPerte" };
+function setPath(id, k, v, motif) {
   const r = get(id); if (!r || r[k] === v) return;
-  const upd = { ...r, [k]: v };
+  const lk = LOSS_K[r.o];
+  if (lk && v === "Perdu" && !motif) { askLoss(id, k); return; }        // motif de perte obligatoire
+  const upd = { ...r, [k]: v }; if (lk && motif) upd[lk] = motif;
   if (r.o === "opp") { upd.proba = stageOf(v).p; if (stageOf(v).won && !upd.cloture) upd.cloture = today(); }
   putItem(id, upd); toast(`Étape : ${v}`);
-  if (r.o === "opp" && v === "Perdu") { render(); openForm("opp", id); setTimeout(() => $("#f-raisonPerte")?.focus(), 60); return; }
+  if (((r.o === "porteur" && v === "Échange réalisé") || (r.o === "opp" && v === "Rendez-vous réalisé")) && !entretiensFor(get(id)).some(e => e.statut === "terminé"))
+    setTimeout(() => toast("Rappel : aucun entretien enregistré pour cette fiche. « Mener un entretien » garde la fiche récapitulative."), 1800);
   if (r.o === "opp" && stageOf(v).won && !all("contrat").some(c => c.opp === id)) { render(); toast("Signé ! Créez le contrat pour suivre les contreparties."); contratFromOpp(get(id)); return; }
   render();
 }
@@ -1255,15 +1454,578 @@ function closeSearch() { $("#sov").hidden = true; $("#sov").innerHTML = ""; }
 function searchRun(q) {
   const n = norm(q);
   if (!n) { SRES = (lsGet(CONFIG.key + ":recent") || []).map(get).filter(Boolean).slice(0, 8); }
-  else SRES = Object.values(S.items).filter(r => r.o !== "act" || n.length > 2).map(r => { const hay = norm([rname(r), r.siren, r.email, r.tel, r.ville, r.discipline, r.secteur, r.numero, r.fonction].filter(Boolean).join(" ")); const i = hay.indexOf(n); return i < 0 ? null : { r, s:(norm(rname(r)).startsWith(n) ? 0 : 1) * 1000 + i }; }).filter(Boolean).sort((a, b) => a.s - b.s).slice(0, 30).map(x => x.r);
+  else SRES = Object.values(S.items).filter(r => OBJ[r.o] && (r.o !== "act" || n.length > 2)).map(r => { const hay = norm([rname(r), r.siren, r.email, r.tel, r.ville, r.discipline, r.secteur, r.numero, r.fonction].filter(Boolean).join(" ")); const i = hay.indexOf(n); return i < 0 ? null : { r, s:(norm(rname(r)).startsWith(n) ? 0 : 1) * 1000 + i }; }).filter(Boolean).sort((a, b) => a.s - b.s).slice(0, 30).map(x => x.r);
   SSEL = 0;
-  const order = ["porteur", "entreprise", "contact", "opp", "contrat", "act"];
+  const order = ["porteur", "entreprise", "contact", "opp", "contrat", "entretien", "act"];
   const groups = n ? order.map(o => [o, SRES.filter(r => r.o === o)]).filter(g => g[1].length) : [["recent", SRES]];
   SRES = groups.flatMap(g => g[1]);
   let i = 0;
   $("#sres").innerHTML = SRES.length ? groups.map(([o, l]) => `<h4>${o === "recent" ? "Récents" : OBJ[o].lp}</h4>${l.map(r => `<a href="#/r/${r.id}" data-si="${i++}" class="${i === 1 ? "sel" : ""}">${oico(r.o, 28)}<b>${esc(rname(r))}</b><span>${esc(subOf(r))}</span></a>`).join("")}`).join("") : `<div class="empty">${n ? "Aucun résultat." : "Tapez un nom, un SIREN, un e-mail, une ville…"}</div>`;
 }
-const subOf = r => r.o === "porteur" ? [r.type, r.ville].filter(Boolean).join(" · ") : r.o === "entreprise" ? [r.secteur, r.ville].filter(Boolean).join(" · ") : r.o === "contact" ? rname(get(r.compte)) : r.o === "opp" ? r.etape : r.o === "contrat" ? r.type : r.o === "act" ? r.type : "";
+const subOf = r => r.o === "porteur" ? [r.type, r.ville].filter(Boolean).join(" · ") : r.o === "entreprise" ? [r.secteur, r.ville].filter(Boolean).join(" · ") : r.o === "contact" ? rname(get(r.compte)) : r.o === "opp" ? r.etape : r.o === "contrat" ? r.type : r.o === "act" ? r.type : r.o === "entretien" ? dfr(r.date) : "";
+
+/* ═════════ GUIDE D'ENTRETIEN DE VENTE (v1.2.0) ═════════
+   Le contenu commercial (questions, relances, objections, règles) n'est pas dans ce code public :
+   il est importé une fois (Réglages › Guides d'entretien) dans l'enregistrement « cfg-guides »,
+   synchronisé et sauvegardé comme une fiche. */
+const GID = "cfg-guides";
+const GREC = () => S.items[GID] || null;
+const GC = () => GREC()?.data || null;
+const GNAME = { A:"Échange découverte porteur", B:"Rendez-vous découverte entreprise", C:"Proposition et négociation" };
+const gTitle = r => GC()?.guides?.[r.guide]?.titre || r.titre || GNAME[r.guide] || "Entretien";
+const gPhases = g => GC()?.guides?.[g]?.phases || [];
+const gFields = g => gPhases(g).flatMap(p => (p.questions || []).flatMap(q => q.champs || []));
+const isEmptyV = v => v === undefined || v === null || v === "" || (Array.isArray(v) && !v.length);
+const entretiensFor = r => !r ? [] : all("entretien").filter(e => r.o === "opp" ? e.opp === r.id : e.compte === r.id).sort((a, b) => (b.date || "").localeCompare(a.date || "") || (b.created || 0) - (a.created || 0));
+const STATUT_G = { "Association loi 1901":"Association loi 1901", "Association reconnue d'utilité publique":"Association loi 1901", "Société sportive (SASP, SAOS…)":"Société", "Société":"Société", "Entreprise individuelle":"Athlète individuel", "Particulier":"Athlète individuel", "Collectivité":"Collectivité", "Autre":"Autre" };
+const STATUT_F = { "Association loi 1901":"Association loi 1901", "Société":"Société", "Athlète individuel":"Entreprise individuelle", "Collectivité":"Collectivité", "Autre":"Autre" };
+const IMPOS_G = { is15:"IS 15 %", is25:"IS 25 %", ir:"IR", micro:"Micro-entreprise" };
+const pubOf = r => r.compteO === "entreprise" ? "entreprise" : "porteur";
+
+/* ---------- valeurs d'une fiche ↔ champs du guide ---------- */
+function ficheToGuide(f, fiche) {
+  if (!fiche || !f.cible) return undefined;
+  const v = fiche[f.cible];
+  if (f.cible === "statutJur") return STATUT_G[v];
+  if (f.cible === "imposition") return IMPOS_G[v];
+  if (f.cible === "objectifs") return undefined;               // texte libre de la fiche : jamais prérempli
+  return isEmptyV(v) ? undefined : v;
+}
+function guideToFiche(f, v) {
+  if (f.cible === "statutJur") return STATUT_F[v];
+  if (f.cible === "imposition") return ENT_IMPOS[v];
+  return v;
+}
+
+/* ---------- lancement ---------- */
+function guideChoices(rec) {
+  if (rec.o === "porteur") return { compte:rec, opp:null, opts:["A", "C"], sug:["Identifié", "Contacté", undefined, ""].includes(rec.relation) ? "A" : "C" };
+  if (rec.o === "entreprise") return { compte:rec, opp:null, opts:["B", "C"], sug:all("opp").some(o => o.entreprise === rec.id && ["Rendez-vous réalisé", "Proposition envoyée", "Négociation"].includes(o.etape)) ? "C" : "B" };
+  if (rec.o === "opp") return { compte:get(rec.entreprise), opp:rec, opts:["B", "C"], sug:["Ciblée", "Contactée"].includes(rec.etape) ? "B" : "C" };
+  if (rec.o === "contact") { const acc = get(rec.compte); return acc ? guideChoices(acc) : null; }
+  return null;
+}
+function openGuidePicker(id) {
+  const rec = get(id), ch = rec && guideChoices(rec);
+  if (!GC()) {
+    $("#modal").innerHTML = `<div class="dlg" style="max-width:520px"><header><h2>Mener un entretien</h2><button type="button" class="iconbtn" data-close="1" aria-label="Fermer">✕</button></header><div class="db" style="padding:16px 20px"><p>Le contenu des guides d'entretien n'est pas encore importé sur cet appareil.</p><p class="small muted">Il n'est pas dans le code public de l'application : importez une fois le fichier fourni (partenarium-guides-…json) dans <b>Réglages › Guides d'entretien</b>. Il se synchronise ensuite sur vos autres appareils.</p></div><footer><button class="btn" data-close="1">Fermer</button><a class="btn pri" href="#/reglages" data-close="1">Ouvrir les Réglages</a></footer></div>`;
+    $("#modal").hidden = false; return;
+  }
+  if (!ch || !ch.compte) { toast("Rattachez d'abord la fiche à une entreprise ou à un porteur."); return; }
+  const drafts = all("entretien").filter(e => e.statut === "brouillon" && e.compte === ch.compte.id && (!ch.opp || e.opp === ch.opp.id));
+  $("#modal").innerHTML = `<div class="dlg" style="max-width:560px"><header><h2>Mener un entretien · ${esc(rname(ch.compte))}</h2><button type="button" class="iconbtn" data-close="1" aria-label="Fermer">✕</button></header><div class="db" style="padding:8px 12px 12px">
+    ${drafts.length ? `<h3 class="tiny" style="text-transform:uppercase;font-weight:600;margin:10px 8px 4px">Brouillons à reprendre</h3>${drafts.map(e => `<button class="lcard gpick" data-eopen="${e.id}"><span class="oico" style="--c:var(--orange);width:32px;height:32px">${svg("meet", 2)}</span><div class="t"><b>${esc(gTitle(e))}</b><span>Commencé le ${dfr(e.date)} · phase ${(e.phase || 0) + 1}</span></div></button>`).join("")}` : ""}
+    <h3 class="tiny" style="text-transform:uppercase;font-weight:600;margin:10px 8px 4px">Nouveau</h3>
+    ${ch.opts.map(g => { const G0 = GC().guides[g]; return `<button class="lcard gpick ${g === ch.sug ? "sug" : ""}" data-estart="${g}|${ch.compte.id}|${ch.opp ? ch.opp.id : ""}"><span class="oico" style="--c:var(--indigo);width:32px;height:32px"><b style="font-size:15px">${g}</b></span><div class="t"><b>${esc(G0.titre)}</b><span>${esc(G0.duree || "")}${g === ch.sug ? " · conseillé pour cette étape" : ""}</span></div></button>`; }).join("")}
+  </div></div>`;
+  $("#modal").hidden = false;
+}
+function startEntretien(g, compteId, oppId) {
+  const compte = get(compteId), opp = oppId ? get(oppId) : null, C0 = GC(); if (!compte || !C0) return;
+  const rep = {};
+  gFields(g).forEach(f => { const v = ficheToGuide(f, compte); if (v !== undefined && rep[f.k] === undefined) rep[f.k] = v; });
+  const cs = all("contact").filter(c => c.compte === compte.id);
+  const main = (opp && get(opp.contact)) || cs.find(c => c.role === "Décideur") || cs.find(c => c.role === "Signataire") || cs[0];
+  if (main) rep.interlocuteurs = [{ nom:rname(main), fonction:main.fonction || "", contact:main.id, decideur:main.role === "Décideur" }];
+  if (g === "B") rep.porteurs = opp ? [opp.porteur] : [];
+  if (g === "C") {
+    const prev = all("entretien").filter(e => e.statut === "terminé" && e.compte === compte.id && e.guide !== "C").sort((a, b) => (b.date || "").localeCompare(a.date || ""))[0];
+    if (prev) { rep.probleme = prev.rep?.probleme || ""; }
+    if (opp && opp.montant) rep.montant = opp.montant;
+    if (compte.o === "porteur") rep.offre = "P1";
+  }
+  const id = uid();
+  const r = { o:"entretien", id, guide:g, titre:C0.guides[g].titre, statut:"brouillon", date:today(), compte:compte.id, compteO:compte.o, opp:opp ? opp.id : "", rep, objections:[], phase:0, temps:{}, duree:0, prevId:g === "C" ? (all("entretien").filter(e => e.statut === "terminé" && e.compte === compte.id && e.guide !== "C").sort((a, b) => (b.date || "").localeCompare(a.date || ""))[0]?.id || "") : "" };
+  putItem(id, r); closeModal(); location.hash = "#/entretien/" + id;
+}
+
+/* ---------- mode « en direct » ---------- */
+let ENT = null;               // { id, r, dirty, mark, drawer, q }
+function entLoad(id) {
+  if (ENT && ENT.id === id) return ENT;
+  const rec = get(id); if (!rec) return null;
+  ENT = { id, r:JSON.parse(JSON.stringify(rec)), dirty:false, mark:null, drawer:false, q:"" };
+  ENT.r.rep = ENT.r.rep || {}; ENT.r.objections = ENT.r.objections || []; ENT.r.temps = ENT.r.temps || {};
+  return ENT;
+}
+function entTouch() { if (!ENT) return; ENT.dirty = true; lsSet(CONFIG.key + ":entdraft", { ...ENT.r, _saved:Date.now() }); }
+function entSave() {
+  if (!ENT || !ENT.dirty) return;
+  entClock();
+  const cur = get(ENT.id); if (!cur) { ENT = null; return; }
+  putItem(ENT.id, JSON.parse(JSON.stringify(ENT.r))); ENT.r.updated = get(ENT.id).updated; ENT.dirty = false;
+  store.set("items", S.items);              // écriture immédiate (sans attendre) : rien ne se perd si l'onglet se ferme
+  lsSet(CONFIG.key + ":entdraft", { ...ENT.r, _saved:ENT.r.updated });
+}
+const phaseOf = () => gPhases(ENT.r.guide)[ENT.r.phase || 0];
+const isChrono = p => p && p.chrono !== false && p.fin !== undefined;
+const plannedSec = p => isChrono(p) ? (p.fin - p.debut) * 60 : 0;
+function entClock() {                       // ajoute le temps écoulé depuis le dernier repère à la phase en cours
+  if (!ENT || !ENT.mark) return;
+  const now = Date.now(), dt = Math.min(60, (now - ENT.mark) / 1000); ENT.mark = now;
+  const p = phaseOf(); if (!isChrono(p)) return;
+  ENT.r.temps[p.k] = (ENT.r.temps[p.k] || 0) + dt; ENT.r.duree = (ENT.r.duree || 0) + dt; ENT.dirty = true;
+}
+const mmss = s => { s = Math.round(s || 0); return `${Math.floor(s / 60)}:${pad(s % 60)}`; };
+setInterval(() => {
+  if (!ENT || route().p[0] !== "entretien" || route().p[2] || document.visibilityState !== "visible") { if (ENT) ENT.mark = null; return; }
+  if (!ENT.mark) { ENT.mark = Date.now(); return; }
+  entClock(); entChronoDom();
+}, 1000);
+setInterval(() => { if (ENT && ENT.dirty) entSave(); }, 5000);
+function entChronoDom() {
+  const el = $("#chrono"); if (!el || !ENT) return;
+  const p = phaseOf(), t = ENT.r.temps[p.k] || 0, pl = plannedSec(p), over = pl && t > pl;
+  el.innerHTML = `<span><span class="tiny">Écoulé</span> <b class="num">${mmss(ENT.r.duree)}</b></span>${isChrono(p) ? `<span class="${over ? "over" : ""}"><span class="tiny">Phase</span> <b class="num">${mmss(t)}</b> <span class="tiny">/ ${Math.round(pl / 60)} min</span></span>` : `<span class="tiny">Phase non chronométrée</span>`}`;
+  const b = document.querySelector(`.ent-path [data-ephase="${ENT.r.phase || 0}"]`); if (b) b.classList.toggle("over", !!over);
+}
+/* valeurs calculées utilisées par l'écran, la fiche récapitulative et les tests */
+function entVals(r) {
+  const rep = r.rep || {}, compte = get(r.compte), pers = rep.interlocuteurs || [];
+  const dec = pers.find(p => p.decideur) || all("contact").filter(c => c.compte === r.compte).map(c => ({ nom:rname(c), fonction:c.fonction, role:c.role })).find(c => c.role === "Décideur");
+  const off = (GC()?.catalogue || []).find(c => c.code === rep.offre);
+  return {
+    montantRecherche: rep.montantRecherche ? eur(rep.montantRecherche) : "", echeance: dfr(rep.echeance), projetOuConsequence: rep.projetRepere || rep.consequence || "",
+    probleme: rep.probleme || "", critere: rep.critere || "",
+    objectif: [rep.objectifTexte, rep.objectifNombre ? `(${nb(rep.objectifNombre)})` : ""].filter(Boolean).join(" "), decideurNom: dec ? [dec.nom, dec.fonction].filter(Boolean).join(", ") : "", moisBudget: rep.moisBudget || "",
+    offre: off ? `${off.code} ${off.nom}` : "", montant: rep.montant ? eur(rep.montant) + " HT" : "", engagement: (rep.engagement || "").toLowerCase(), conditions: rep.conditions ? ` (${rep.conditions})` : "", dateDecision: dfr(rep.dateDecision),
+    prochaineDate: dfr(rep.prochaineDate), compte: rname(compte)
+  };
+}
+function entReform(r) { const p = gPhases(r.guide).find(x => x.reformulation); return p ? fillTpl(p.reformulation, entVals(r)) : ""; }
+function entScores(r) {
+  const rep = r.rep || {}, out = {}, C0 = GC() || {};
+  if (r.guide === "A" || (r.guide === "C" && r.compteO === "porteur")) {
+    const compte = get(r.compte);
+    out.elig = eligMecenat({ statut:rep.statut, benevoles:rep.benevoles, ouvert:rep.ouvert, lucratif:rep.lucratif, sportPro:compte?.statutJur === "Société sportive (SASP, SAOS…)" });
+  }
+  if (r.guide === "A") {
+    out.qualif = qualifPorteur(rep, r.date);
+    const notes = rep.sponso || {}; out.sponso = Object.keys(notes).some(k => notes[k] !== "" && notes[k] !== null && notes[k] !== undefined) ? sponsoTotal(notes) : null;
+    out.pack = packSuggere(rep.montantRecherche, C0.pack);
+  }
+  if (r.guide === "B") {
+    const notes = rep.grille || {}; out.grille = grilleTotal(notes); out.grilleNiveau = grilleNiveau(out.grille); out.grilleRemplie = Object.keys(notes).length;
+    const ent = { ...(get(r.compte) || {}) }; if (rep.imposition) ent.imposition = ENT_IMPOS[rep.imposition]; if (rep.caHT) ent.caHT = rep.caHT;
+    if (+rep.montantEnvisage > 0) out.cout = coutNetEntretien(rep.montantEnvisage, rep.typeEnvisage, ent, G(), P());
+  }
+  return out;
+}
+function entMissing(r) {
+  const rep = r.rep || {}, miss = [];
+  gPhases(r.guide).forEach((p, i) => (p.questions || []).forEach(q => (q.champs || []).forEach(f => {
+    if (!f.oblig) return;
+    const v = rep[f.k], bad = f.type === "personnes" ? !(Array.isArray(v) && v.some(x => (x.nom || "").trim())) : isEmptyV(v);
+    if (bad && !miss.some(m => m.k === f.k)) miss.push({ k:f.k, l:f.l, i });
+  })));
+  return rep.secteurInterdit ? [] : miss;
+}
+function entPoints(r) {
+  const rep = r.rep || {}, sc = entScores(r), out = [];
+  if (rep.secteurInterdit) out.push("Secteur interdit (alcool, tabac, opérateur de paris) : pas de partenariat possible en 2027.");
+  if (sc.elig === "À vérifier") out.push("Éligibilité au mécénat à vérifier (pendant l'audit du Pack, rescrit éventuel).");
+  if (sc.elig === "Probable") out.push("Éligibilité au mécénat probable : à confirmer pendant l'audit du Pack.");
+  if (r.guide === "A") {
+    const c = sc.qualif.crit;
+    if (!c.besoin) out.push("Besoin non chiffré : montant recherché à obtenir.");
+    if (!c.decideur) out.push("Décideur absent de l'échange.");
+    if (!c.capacite) out.push(`Capacité à payer le Pack : ${rep.capacitePack ? `« ${rep.capacitePack} »` : "non renseignée"}.`);
+    if (!c.echeance) out.push(rep.echeance ? "Échéance à plus de 9 mois." : "Échéance non renseignée.");
+    if (sc.sponso !== null && sc.sponso < (GC()?.sponsorabilite?.seuil ?? 50)) out.push(`Score de sponsorabilité sous ${GC()?.sponsorabilite?.seuil ?? 50}/100 : pas de proposition (${GC()?.sponsorabilite?.sousSeuil || "conseils et relance"}).`);
+  }
+  if (r.guide === "B") {
+    if (rep.decideur !== "Oui") out.push("Décideur absent du rendez-vous.");
+    if (sc.grilleRemplie < 6) out.push(`Grille de qualification incomplète (${sc.grilleRemplie}/6 lignes notées).`);
+    else if (sc.grille < 8) out.push(`Grille de qualification à ${sc.grille}/12 : ${sc.grille >= 5 ? "compléter avant de proposer" : "non prioritaire"}.`);
+    if (!rep.moisBudget) out.push("Mois du vote du budget inconnu.");
+    if (["Mécénat", "Mixte"].includes(rep.typeEnvisage)) (rep.porteurs || []).map(get).filter(Boolean).forEach(p => { if (p.mecenat !== "Oui (intérêt général)") out.push(`Mécénat envisagé : l'éligibilité de ${p.nom} est « ${p.mecenat || "À vérifier"} ».`); });
+  }
+  if (r.guide === "C") {
+    if (["Refus", "À revoir"].includes(rep.engagement)) out.push(`Réponse : « ${rep.engagement} ».`);
+    if (rep.engagement === "Accord sous conditions" && rep.conditions) out.push(`Conditions à lever : ${rep.conditions}.`);
+    const ctl = GC()?.guides?.C?.phases?.find(p => p.k === "avantContrat")?.questions?.[0]?.champs?.[0]?.options || [], ok = rep.controles || [];
+    const manque = ctl.filter(x => !ok.includes(x)); if (manque.length && ["Accord", "Accord sous conditions"].includes(rep.engagement)) out.push(`Contrôles avant contractualisation non cochés : ${manque.join(", ")}.`);
+  }
+  if (rep.prochaineDate && rep.prochaineDate < today() && r.statut !== "terminé") out.push("La date de la prochaine action est déjà passée.");
+  return out;
+}
+
+/* ---------- affichage du mode en direct ---------- */
+function vEntretien(id, sub) {
+  const rec = get(id);
+  if (!rec) return `<div class="card"><div class="empty">Cet entretien n'existe plus. <a href="#/">Retour à l'accueil</a></div></div>`;
+  if (!GC()) return `<div class="card"><div class="empty">Le contenu des guides n'est pas importé sur cet appareil. <a href="#/reglages">Réglages › Guides d'entretien</a></div></div>`;
+  entLoad(id);
+  if (sub === "fin") return vEntretienFin();
+  const r = ENT.r, ph = gPhases(r.guide), i = Math.min(r.phase || 0, ph.length - 1), p = ph[i], compte = get(r.compte), C0 = GC();
+  const stop = r.rep.secteurInterdit;
+  return `<div class="ent">
+  <div class="ent-top"><div class="t">${compte?.logo ? `<img src="${esc(compte.logo)}" alt="" class="elogo">` : oico(r.compteO || "porteur", 40)}<div style="min-width:0"><div class="tiny">Guide ${r.guide} · ${esc(gTitle(r))}${r.statut === "terminé" ? " · modification d'un entretien terminé" : ""}</div><h1>${esc(rname(compte))}</h1></div></div>
+    <div class="chrono" id="chrono"></div>
+    <div class="acts"><button class="btn" data-eobj="1" title="Objections (touche O)">${svg("note")}Objections${r.objections.length ? ` <span class="pill" style="--c:var(--orange)">${r.objections.length}</span>` : ""}</button><button class="btn" data-equit="1">Enregistrer et quitter</button></div></div>
+  <div class="path ent-path" role="group" aria-label="Phases">${ph.map((x, j) => `<button data-ephase="${j}" class="${j === i ? "cur" : j < i ? "past" : ""}${plannedSec(x) && (r.temps[x.k] || 0) > plannedSec(x) ? " over" : ""}" style="--c:var(--indigo)" ${stop && j > 0 ? "disabled" : ""}>${x.lettre ? `<b>${esc(x.lettre)}</b> · ` : ""}${esc(x.titre)}</button>`).join("")}</div>
+  ${i === 0 && C0.regles?.length ? `<details class="card ent-rules" open><summary>Règles de ton et RGPD</summary><div class="cb"><ul>${C0.regles.map(x => `<li>${esc(x)}</li>`).join("")}</ul><ul class="rgpd">${(C0.rgpd || []).map(x => `<li>${esc(x)}</li>`).join("")}</ul></div></details>` : `<details class="card ent-rules"><summary>Règles de ton et RGPD</summary><div class="cb"><ul>${(C0.regles || []).map(x => `<li>${esc(x)}</li>`).join("")}</ul><ul class="rgpd">${(C0.rgpd || []).map(x => `<li>${esc(x)}</li>`).join("")}</ul></div></details>`}
+  ${stop ? `<div class="alert" style="--c:var(--red)"><div style="flex:1"><b>${esc(gFields("B").find(f => f.k === "secteurInterdit")?.arret || "Pas de partenariat possible")}.</b> Le guide s'arrête ici.</div><button class="btn sm danger" data-estop="1">Clore l'entretien</button></div>` : ""}
+  <div class="card ent-phase"><div class="ch"><h2>${p.lettre ? `<span class="letter">${esc(p.lettre)}</span>` : ""}${esc(p.titre)}</h2><span class="tiny">${isChrono(p) ? `${p.debut} à ${p.fin} min` : p.min ? `${p.min} min, non chronométrée` : "non chronométrée"}</span></div><div class="cb">
+    ${p.aide ? `<p class="small muted" style="margin-top:0">${esc(p.aide)}</p>` : ""}
+    ${p.interdit ? `<div class="alert" style="--c:var(--red)"><div>${esc(p.interdit)}</div></div>` : ""}
+    ${p.regle ? `<div class="alert" style="--c:var(--yellow)"><div><b>Règle :</b> ${esc(p.regle)}</div></div>` : ""}
+    ${(p.questions || []).map((q, qi) => qHtml(q, qi)).join("")}
+  </div></div>
+  <div class="ent-nav"><button class="btn" data-ephase="${i - 1}" ${i === 0 ? "disabled" : ""}>← Précédent</button><span class="tiny hm">Ctrl + Entrée : phase suivante · O : objections</span>
+    ${i < ph.length - 1 ? `<button class="btn pri" data-ephase="${i + 1}" ${stop ? "disabled" : ""}>Suivant →</button>` : `<button class="btn pri" data-efin="1">Terminer l'entretien</button>`}</div>
+  </div>
+  <button class="fab" data-eobj="1" aria-label="Objections">${svg("note", 2)}<span>Objections</span></button>
+  ${ENT.drawer ? objDrawer() : ""}`;
+}
+function qHtml(q, qi) {
+  const r = ENT.r, rep = r.rep, vals = entVals(r);
+  let special = "";
+  if (q.type === "reformulation") {
+    const auto = entReform(r), cur = rep.reformAuto === false && rep.reformulation ? rep.reformulation : auto;
+    special = `<div class="fld wide"><label for="e-reform">Reformulation à lire (générée à partir de vos notes, modifiable)</label><textarea id="e-reform" data-ereform="1" rows="4">${esc(cur)}</textarea><div class="help">${rep.reformAuto === false ? `Texte modifié à la main. <button type="button" class="btn sm" data-eregen="1">Régénérer</button>` : "Se met à jour tant que vous ne la modifiez pas."}</div></div>`;
+  }
+  if (q.type === "rappel") {
+    const prev = r.prevId ? get(r.prevId) : null;
+    special = prev ? `<div class="alert" style="--c:var(--blue)"><div><b>La dernière fois (${dfr(prev.date)}, ${esc(gTitle(prev))}) :</b> ${esc(prev.reformulation || prev.rep?.reformulation || entReform(prev))}</div></div>` : `<div class="alert" style="--c:var(--gray)"><div>Aucun entretien précédent enregistré pour cette fiche.</div></div>`;
+  }
+  if (q.type === "objections") special = raisedHtml(true);
+  if (q.type === "coutNet") special = coutHtml();
+  if (q.type === "grille") special = grilleHtml();
+  if (q.type === "score") special = scoreHtml();
+  const dire = q.dire ? fillTpl(q.dire, vals, "[date]") : "";
+  return `<div class="q">
+    ${q.intro ? `<p class="q-intro">${esc(q.intro)}</p>` : ""}
+    ${dire ? `<blockquote class="q-dire">« ${esc(dire)} »</blockquote>` : ""}
+    ${q.aide ? `<div class="help" style="margin:-4px 0 8px">${esc(q.aide)}</div>` : ""}
+    ${q.relance ? `<details class="q-rel"><summary>Exemple de relance</summary><p>« ${esc(q.relance)} »</p></details>` : ""}
+    ${special}
+    ${(q.champs || []).length ? `<div class="ff">${q.champs.map(f => fieldHtml(f)).join("")}</div>` : ""}</div>`;
+}
+const choiceCls = (on) => `chipbtn${on ? " on" : ""}`;
+function fieldHtml(f) {
+  const v = ENT.r.rep[f.k], id = "e-" + f.k, lab = `<label for="${id}">${esc(f.l)}${f.oblig ? ` <i class="dot" title="Obligatoire pour terminer">●</i>` : ""}${f.pourCommencer ? ` <i class="dot" title="Obligatoire pour commencer">●</i>` : ""}</label>`;
+  const wide = ["texte_long", "multi", "personnes", "porteurs", "cases"].includes(f.type) || (f.options || []).length > 4 ? " wide" : "";
+  switch (f.type) {
+    case "texte_long": return `<div class="fld${wide}">${lab}<textarea id="${id}" data-ek="${f.k}" rows="3">${esc(v ?? "")}</textarea></div>`;
+    case "nombre": case "montant": return `<div class="fld">${lab}<input id="${id}" data-ek="${f.k}" data-et="num" inputmode="decimal" autocomplete="off" value="${v === undefined || v === null ? "" : String(v).replace(".", ",")}"></div>`;
+    case "pct": return `<div class="fld">${lab}<input id="${id}" data-ek="${f.k}" data-et="pct" inputmode="decimal" placeholder="%" autocomplete="off" value="${v === undefined || v === null || v === "" ? "" : String(Math.round(v * 1000) / 10).replace(".", ",")}"></div>`;
+    case "date": return `<div class="fld">${lab}<input type="date" id="${id}" data-ek="${f.k}" value="${esc(v || "")}"></div>`;
+    case "case": return `<div class="fld${wide}"><label class="casebox"><input type="checkbox" class="switch" id="${id}" data-ek="${f.k}" data-et="bool" ${v ? "checked" : ""}><span>${esc(f.l)}${f.pourCommencer ? ` <i class="dot">●</i>` : ""}</span></label></div>`;
+    case "choix": return `<div class="fld${wide}">${lab}<div class="chips" role="group">${(f.options || []).map(o => `<button type="button" class="${choiceCls(v === o)}" data-echoice="${esc(f.k)}" data-ev="${esc(o)}" aria-pressed="${v === o}">${esc(o)}</button>`).join("")}</div></div>`;
+    case "multi": case "cases": { const a = Array.isArray(v) ? v : []; return `<div class="fld wide">${lab}<div class="chips" role="group">${(f.options || []).map(o => `<button type="button" class="${choiceCls(a.includes(o))}${f.type === "cases" ? " box" : ""}" data-emulti="${esc(f.k)}" data-ev="${esc(o)}" aria-pressed="${a.includes(o)}">${f.type === "cases" ? (a.includes(o) ? "☑ " : "☐ ") : ""}${esc(o)}</button>`).join("")}</div></div>`; }
+    case "personnes": {
+      const a = Array.isArray(v) ? v : [], cs = all("contact").filter(c => c.compte === ENT.r.compte && !a.some(p => p.contact === c.id));
+      return `<div class="fld wide">${lab}<div class="pers">${a.map((p, j) => `<div class="prow"><input data-epers="${j}|nom" placeholder="Nom" value="${esc(p.nom || "")}" aria-label="Nom"><input data-epers="${j}|fonction" placeholder="Fonction" value="${esc(p.fonction || "")}" aria-label="Fonction"><label class="small"><input type="checkbox" data-epers="${j}|decideur" ${p.decideur ? "checked" : ""}> décideur</label>${p.contact ? `<span class="tiny">contact de la fiche</span>` : ""}<button type="button" class="iconbtn" data-epersrm="${j}" title="Retirer">${svg("trash")}</button></div>`).join("")}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><button type="button" class="btn sm" data-epersadd="1">${svg("plus", 2)}Ajouter une personne</button>${cs.length ? `<select class="inp" data-eperspick="1" style="width:auto"><option value="">Ajouter un contact de la fiche…</option>${cs.map(c => `<option value="${c.id}">${esc(rname(c))}${c.fonction ? ` · ${esc(c.fonction)}` : ""}</option>`).join("")}</select>` : ""}</div></div>`;
+    }
+    case "porteurs": {
+      const a = Array.isArray(v) ? v : [], ps = all("porteur").filter(p => MANDAT.includes(p.relation) || a.includes(p.id));
+      return `<div class="fld wide">${lab}${ps.length ? `<div class="chips">${ps.map(p => `<button type="button" class="${choiceCls(a.includes(p.id))}" data-emulti="porteurs" data-ev="${p.id}" aria-pressed="${a.includes(p.id)}">${esc(p.nom)}${p.mecenat === "Oui (intérêt général)" ? " · éligible mécénat" : ""}</button>`).join("")}</div>` : `<div class="help">Aucun porteur sous mandat pour l'instant.</div>`}</div>`;
+    }
+    case "offre": {
+      const cat = (GC().catalogue || []).filter(c => c.pour === pubOf(ENT.r));
+      return `<div class="fld">${lab}<select id="${id}" data-ek="${f.k}"><option value="">—</option>${cat.map(c => `<option value="${esc(c.code)}"${v === c.code ? " selected" : ""}>${esc(c.code)} · ${esc(c.nom)} (${esc(c.prix)})</option>`).join("")}</select></div>`;
+    }
+    default: return `<div class="fld${wide}">${lab}<input id="${id}" data-ek="${f.k}" autocomplete="off" value="${esc(v ?? "")}"></div>`;
+  }
+}
+function coutHtml() {
+  const rep = ENT.r.rep, sc = entScores(ENT.r), porteurs = (rep.porteurs || []).map(get).filter(Boolean), bad = ["Mécénat", "Mixte"].includes(rep.typeEnvisage) ? porteurs.filter(p => p.mecenat !== "Oui (intérêt général)") : [];
+  return `<div id="e-cout">${sc.cout ? `<div class="kv"><span>Coût net pour l'entreprise${rep.imposition === "Micro-entreprise" && rep.typeEnvisage !== "Mécénat" ? " (micro-entreprise : coût brut en parrainage)" : ""}</span><b>${eur(sc.cout.cout)}</b></div><div class="kv"><span>Économie d'impôt estimée</span><b style="color:var(--green)">${eur(sc.cout.economie)}</b></div>` : ""}
+      ${bad.map(p => `<div class="alert" style="--c:var(--orange)"><div><b>Mécénat :</b> l'éligibilité de ${esc(p.nom)} est « ${esc(p.mecenat || "À vérifier")} ». Ne proposez pas de mécénat sans porteur éligible.</div></div>`).join("")}</div>`;
+}
+function sponsoTotHtml() {
+  const sp = GC().sponsorabilite || {}, notes = ENT.r.rep.sponso || {}, tot = sponsoTotal(notes), seuil = sp.seuil ?? 50, any = Object.keys(notes).some(k => notes[k] !== null && notes[k] !== "");
+  return `<b id="e-sponso">${any ? `${pill(`${tot}/100`, tot >= seuil ? "var(--green)" : "var(--red)")}${tot < seuil ? ` <span class="small muted">sous ${seuil} : ${esc(sp.sousSeuil || "pas de proposition")}</span>` : ""}` : "—"}</b>`;
+}
+function entLive() {          // met à jour les blocs calculés sans redessiner l'écran (le curseur reste en place)
+  if (!ENT) return;
+  const rf = $("#e-reform"); if (rf && ENT.r.rep.reformAuto !== false && document.activeElement !== rf) rf.value = entReform(ENT.r);
+  const c = $("#e-cout"); if (c) c.outerHTML = coutHtml();
+  const sp = $("#e-sponso"); if (sp) sp.outerHTML = sponsoTotHtml();
+}
+function grilleHtml() {
+  const rep = ENT.r.rep, notes = rep.grille || {}, sug = grilleSuggest(rep, all("contact").filter(c => c.compte === ENT.r.compte)), tot = grilleTotal(notes), niv = grilleNiveau(tot);
+  return `<div class="grille">${(GC().grille || []).map(l => { const v = notes[l.k], s = sug[l.k]; return `<div class="gl"><div class="gq"><b>${esc(l.titre)}</b><span class="small muted">${esc(l.question)}</span><span class="tiny">2 : ${esc(l.deux)} · 1 : ${esc(l.un)}</span></div>
+    <div class="seg" role="group">${[0, 1, 2].map(n => `<button type="button" data-egrille="${esc(l.k)}" data-ev="${n}" aria-pressed="${v === n}" class="${v === undefined && s === n ? "sugg" : ""}">${n}</button>`).join("")}</div>${v === undefined && s !== null && s !== undefined ? `<span class="tiny">suggéré : ${s}</span>` : ""}</div>`; }).join("")}
+    <div class="kv" style="margin-top:8px"><span>Total</span><b>${pill(`${tot}/12`, niv === "vert" ? "var(--green)" : niv === "orange" ? "var(--orange)" : "var(--red)")} <span class="small muted">${niv === "vert" ? "proposition" : niv === "orange" ? "compléter avant de proposer" : "non prioritaire"}</span></b></div>
+    <button type="button" class="btn sm" data-egrillesug="1">Reprendre les suggestions</button></div>`;
+}
+function scoreHtml() {
+  const sp = GC().sponsorabilite || {}, notes = ENT.r.rep.sponso || {};
+  return `<div class="grille">${(sp.criteres || []).map(c => `<div class="gl"><div class="gq"><b>${esc(c.libelle)}</b>${c.aide ? `<span class="tiny">${esc(c.aide)}</span>` : ""}</div><input class="inp" style="width:90px" data-esponso="${esc(c.k)}" inputmode="decimal" placeholder="0 à 20" value="${notes[c.k] ?? ""}" aria-label="Note sur 20"></div>`).join("")}
+    <div class="kv" style="margin-top:8px"><span>Total</span>${sponsoTotHtml()}</div></div>`;
+}
+function raisedHtml(inline) {
+  const a = ENT.r.objections;
+  if (!a.length) return inline ? `<div class="help">Aucune objection enregistrée. Ouvrez le panneau Objections (touche O) et touchez « Soulevée ».</div>` : "";
+  return `<div class="raised">${a.map((o, j) => `<div class="ro"><div style="display:flex;gap:8px;align-items:flex-start"><b style="flex:1">« ${esc(o.texte)} »</b><button type="button" class="iconbtn" data-eobjrm="${j}" title="Retirer">${svg("trash")}</button></div><textarea class="inp" data-eobjrep="${j}" rows="2" aria-label="Réponse donnée">${esc(o.reponse || "")}</textarea></div>`).join("")}</div>`;
+}
+function objDrawer() {
+  const pub = pubOf(ENT.r), q = norm(ENT.q || ""), raisedIds = ENT.r.objections.map(o => o.id);
+  const list = (GC().objections || []).filter(o => [pub, "les deux"].includes(o.public) && (!q || norm(o.texte + " " + o.reponse).includes(q)));
+  return `<div class="drawer" role="dialog" aria-label="Objections"><header><h2>Objections</h2><button class="iconbtn" data-eobj="1" aria-label="Fermer">✕</button></header>
+    <div class="db"><label class="lsearch" style="color:var(--tx3);margin-bottom:10px">${svg("search", 2)}<input type="search" data-eobjq="1" placeholder="Rechercher un mot" value="${esc(ENT.q || "")}" autocomplete="off"></label>
+    ${ENT.r.objections.length ? `<h3 class="tiny up">Soulevées pendant cet entretien (${ENT.r.objections.length})</h3>${raisedHtml(false)}` : ""}
+    <h3 class="tiny up">Réponses proposées</h3>
+    ${list.map(o => `<div class="obj"><b>« ${esc(o.texte)} »</b><p>${esc(o.reponse)}</p>${o.relance ? `<p class="small muted"><i>Relance : « ${esc(o.relance)} »</i></p>` : ""}<button class="btn sm ${raisedIds.includes(o.id) ? "" : "pri"}" data-eraise="${esc(o.id)}">${raisedIds.includes(o.id) ? "Enregistrée ✓" : "Soulevée"}</button></div>`).join("") || `<div class="empty">Aucune objection trouvée.</div>`}
+    </div></div>`;
+}
+function entGo(i) {
+  const r = ENT.r, ph = gPhases(r.guide); i = Math.max(0, Math.min(ph.length - 1, i));
+  if (i === r.phase) return;
+  if (i > 0 && r.guide === "B" && (r.phase || 0) === 0 && !r.rep.baseLegale) { toast("Cochez d'abord « Base légale de la prospection notée » (obligatoire pour commencer)."); return; }
+  if (i > 0 && r.rep.secteurInterdit) { toast("Secteur interdit : le guide s'arrête."); return; }
+  entClock(); r.phase = i; ENT.mark = Date.now(); entTouch(); entSave();
+  if (ph[i].ouvrirObjections) ENT.drawer = true;
+  render(); scrollTo(0, 0);
+}
+
+/* ---------- fin d'entretien ---------- */
+function entProposals(r) {
+  const rep = r.rep || {}, compte = get(r.compte), out = [], sc = entScores(r);
+  if (compte) gFields(r.guide).filter(f => f.cible).forEach(f => {
+    if (out.some(x => x.k === f.cible)) return;
+    const v = rep[f.k]; if (isEmptyV(v)) return;
+    if (f.cible === "objectifs") { if (!(compte.objectifs || "").includes(v)) out.push({ kind:"fiche", id:compte.id, k:"objectifs", lab:"Objectifs (critère de réussite)", from:compte.objectifs ? "…" : "—", to:`ajouter « ${v} »`, val:[compte.objectifs, `Critère de réussite (entretien du ${dfr(r.date)}) : ${v}`].filter(Boolean).join("\n") }); return; }
+    const nv = guideToFiche(f, v); if (nv === undefined || nv === null || nv === "") return;
+    if (f.cible === "imposition" && compte.imposition === "ismix" && nv === "is15") return;
+    if (String(compte[f.cible] ?? "") === String(nv)) return;
+    const fd = fdef(compte.o, f.cible); if (!fd) return;
+    out.push({ kind:"fiche", id:compte.id, k:f.cible, lab:fd.l, from:isEmptyV(compte[f.cible]) ? "—" : stripTags(fmt(fd, compte[f.cible], compte)), to:stripTags(fmt(fd, nv, compte)), val:nv });
+  });
+  if (compte && sc.elig) {
+    const map = { "Probable":"Probable (à confirmer)", "Non":"Non", "À vérifier":"À vérifier" }, nv = map[sc.elig], cur = compte.mecenat || "À vérifier";
+    if (nv !== cur && (["À vérifier", ""].includes(cur) || sc.elig === "Non" || (cur === "Probable (à confirmer)" && sc.elig !== "À vérifier"))) out.push({ kind:"fiche", id:compte.id, k:"mecenat", lab:"Éligible au mécénat", from:cur, to:nv, val:nv, warn:cur === "Oui (intérêt général)" ? "La fiche indique une éligibilité vérifiée." : "" });
+  }
+  (rep.interlocuteurs || []).forEach((p, j) => { if (!p.contact && (p.nom || "").trim()) out.push({ kind:"contact", j, lab:"Nouveau contact", from:"—", to:[p.nom, p.fonction].filter(Boolean).join(", ") }); });
+  /* étapes du cycle de vente */
+  const stOpp = (o, v, why) => { if (o && o.etape !== v && STAGES.findIndex(s => s.v === v) > STAGES.findIndex(s => s.v === o.etape) || (o && v === "Perdu" && o.etape !== "Perdu")) out.push({ kind:"etape", id:o.id, lab:`Étape · ${rname(o)}`, from:o.etape, to:v, val:v, why }); };
+  const stPor = (p, v) => { const ci = REL.findIndex(s => s.v === (p.relation || REL0)), ni = REL.findIndex(s => s.v === v); if (p && p.relation !== v && (ni > ci || v === "Perdu")) out.push({ kind:"relation", id:p.id, lab:`Relation · ${p.nom}`, from:p.relation || REL0, to:v, val:v }); };
+  if (r.guide === "A" && compte) stPor(compte, "Échange réalisé");
+  if (r.guide === "B" && compte) {
+    if (r.opp) stOpp(get(r.opp), "Rendez-vous réalisé");
+    (rep.porteurs || []).filter(pid => !r.opp || get(r.opp)?.porteur !== pid).forEach(pid => {
+      const o = all("opp").find(x => x.entreprise === compte.id && x.porteur === pid);
+      if (o) stOpp(o, "Rendez-vous réalisé");
+      else if (get(pid)) out.push({ kind:"newopp", porteur:pid, lab:"Nouvelle opportunité", from:"—", to:`${compte.nom} · ${get(pid).nom} (Rendez-vous réalisé${rep.montantEnvisage ? `, ${eur(rep.montantEnvisage)}` : ""})` });
+    });
+  }
+  if (r.guide === "C") {
+    const e = rep.engagement;
+    if (r.compteO === "porteur" && compte) { if (e === "Accord") stPor(compte, "Pack en cours"); else if (e === "Refus") stPor(compte, "Perdu"); else stPor(compte, "Proposition envoyée"); }
+    if (r.opp) { const o = get(r.opp); if (e === "Refus") stOpp(o, "Perdu"); else if (e) stOpp(o, "Négociation"); else stOpp(o, "Proposition envoyée"); }
+  }
+  return out;
+}
+const stripTags = h => String(h || "").replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+function vEntretienFin() {
+  const r = ENT.r, miss = entMissing(r), sc = entScores(r), pts = entPoints(r), props = entProposals(r), rep = r.rep, act = GC().actions?.[rep.prochaine] || {};
+  ENT.props = props;
+  const lossNeeded = props.some(p => p.val === "Perdu");
+  return `<div class="ent"><div class="ent-top"><div class="t">${oico(r.compteO || "porteur", 40)}<div><div class="tiny">Fin d'entretien · ${esc(gTitle(r))}</div><h1>${esc(rname(get(r.compte)))}</h1></div></div><div class="acts"><a class="btn" href="#/entretien/${r.id}">← Revenir à l'entretien</a></div></div>
+  ${miss.length ? `<div class="alert" style="--c:var(--red)"><div><b>À compléter pour terminer :</b> ${miss.map(m => `<a href="#/entretien/${r.id}" data-ephasego="${m.i}">${esc(m.l)}</a>`).join(" · ")}</div></div>` : ""}
+  <div class="grid2"><div class="col">
+    <div class="card"><div class="ch"><h2>Qualification</h2></div><div class="cb">${qualifHtml(r, sc)}</div></div>
+    <div class="card"><div class="ch"><h2>Points à vérifier</h2></div><div class="cb">${pts.length ? `<ul class="pts">${pts.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : `<div class="empty" style="padding:10px">Rien à signaler.</div>`}</div></div>
+  </div><div class="col">
+    <div class="card"><div class="ch"><h2>Mise à jour de la fiche</h2></div><div class="cb">${props.length ? `<p class="tiny" style="margin-top:0">Rien n'est modifié sans votre accord : décochez ce que vous ne voulez pas reporter.</p>${props.map((p, j) => `<label class="upd"><input type="checkbox" data-eprop="${j}" ${p.warn ? "" : "checked"}><span><b>${esc(p.lab)}</b> : ${esc(p.from)} → <b>${esc(p.to)}</b>${p.warn ? `<br><span class="tiny" style="color:var(--orange)">${esc(p.warn)}</span>` : ""}</span></label>`).join("")}` : `<div class="empty" style="padding:10px">Aucune modification proposée.</div>`}
+      ${lossNeeded ? `<div class="fld" style="margin-top:10px"><label for="e-loss">Motif de la perte <i class="dot">●</i></label><select id="e-loss"><option value="">—</option>${(fdef(r.compteO === "porteur" && !r.opp ? "porteur" : "opp", r.compteO === "porteur" && !r.opp ? "motifPerte" : "raisonPerte")?.o || []).map(x => `<option>${esc(x)}</option>`).join("")}</select></div>` : ""}</div></div>
+    <div class="card"><div class="ch"><h2>Ce qui sera créé</h2></div><div class="cb">
+      <div class="kv"><span>Activité « Entretien réalisé »</span><b>${dfr(r.date)}</b></div>
+      ${rep.prochaine && rep.prochaine !== "Aucune" ? `<div class="kv"><span>Tâche : ${esc(rep.prochaine)}${act.j2 ? " (sous 48 h)" : ""}</span><b>${dfr(rep.prochaineDate) || "date à saisir"}</b></div>` : `<div class="kv"><span>Prochaine action</span><b>aucune</b></div>`}
+      <div class="kv"><span>Fiche récapitulative</span><b>sur la fiche ${esc(rname(get(r.compte)))}</b></div></div></div>
+  </div></div>
+  <div class="ent-nav"><a class="btn" href="#/entretien/${r.id}">← Revenir</a><span></span><button class="btn pri" data-edone="1" ${miss.length ? "disabled" : ""}>Enregistrer et terminer</button></div></div>`;
+}
+function qualifHtml(r, sc) {
+  const rep = r.rep || {}, out = [];
+  if (sc.qualif) out.push(`<div class="kv"><span>Prêt pour une proposition</span><b>${pill(`${sc.qualif.score}/4`, sc.qualif.score === 4 ? "var(--green)" : sc.qualif.score >= 2 ? "var(--orange)" : "var(--red)")}</b></div><div class="tiny" style="margin:-2px 0 6px">${[["besoin", "besoin chiffré"], ["decideur", "décideur présent"], ["capacite", "capacité à payer le Pack"], ["echeance", "échéance à 9 mois au plus"]].map(([k, l]) => `${sc.qualif.crit[k] ? "✓" : "✗"} ${l}`).join(" · ")}</div>`);
+  if (sc.sponso !== undefined && sc.sponso !== null) out.push(`<div class="kv"><span>Score de sponsorabilité</span><b>${pill(`${sc.sponso}/100`, sc.sponso >= (GC()?.sponsorabilite?.seuil ?? 50) ? "var(--green)" : "var(--red)")}</b></div>`);
+  if (sc.grille !== undefined) out.push(`<div class="kv"><span>Grille de qualification</span><b>${pill(`${sc.grille}/12`, sc.grilleNiveau === "vert" ? "var(--green)" : sc.grilleNiveau === "orange" ? "var(--orange)" : "var(--red)")}</b></div>`);
+  if (sc.elig) out.push(`<div class="kv"><span>Éligibilité au mécénat</span><b>${pill(sc.elig, sc.elig === "Probable" ? "var(--green)" : sc.elig === "Non" ? "var(--red)" : "var(--orange)")}</b></div>`);
+  if (sc.pack) out.push(`<div class="kv"><span>Pack suggéré</span><b>${esc(sc.pack.nom)} · ${nb(sc.pack.entreprises)} entreprises · ${eur(sc.pack.prix)} HT</b></div>`);
+  if (sc.cout) out.push(`<div class="kv"><span>Coût net pour l'entreprise</span><b>${eur(sc.cout.cout)} <span class="tiny">pour ${eur(sc.cout.brut)}</span></b></div>`);
+  if (r.guide === "C" && rep.engagement) out.push(`<div class="kv"><span>Réponse</span><b>${esc(rep.engagement)}</b></div>`);
+  return out.join("") || `<div class="empty" style="padding:10px">—</div>`;
+}
+function entFinish() {
+  const r = ENT.r, rep = r.rep, miss = entMissing(r); if (miss.length) { toast("Complétez d'abord les champs obligatoires."); return; }
+  const props = ENT.props || entProposals(r), checked = new Set([...document.querySelectorAll("[data-eprop]")].filter(x => x.checked).map(x => +x.dataset.eprop));
+  const loss = $("#e-loss")?.value || "";
+  if (props.some((p, j) => checked.has(j) && p.val === "Perdu") && !loss) { toast("Choisissez le motif de la perte."); $("#e-loss")?.focus(); return; }
+  entClock();
+  const compte = get(r.compte);
+  props.forEach((p, j) => {
+    if (!checked.has(j)) return;
+    if (p.kind === "fiche") { const cur = get(p.id); if (cur) putItem(p.id, { ...cur, [p.k]:p.val }); }
+    if (p.kind === "contact") { const pr = rep.interlocuteurs[p.j], cid = uid(); const [prenom, ...rest] = (pr.nom || "").trim().split(/\s+/); putItem(cid, { o:"contact", id:cid, prenom:rest.length ? prenom : "", nom:rest.length ? rest.join(" ") : prenom, compte:r.compte, fonction:pr.fonction || "", role:pr.decideur ? "Décideur" : "", dernierContact:r.date }); pr.contact = cid; }
+    if (p.kind === "etape") { const o = get(p.id); if (o) putItem(p.id, { ...o, etape:p.val, proba:stageOf(p.val).p, ...(p.val === "Perdu" ? { raisonPerte:loss } : {}) }); }
+    if (p.kind === "relation") { const o = get(p.id); if (o) putItem(p.id, { ...o, relation:p.val, ...(p.val === "Perdu" ? { motifPerte:loss } : {}) }); }
+    if (p.kind === "newopp") { const oid = uid(), ty = { "Parrainage":"Parrainage", "Mécénat":"Mécénat", "Mixte":"Mixte", "En nature":"Dotation en nature" }[rep.typeEnvisage] || "Parrainage"; putItem(oid, { o:"opp", id:oid, porteur:p.porteur, entreprise:r.compte, contact:(rep.interlocuteurs || []).find(x => x.contact)?.contact || "", type:ty, etape:"Rendez-vous réalisé", proba:stageOf("Rendez-vous réalisé").p, montant:+rep.montantEnvisage || null, presente:r.date, prochaine:rep.prochaine || "", relance:rep.prochaineDate || "", notes:rep.objectifTexte ? `Objectif chiffré : ${rep.objectifTexte}${rep.objectifNombre ? ` (${nb(rep.objectifNombre)})` : ""}` : "" }); }
+  });
+  /* contacts rencontrés : dernier contact venant de la personne (règle des 3 ans) */
+  (rep.interlocuteurs || []).forEach(pr => { const c = pr.contact && get(pr.contact); if (c && (!c.dernierContact || c.dernierContact < r.date)) putItem(c.id, { ...c, dernierContact:r.date }); });
+  const lie = r.opp || r.compte, reform = rep.reformAuto === false && rep.reformulation ? rep.reformulation : entReform(r);
+  const actA = { o:"act", type:"Rendez-vous", sujet:`Entretien réalisé · ${gTitle(r)}`, date:r.date, statut:"Fait", priorite:"Normale", lie, description:reform, entretien:r.id };
+  if (r.actId && get(r.actId)) putItem(r.actId, { ...get(r.actId), ...actA }); else { r.actId = uid(); putItem(r.actId, { ...actA, id:r.actId }); }
+  if (rep.prochaine && rep.prochaine !== "Aucune") {
+    const j2 = !!GC().actions?.[rep.prochaine]?.j2;
+    const t = { o:"act", type:"Tâche", sujet:`${rep.prochaine} · ${rname(compte)}`, date:rep.prochaineDate, statut:"À faire", priorite:j2 ? "Haute" : "Normale", lie, description:`Suite de l'entretien du ${dfr(r.date)}.`, entretien:r.id, reactivite:j2 };
+    if (r.taskId && get(r.taskId)) putItem(r.taskId, { ...get(r.taskId), ...t }); else { r.taskId = uid(); putItem(r.taskId, { ...t, id:r.taskId }); }
+  }
+  r.reformulation = reform; r.scores = entScores(r); r.points = entPoints(r); r.statut = "terminé"; r.termine = Date.now();
+  ENT.dirty = true; entSave(); const id = r.id; ENT = null; try { localStorage.removeItem(CONFIG.key + ":entdraft"); } catch {}
+  toast("Entretien terminé : fiche récapitulative créée."); location.hash = "#/r/" + id;
+}
+function entStop() {          // secteur interdit : l'entretien est clos sans proposition
+  const r = ENT.r; r.rep.prochaine = "Aucune"; r.reformulation = gFields("B").find(f => f.k === "secteurInterdit")?.arret || "Secteur interdit : pas de partenariat possible.";
+  r.scores = entScores(r); r.points = entPoints(r); r.statut = "terminé"; r.termine = Date.now(); ENT.dirty = true; entSave(); const id = r.id; ENT = null; location.hash = "#/r/" + id;
+}
+
+/* ---------- fiche récapitulative ---------- */
+function recapData(r) {
+  const rep = r.rep || {}, sc = r.scores || entScores(r), compte = get(r.compte), C0 = GC() || {};
+  const situ = [];
+  const add = (l, v) => { if (!isEmptyV(v)) situ.push([l, v]); };
+  if (r.guide === "A") { add("Licenciés ou membres", rep.membres && nb(rep.membres)); add("Spectateurs par match ou événement", rep.spectateursMatch && nb(rep.spectateursMatch)); add("Abonnés", rep.abonnes && nb(rep.abonnes)); add("Budget annuel", rep.budget && eur(rep.budget)); add("Part des partenaires", rep.partPartenaires && pct(rep.partPartenaires)); add("Partenaires actuels", [rep.nbPartenaires && nb(rep.nbPartenaires), rep.montantPartenaires && eur(rep.montantPartenaires)].filter(Boolean).join(" · ")); add("Responsable des partenaires", [rep.responsable, rep.heuresMois && `${nb(rep.heuresMois)} h/mois`].filter(Boolean).join(" · ")); }
+  if (r.guide === "B") { add("Effectif", rep.effectif && nb(rep.effectif)); add("Recrutements prévus", [rep.recrutements && nb(rep.recrutements), rep.metiers].filter(Boolean).join(" · ")); add("Soutien actuel", [rep.soutienDeja, rep.montantSoutien && eur(rep.montantSoutien)].filter(Boolean).join(" · ")); add("Vote du budget", [rep.moisBudget, rep.circuit].filter(Boolean).join(" · ")); add("Imposition et CA", [rep.imposition, rep.caHT && eur(rep.caHT)].filter(Boolean).join(" · ")); add("Porteurs présentés", (rep.porteurs || []).map(get).filter(Boolean).map(p => p.nom).join(", ")); }
+  if (r.guide === "C") { add("Offre présentée", entVals(r).offre); add("Montant", rep.montant && eur(rep.montant)); add("Réponse", rep.engagement); add("Date de décision", dfr(rep.dateDecision)); add("Conditions", rep.conditions); add("Concessions", rep.concessions); }
+  const probleme = [rep.probleme, (rep.blocages || rep.enjeux || []).join(", "), rep.blocagesTexte || rep.enjeuxTexte, rep.nonRenouv?.length ? `Non-renouvellements : ${rep.nonRenouv.join(", ")}` : "", rep.deception].filter(Boolean);
+  const impl = [rep.montantRecherche ? `Montant recherché : ${eur(rep.montantRecherche)}${rep.echeance ? ` avant le ${dfr(rep.echeance)}` : ""}` : "", rep.consequence, rep.heuresPerdues ? `${nb(rep.heuresPerdues)} h perdues par mois${rep.heuresTexte ? ` (${rep.heuresTexte})` : ""}` : "", rep.coutVacant ? `Coût d'un poste vacant : ${rep.coutVacant}` : "", rep.perte].filter(Boolean);
+  const gain = [rep.gain, rep.critere ? `Critère de réussite : ${rep.critere}` : "", rep.objectifTexte ? `Objectif chiffré : ${rep.objectifTexte}${rep.objectifNombre ? ` (${nb(rep.objectifNombre)})` : ""}${rep.echeance && r.guide === "B" ? ` d'ici le ${dfr(rep.echeance)}` : ""}` : "", rep.montantEnvisage ? `Montant envisagé : ${eur(rep.montantEnvisage)}${rep.typeEnvisage ? ` (${rep.typeEnvisage.toLowerCase()})` : ""}` : ""].filter(Boolean);
+  let offre = "";
+  if (r.guide === "A") offre = sc.pack ? `Pack Lancement ${sc.pack.nom} (${sc.pack.entreprises} entreprises) · ${eur(sc.pack.prix)} HT` : (C0.pack?.actif || !C0.pack ? "" : `Pack Lancement : niveau à choisir (${(C0.pack.niveaux || []).map(n => `${n.nom} ${eur(n.prix)}`).join(", ")} HT)`);
+  if (r.guide === "B") offre = rep.montantEnvisage ? `${rep.typeEnvisage || "Partenariat"} de ${eur(rep.montantEnvisage)}${sc.cout ? `, coût net ${eur(sc.cout.cout)}` : ""}` : "";
+  if (r.guide === "C") { const o = (C0.catalogue || []).find(c => c.code === rep.offre); offre = o ? `${o.code} ${o.nom} · ${o.prix}` : ""; }
+  return { rep, sc, compte, situ, probleme, impl, gain, offre, reform:r.reformulation || (rep.reformAuto === false ? rep.reformulation : entReform(r)) };
+}
+function vEntretienRecap(r) {
+  rememberRecent(r.id);
+  const d = recapData(r), rep = d.rep, sc = d.sc, pers = rep.interlocuteurs || [], dur = Math.round((r.duree || 0) / 60);
+  const ind = [];
+  if (sc.qualif) ind.push(pill(`Prêt pour une proposition : ${sc.qualif.score}/4`, sc.qualif.score === 4 ? "var(--green)" : "var(--orange)"));
+  if (sc.grille !== undefined) ind.push(pill(`Qualification : ${sc.grille}/12`, sc.grilleNiveau === "vert" ? "var(--green)" : sc.grilleNiveau === "orange" ? "var(--orange)" : "var(--red)"));
+  if (sc.sponso !== undefined && sc.sponso !== null) ind.push(pill(`Sponsorabilité : ${sc.sponso}/100`, sc.sponso >= (GC()?.sponsorabilite?.seuil ?? 50) ? "var(--green)" : "var(--red)"));
+  if (sc.elig) ind.push(pill(`Mécénat : ${sc.elig.toLowerCase()}`, sc.elig === "Probable" ? "var(--green)" : sc.elig === "Non" ? "var(--red)" : "var(--orange)"));
+  if (rep.montantRecherche) ind.push(pill(`Recherché : ${eur(rep.montantRecherche)}`, "var(--blue)"));
+  if (rep.montantEnvisage) ind.push(pill(`Envisagé : ${eur(rep.montantEnvisage)}`, "var(--blue)"));
+  if (rep.echeance) ind.push(pill(`Échéance : ${dfr(rep.echeance)}`, "var(--indigo)"));
+  if (sc.cout) ind.push(pill(`Coût net : ${eur(sc.cout.cout)}`, "var(--teal)"));
+  const sec = (t, lines) => lines.length ? `<section><h3>${t}</h3>${lines.map(x => `<p>${esc(x)}</p>`).join("")}</section>` : "";
+  return `<div class="lhead noprint"><div class="t">${oico("entretien", 38)}<div><div class="tiny up">Fiche récapitulative</div><h1 style="font-size:24px">${esc(gTitle(r))}</h1></div></div>
+    <button class="btn" data-eopen="${r.id}">${svg("edit")}Modifier</button><button class="btn" data-ecopy="${r.id}">Copier en texte</button><button class="btn" data-eprint="1">${svg("download")}Imprimer ou PDF</button><a class="btn pri" href="${esc(mailtoFor(r))}">${svg("mail")}Préparer l'e-mail au client</a><button class="btn danger" data-del="${r.id}">${svg("trash")}Supprimer</button></div>
+  ${r.statut !== "terminé" ? `<div class="alert noprint" style="--c:var(--orange)"><div><b>Brouillon.</b> <a href="#/entretien/${r.id}">Reprendre l'entretien</a></div></div>` : ""}
+  <article class="card recap"><div class="cb">
+    <div class="rc-print"><img src="icons/icon-192.png" alt=""><b>Partenarium</b><span>Fiche récapitulative d'entretien</span></div>
+    <header class="rc-head"><div><h2>${d.compte?.o ? `<a href="#/r/${d.compte.id}">${esc(rname(d.compte))}</a>` : "—"}</h2><div class="small muted">${esc(gTitle(r))} · ${dfr(r.date)}${dur ? ` · ${dur} min` : ""}${r.opp && get(r.opp) ? ` · ${esc(rname(get(r.opp)))}` : ""}</div>
+      <div class="small">${pers.map(p => `${esc(p.nom)}${p.fonction ? `, ${esc(p.fonction)}` : ""}${p.decideur ? " (décideur)" : ""}`).join(" · ") || "—"} · décideur présent : <b>${esc(rep.decideur || "—")}</b></div></div></header>
+    <section class="rc-one"><h3>En une phrase</h3><p>${esc(d.reform)}</p>${rep.reformValidee ? `<span class="tiny">✓ validée par l'interlocuteur</span>` : `<span class="tiny">non validée</span>`}${rep.reformCorrections ? `<p class="small muted">Corrections : ${esc(rep.reformCorrections)}</p>` : ""}</section>
+    ${ind.length ? `<div class="chips rc-ind">${ind.join("")}</div>` : ""}
+    ${d.situ.length ? `<section><h3>Situation</h3><div class="rc-kv">${d.situ.map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("")}</div></section>` : ""}
+    ${sec("Problème", d.probleme)}${sec("Implication", d.impl)}${sec("Gain", d.gain)}
+    ${(r.objections || []).length ? `<section><h3>Objections soulevées</h3>${r.objections.map(o => `<p><b>« ${esc(o.texte)} »</b><br>${esc(o.reponse || "")}</p>`).join("")}</section>` : ""}
+    ${d.offre ? `<section><h3>Offre conseillée</h3><p>${esc(d.offre)}</p></section>` : ""}
+    ${(r.points || entPoints(r)).length ? `<section><h3>Points à vérifier</h3><ul>${(r.points || entPoints(r)).map(x => `<li>${esc(x)}</li>`).join("")}</ul></section>` : ""}
+    <section class="rc-next"><h3>Prochaine action</h3><p><b>${esc(rep.prochaine || "—")}</b>${rep.prochaineDate ? ` · ${dfr(rep.prochaineDate)}` : ""}</p>${rep.convenu ? `<p class="small">Convenu avec le client : ${esc(rep.convenu)}</p>` : ""}</section>
+  </div></article>`;
+}
+function recapText(r) {
+  const d = recapData(r), rep = d.rep, pers = rep.interlocuteurs || [], L = [];
+  L.push(`FICHE RÉCAPITULATIVE — ${gTitle(r)}`, `${rname(d.compte)} · ${dfr(r.date)}${r.duree ? ` · ${Math.round(r.duree / 60)} min` : ""}`, `Interlocuteurs : ${pers.map(p => [p.nom, p.fonction].filter(Boolean).join(", ")).join(" ; ") || "—"} · décideur présent : ${rep.decideur || "—"}`, "", `EN UNE PHRASE : ${d.reform}`, "");
+  const sc = d.sc; if (sc.qualif) L.push(`Prêt pour une proposition : ${sc.qualif.score}/4`); if (sc.grille !== undefined) L.push(`Qualification : ${sc.grille}/12`); if (sc.sponso !== undefined && sc.sponso !== null) L.push(`Sponsorabilité : ${sc.sponso}/100`); if (sc.elig) L.push(`Éligibilité au mécénat : ${sc.elig}`); if (sc.cout) L.push(`Coût net pour l'entreprise : ${eur(sc.cout.cout)}`);
+  if (d.situ.length) L.push("", "SITUATION", ...d.situ.map(([k, v]) => `- ${k} : ${v}`));
+  [["PROBLÈME", d.probleme], ["IMPLICATION", d.impl], ["GAIN", d.gain]].forEach(([t, a]) => { if (a.length) L.push("", t, ...a.map(x => `- ${x}`)); });
+  if ((r.objections || []).length) L.push("", "OBJECTIONS", ...r.objections.map(o => `- « ${o.texte} » → ${o.reponse || ""}`));
+  if (d.offre) L.push("", `OFFRE CONSEILLÉE : ${d.offre}`);
+  const pts = r.points || entPoints(r); if (pts.length) L.push("", "POINTS À VÉRIFIER", ...pts.map(x => `- ${x}`));
+  L.push("", `PROCHAINE ACTION : ${rep.prochaine || "—"}${rep.prochaineDate ? ` · ${dfr(rep.prochaineDate)}` : ""}`);
+  return L.join("\n");
+}
+/* e-mail au client : reformulation, ce qui a été convenu et prochaine étape. Jamais les notes internes, scores ni points à vérifier. */
+function mailtoFor(r) {
+  const rep = r.rep || {}, C0 = GC() || {}, tpl = C0.email || {}, pers = rep.interlocuteurs || [];
+  const c = pers.map(p => p.contact && get(p.contact)).find(x => x && x.email) || all("contact").find(x => x.compte === r.compte && x.email);
+  const prenom = c?.prenom ? ` ${c.prenom}` : "";
+  const reform = r.reformulation || entReform(r), act = C0.actions?.[rep.prochaine]?.client || "";
+  const vals = { date:dfr(r.date), prenom, reformulation:reform.replace(/\s*C'est bien ça \?\s*$/, ""), convenu:rep.convenu ? `\nCe que nous avons convenu : ${rep.convenu}\n` : "", prochaineClient:act ? act.charAt(0).toUpperCase() + act.slice(1) : "", prochaineDate:rep.prochaineDate ? ` le ${dfr(rep.prochaineDate)}` : "" };
+  let body = fillTpl(tpl.corps || "{reformulation}", vals, "");
+  if (!act) body = body.replace(/\n?Prochaine étape : [^\n]*\n?/, "\n");
+  const subject = fillTpl(tpl.objet || "Partenarium – notre échange du {date}", vals, "");
+  return `mailto:${encodeURIComponent(c?.email || "")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+/* ---------- listes, accueil, rapports ---------- */
+function entretiensCard(r) {
+  const l = entretiensFor(r);
+  return `<div class="card"><div class="ch"><h2>${oico("entretien", 24)} Entretiens (${l.length})</h2><button class="btn sm" data-eguide="${r.id}">Mener un entretien</button></div><div class="cb">
+    ${l.length ? l.map(e => { const sc = e.scores || {}; return `<div class="item" data-href="${e.statut === "brouillon" ? "#/entretien/" + e.id : "#/r/" + e.id}"><div class="t"><b>${esc(gTitle(e))} · ${dfr(e.date)}</b><span>${esc(e.reformulation || (e.statut === "brouillon" ? "Brouillon à terminer" : ""))}</span></div>${e.statut === "brouillon" ? pill("Brouillon", "var(--orange)") : sc.qualif ? pill(`${sc.qualif.score}/4`, sc.qualif.score === 4 ? "var(--green)" : "var(--orange)") : sc.grille !== undefined ? pill(`${sc.grille}/12`, sc.grilleNiveau === "vert" ? "var(--green)" : sc.grilleNiveau === "orange" ? "var(--orange)" : "var(--red)") : pill("Terminé", "var(--green)")}</div>`; }).join("") : `<div class="empty">Aucun entretien. « Mener un entretien » ouvre le guide adapté à l'étape.</div>`}</div></div>`;
+}
+function homeEntretiens() {
+  const dr = all("entretien").filter(e => e.statut === "brouillon").sort((a, b) => (b.updated || 0) - (a.updated || 0));
+  if (!dr.length) return "";
+  return `<div class="card"><div class="ch"><h2>${svg("meet")} Entretiens à terminer</h2></div><div class="cb">${dr.slice(0, 6).map(e => `<div class="item" data-href="#/entretien/${e.id}"><div class="t"><b>${esc(rname(get(e.compte)))}</b><span>${esc(gTitle(e))} · ${dfr(e.date)}</span></div><span class="btn sm">Reprendre</span></div>`).join("")}</div></div>`;
+}
+function homeReactivite() {
+  const late = all("act").filter(a => a.reactivite && a.statut !== "Fait" && a.date && a.date < today());
+  return late.length ? `<div class="alert" style="--c:var(--red);margin-top:14px"><div><b>Réactivité :</b> ${late.length} envoi${late.length > 1 ? "s" : ""} promis sous 48 heures en retard : ${late.slice(0, 4).map(a => `<a href="#/r/${a.id}">${esc(a.sujet)}</a>`).join(" · ")}.</div></div>` : "";
+}
+function reportEntretiens(title) {
+  const l = all("entretien").sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  const q = e => { const sc = e.scores || {}; return sc.qualif ? `${sc.qualif.score}/4` : sc.grille !== undefined ? `${sc.grille}/12` : ""; };
+  return { title, html:tableHtml(["Date", "Structure", "Guide", "Statut", "Qualification", "Prochaine action", "Date"], l.map(e => ({ _href:e.statut === "brouillon" ? "#/entretien/" + e.id : "#/r/" + e.id, cells:[dfr(e.date), esc(rname(get(e.compte))), esc(gTitle(e)), pill(e.statut, ENT_ST[e.statut] || "var(--gray)"), esc(q(e)), esc(e.rep?.prochaine || ""), dfr(e.rep?.prochaineDate)] }))),
+    rows:[["Date", "Structure", "Guide", "Statut", "Qualification", "Durée (min)", "Reformulation", "Prochaine action", "Date de la prochaine action"], ...l.map(e => [e.date, rname(get(e.compte)), gTitle(e), e.statut, q(e), Math.round((e.duree || 0) / 60), e.reformulation || "", e.rep?.prochaine || "", e.rep?.prochaineDate || ""])],
+    note:"Les entretiens suivent les règles du CRM : synchronisés, sauvegardés dans Drive, inclus dans l'export des données d'une personne, supprimés avec la fiche du porteur ou de l'entreprise." };
+}
+const ENT_ST = { brouillon:"var(--orange)", "terminé":"var(--green)" };
+
+/* ---------- RGPD ---------- */
+function scrubContact(cid) {
+  all("entretien").forEach(e => { const p = e.rep?.interlocuteurs || []; if (p.some(x => x.contact === cid)) putItem(e.id, { ...e, rep:{ ...e.rep, interlocuteurs:p.filter(x => x.contact !== cid) } }); });
+}
+
+/* ---------- Réglages › Guides d'entretien ---------- */
+function guidesCard() {
+  const rec = GREC(), c = rec?.data;
+  return `<div class="card" id="gcard"><div class="ch"><h2>Guides d'entretien</h2></div><div class="cb">
+    ${c ? `<div class="kv"><span>Contenu</span><b>version ${esc(c.version || "?")} du ${dfr(c.date)}</b></div><div class="kv"><span>Importé le</span><b>${rec.importe ? new Date(rec.importe).toLocaleString("fr-FR") : "—"}</b></div><div class="kv"><span>Textes modifiés ici</span><b>${JSON.stringify(rec.data) === JSON.stringify(rec.base) ? "non" : "oui"}</b></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><a class="btn pri" href="#/reglages/guides">Modifier les textes</a><label class="btn filebtn" tabindex="0" role="button">Réimporter<input type="file" accept="application/json,.json" class="vh-file" id="gimp" tabindex="-1"></label><button class="btn" data-gexport="1">${svg("download")}Exporter</button><button class="btn danger" data-grestore="1">Rétablir les textes d'origine</button>${rec.precedent ? `<button class="btn" data-gprev="1">Revenir à la version précédente</button>` : ""}</div>
+      <p class="tiny">« Réimporter » charge une nouvelle version (par exemple les objections définitives du Marketing) ; la version actuelle est gardée et peut être rétablie. « Rétablir » revient au dernier fichier importé. Le contenu est synchronisé avec vos autres appareils et copié dans le dossier Drive (partenarium-crm-guides.json). Il n'est pas dans le code public de l'application.</p>`
+      : `<p class="small" style="margin-top:0">Le contenu des guides (questions, relances, objections) n'est pas dans le code public de l'application. Importez une fois le fichier <b>partenarium-guides-…json</b> fourni par le développeur (rangé dans votre dossier Drive « Sauvegardes CRM »).</p><label class="btn pri filebtn" tabindex="0" role="button">Importer le contenu des guides<input type="file" accept="application/json,.json" class="vh-file" id="gimp" tabindex="-1"></label>`}</div></div>`;
+}
+async function guidesImport(file) {
+  try {
+    const d = JSON.parse(await file.text());
+    if (!d || d.format !== "partenarium-guides" || !d.guides || !["A", "B", "C"].every(g => d.guides[g]?.phases?.length)) throw 0;
+    const rec = GREC(), base = JSON.parse(JSON.stringify(d));
+    putItem(GID, { id:GID, o:"_guides", data:d, base, precedent:rec ? rec.data : null, importe:Date.now(), fichier:file.name || "" });
+    toast(`Guides importés (version ${d.version || "?"}).`); render(); bkSoon(2000);
+  } catch { toast("Ce fichier n'est pas un contenu de guides valide (format partenarium-guides)."); }
+}
+let gSaveT;
+function guidesSet(path, v) {
+  const rec = GREC(); if (!rec) return;
+  const ks = path.split("."); let o = rec.data; while (ks.length > 1) { const k = ks.shift(); o = o[k]; if (o === undefined) return; } o[ks[0]] = v;
+  clearTimeout(gSaveT); gSaveT = setTimeout(() => { putItem(GID, { ...rec }); }, 700);
+}
+function vGuidesEdit() {
+  const rec = GREC(), c = rec?.data; if (!c) return `<div class="card"><div class="empty">Importez d'abord le contenu des guides. <a href="#/reglages">Réglages</a></div></div>`;
+  const ta = (path, v, rows = 2) => `<textarea class="inp" data-gpath="${path}" rows="${rows}">${esc(v ?? "")}</textarea>`;
+  const ip = (path, v, num) => `<input class="inp" data-gpath="${path}" ${num ? 'data-gnum="1" inputmode="decimal"' : ""} value="${esc(v ?? "")}">`;
+  const row = (l, h) => `<div class="fld" style="margin-bottom:8px"><label>${esc(l)}</label>${h}</div>`;
+  return `<div class="lhead"><div class="t"><span class="oico" style="--c:var(--indigo);width:38px;height:38px">${svg("meet", 2)}</span><div><div class="tiny up">Réglages</div><h1 style="font-size:24px">Guides d'entretien</h1></div></div><a class="btn" href="#/reglages">← Réglages</a></div>
+  <p class="small muted">Les modifications sont enregistrées automatiquement et synchronisées. Les réponses à choix fixes (oui/non, étapes, prochaines actions…) servent aux calculs et ne se modifient pas ici.</p>
+  <details class="card gsec"><summary>Règles de ton et RGPD</summary><div class="cb">${c.regles.map((x, i) => row(`Règle ${i + 1}`, ta(`regles.${i}`, x))).join("")}${(c.rgpd || []).map((x, i) => row(`RGPD ${i + 1}`, ta(`rgpd.${i}`, x))).join("")}</div></details>
+  ${["A", "B", "C"].map(g => `<details class="card gsec"><summary>Guide ${g} · ${esc(c.guides[g].titre)}</summary><div class="cb">${c.guides[g].phases.map((p, pi) => `<h3 class="tiny up" style="margin-top:14px">${esc(p.titre)}</h3>${p.aide !== undefined ? row("Aide de la phase", ta(`guides.${g}.phases.${pi}.aide`, p.aide)) : ""}${p.regle !== undefined ? row("Règle affichée", ta(`guides.${g}.phases.${pi}.regle`, p.regle)) : ""}${p.reformulation !== undefined ? row("Modèle de reformulation (les {champs} sont remplis automatiquement)", ta(`guides.${g}.phases.${pi}.reformulation`, p.reformulation, 3)) : ""}
+      ${(p.questions || []).map((q, qi) => `<div class="gq-ed">${q.dire !== undefined ? row("À dire", ta(`guides.${g}.phases.${pi}.questions.${qi}.dire`, q.dire, 3)) : ""}${q.relance !== undefined ? row("Exemple de relance", ta(`guides.${g}.phases.${pi}.questions.${qi}.relance`, q.relance)) : ""}${q.aide !== undefined ? row("Aide", ta(`guides.${g}.phases.${pi}.questions.${qi}.aide`, q.aide)) : ""}
+        ${(q.champs || []).map((f, fi) => row(`Libellé du champ${f.oblig ? " (obligatoire)" : ""}`, ip(`guides.${g}.phases.${pi}.questions.${qi}.champs.${fi}.l`, f.l)) + (f.type === "multi" && !f.fixe ? row("Réponses rapides (séparées par ;)", `<input class="inp" data-gopts="guides.${g}.phases.${pi}.questions.${qi}.champs.${fi}.options" value="${esc((f.options || []).join(" ; "))}">`) : "")).join("")}</div>`).join("")}`).join("")}</div></details>`).join("")}
+  <details class="card gsec"><summary>Objections (${c.objections.length})</summary><div class="cb">${c.objections.map((o, i) => `<div class="gq-ed">${row("Objection", ip(`objections.${i}.texte`, o.texte))}<div class="fld" style="margin-bottom:8px"><label>Public</label><select class="inp" data-gpath="objections.${i}.public">${["porteur", "entreprise", "les deux"].map(x => `<option${o.public === x ? " selected" : ""}>${x}</option>`).join("")}</select></div>${row("Réponse proposée", ta(`objections.${i}.reponse`, o.reponse, 3))}${row("Relance", ta(`objections.${i}.relance`, o.relance))}<button class="btn sm danger" data-gobjrm="${i}">Retirer cette objection</button></div>`).join("")}<button class="btn" data-gobjadd="1">${svg("plus", 2)}Ajouter une objection</button></div></details>
+  <details class="card gsec"><summary>Grille de qualification entreprise</summary><div class="cb">${c.grille.map((l, i) => `<div class="gq-ed">${row("Ligne", ip(`grille.${i}.titre`, l.titre))}${row("Question", ip(`grille.${i}.question`, l.question))}${row("2 points si…", ip(`grille.${i}.deux`, l.deux))}${row("1 point si…", ip(`grille.${i}.un`, l.un))}</div>`).join("")}</div></details>
+  <details class="card gsec"><summary>Score de sponsorabilité</summary><div class="cb">${row("Seuil (sur 100)", ip("sponsorabilite.seuil", c.sponsorabilite.seuil, 1))}${row("Action proposée sous le seuil", ip("sponsorabilite.sousSeuil", c.sponsorabilite.sousSeuil))}${c.sponsorabilite.criteres.map((x, i) => `<div class="gq-ed">${row(`Critère ${i + 1}`, ip(`sponsorabilite.criteres.${i}.libelle`, x.libelle))}${row("Aide", ip(`sponsorabilite.criteres.${i}.aide`, x.aide))}</div>`).join("")}</div></details>
+  <details class="card gsec"><summary>Niveau de Pack suggéré</summary><div class="cb"><div class="alert" style="--c:var(--orange)"><div>${esc(c.pack.aValider || "")}</div></div><label class="casebox" style="margin-bottom:10px"><input type="checkbox" class="switch" data-gbool="pack.actif" ${c.pack.actif ? "checked" : ""}><span>Activer la suggestion du niveau de Pack</span></label>${row("Seuil 1 (€) : en dessous, Essentiel", ip("pack.seuil1", c.pack.seuil1, 1))}${row("Seuil 2 (€) : au-delà, Premium", ip("pack.seuil2", c.pack.seuil2, 1))}${c.pack.niveaux.map((n, i) => `<div class="gq-ed">${row("Niveau", ip(`pack.niveaux.${i}.nom`, n.nom))}${row("Entreprises ciblées", ip(`pack.niveaux.${i}.entreprises`, n.entreprises, 1))}${row("Prix HT (€)", ip(`pack.niveaux.${i}.prix`, n.prix, 1))}</div>`).join("")}</div></details>
+  <details class="card gsec"><summary>Prochaines actions et e-mail au client</summary><div class="cb">${Object.entries(c.actions || {}).map(([k, a]) => row(`« ${k} » : phrase pour le client`, ip(`actions.${k}.client`, a.client))).join("")}${row("Objet de l'e-mail", ip("email.objet", c.email.objet))}${row("Corps de l'e-mail", ta("email.corps", c.email.corps, 8))}<p class="tiny">L'e-mail ne contient que la reformulation, ce qui a été convenu et la prochaine étape : jamais les notes internes, les scores ni les points à vérifier.</p></div></details>`;
+}
 
 /* ═════════ événements ═════════ */
 document.addEventListener("click", e => {
@@ -1276,11 +2038,46 @@ document.addEventListener("click", e => {
   const el = t.closest("button, [data-href], a, label, input"); if (!el) return;
   const d = el.dataset;
   if (d.newpick) { closeModal(); openForm(d.newpick); return; }
+  /* guide d'entretien */
+  if (d.eguide) { e.preventDefault(); openGuidePicker(d.eguide); return; }
+  if (d.estart) { const [g, c, o] = d.estart.split("|"); startEntretien(g, c, o); return; }
+  if (d.eopen) { closeModal(); location.hash = "#/entretien/" + d.eopen; return; }
+  if (ENT && d.ephase !== undefined && el.matches("[data-ephase]")) { entGo(+d.ephase); return; }
+  if (ENT && d.ephasego !== undefined) { e.preventDefault(); ENT.r.phase = +d.ephasego; entTouch(); entSave(); location.hash = "#/entretien/" + ENT.id; return; }
+  if (ENT && d.efin) { entClock(); ENT.dirty = true; entSave(); location.hash = "#/entretien/" + ENT.id + "/fin"; return; }
+  if (ENT && d.edone) { entFinish(); return; }
+  if (ENT && d.equit) { const r = ENT.r; ENT.dirty = true; entSave(); toast("Entretien enregistré en brouillon."); location.hash = "#/r/" + (r.opp || r.compte); return; }
+  if (ENT && d.estop) { entStop(); return; }
+  if (ENT && d.eobj) { ENT.drawer = !ENT.drawer; render(); if (ENT.drawer) setTimeout(() => $("[data-eobjq]")?.focus({ preventScroll:true }), 30); return; }
+  if (ENT && d.eraise) { const a = ENT.r.objections, j = a.findIndex(o => o.id === d.eraise); if (j >= 0) a.splice(j, 1); else { const o = (GC().objections || []).find(x => x.id === d.eraise); if (o) a.push({ id:o.id, texte:o.texte, reponse:o.reponse, at:Date.now() }); } entTouch(); render(); return; }
+  if (ENT && d.eobjrm !== undefined && el.matches("[data-eobjrm]")) { ENT.r.objections.splice(+d.eobjrm, 1); entTouch(); render(); return; }
+  if (ENT && d.echoice) { const rep = ENT.r.rep; rep[d.echoice] = rep[d.echoice] === d.ev ? "" : d.ev;
+    if (d.echoice === "prochaine" && GC().actions?.[rep.prochaine]?.j2 && !rep.prochaineDate) rep.prochaineDate = addDays(today(), 2);   // réactivité : sous 48 heures
+    entTouch(); const y = scrollY; render(); scrollTo(0, y); return; }
+  if (ENT && d.emulti) { const rep = ENT.r.rep, a = Array.isArray(rep[d.emulti]) ? rep[d.emulti] : []; rep[d.emulti] = a.includes(d.ev) ? a.filter(x => x !== d.ev) : [...a, d.ev]; entTouch(); const y = scrollY; render(); scrollTo(0, y); return; }
+  if (ENT && d.egrille) { ENT.r.rep.grille = { ...(ENT.r.rep.grille || {}), [d.egrille]:+d.ev }; entTouch(); const y = scrollY; render(); scrollTo(0, y); return; }
+  if (ENT && d.egrillesug) { const sg = grilleSuggest(ENT.r.rep, all("contact").filter(c => c.compte === ENT.r.compte)), gr = { ...(ENT.r.rep.grille || {}) }; Object.entries(sg).forEach(([k, v]) => { if (gr[k] === undefined && v !== null) gr[k] = v; }); ENT.r.rep.grille = gr; entTouch(); const y = scrollY; render(); scrollTo(0, y); return; }
+  if (ENT && d.eregen) { ENT.r.rep.reformAuto = true; delete ENT.r.rep.reformulation; entTouch(); const y = scrollY; render(); scrollTo(0, y); return; }
+  if (ENT && d.epersadd) { const a = ENT.r.rep.interlocuteurs = ENT.r.rep.interlocuteurs || []; a.push({ nom:"", fonction:"" }); entTouch(); const y = scrollY; render(); scrollTo(0, y); setTimeout(() => $(`[data-epers="${a.length - 1}|nom"]`)?.focus(), 20); return; }
+  if (ENT && d.epersrm !== undefined && el.matches("[data-epersrm]")) { ENT.r.rep.interlocuteurs.splice(+d.epersrm, 1); entTouch(); const y = scrollY; render(); scrollTo(0, y); return; }
+  if (d.ecopy) { copyText(recapText(get(d.ecopy))); return; }
+  if (d.eprint) { window.print(); return; }
+  if (d.gexport) { downloadFile(`partenarium-guides-export-${today()}.json`, JSON.stringify(GC(), null, 2), "application/json"); toast("Contenu des guides exporté."); return; }
+  if (d.grestore) {
+    if (el.dataset.armed !== "1") { el.dataset.armed = "1"; el.textContent = "Confirmer : rétablir les textes d'origine"; return; }
+    const rec = GREC(); putItem(GID, { ...rec, precedent:rec.data, data:JSON.parse(JSON.stringify(rec.base)) }); toast("Textes d'origine rétablis."); render(); return;
+  }
+  if (d.gprev) { const rec = GREC(); if (rec?.precedent) { putItem(GID, { ...rec, data:rec.precedent, precedent:rec.data }); toast("Version précédente rétablie."); render(); } return; }
+  if (d.gobjadd) { const rec = GREC(); rec.data.objections.push({ id:"o" + uid(), texte:"Nouvelle objection", public:"les deux", reponse:"", relance:"" }); putItem(GID, { ...rec }); render(); return; }
+  if (d.gobjrm !== undefined && el.matches("[data-gobjrm]")) { const rec = GREC(); rec.data.objections.splice(+d.gobjrm, 1); putItem(GID, { ...rec }); render(); return; }
   if (d.new) { e.preventDefault(); openForm(d.new, null, d.pre ? JSON.parse(d.pre) : null); return; }
   if (d.edit) { openForm(get(d.edit).o, d.edit); return; }
   if (d.del) {
     if (el.dataset.armed !== "1") { el.dataset.armed = "1"; el.innerHTML = svg("trash") + "Confirmer la suppression"; setTimeout(() => { if (el.isConnected) { el.dataset.armed = ""; el.innerHTML = svg("trash") + "Supprimer"; } }, 4000); return; }
-    const r = get(d.del), o = r.o; putItem(d.del, null); toast(`${OBJ[o].l} supprimé${o === "entreprise" || o === "opp" || o === "act" ? "e" : ""}.`); location.hash = "#/l/" + o; return;
+    const r = get(d.del), o = r.o;
+    if (o === "contact") scrubContact(r.id);                                                    // RGPD : la personne disparaît aussi des entretiens
+    if (o === "porteur" || o === "entreprise") all("entretien").filter(e => e.compte === r.id).forEach(e => putItem(e.id, null));
+    putItem(d.del, null); toast(`${OBJ[o].l} supprimé${o === "entreprise" || o === "opp" || o === "act" ? "e" : ""}.`); location.hash = o === "entretien" ? (r.opp && get(r.opp) ? "#/r/" + r.opp : get(r.compte) ? "#/r/" + r.compte : "#/") : "#/l/" + o; return;
   }
   if (d.fav) { let f = favs(); f = f.includes(d.fav) ? f.filter(x => x !== d.fav) : [d.fav, ...f]; lsSet(CONFIG.key + ":favs", f); render(); return; }
   if (d.path) { const [id, k, v] = d.path.split("|"); setPath(id, k, v); return; }
@@ -1296,6 +2093,7 @@ document.addEventListener("click", e => {
   if (d.rmline && FORM) { collectForm(); const [k, i] = d.rmline.split("|"); FORM.r[k].splice(+i, 1); const sc = $("#modal").scrollTop; renderForm(false); $("#modal").scrollTop = sc; return; }
   if (d.noimg && FORM) { collectForm(); FORM.r[d.noimg] = null; const sc = $("#modal").scrollTop; renderForm(false); $("#modal").scrollTop = sc; return; }
   if (d.themeSet) { lsSet(CONFIG.key + ":theme", d.themeSet); applyTheme(); render(); return; }
+  if (d.resetProba) { S.cfg.proba = { opp:{}, porteur:{} }; applyProba(); save("cfg"); render(); toast("Probabilités par défaut rétablies."); return; }
   if (d.resetTax) { S.cfg.tax = { ...TAX }; save("cfg"); render(); toast("Taux par défaut rétablis."); return; }
   if (el.id === "exp") { exportData(); return; }
   if (d.bkchoose) { bkChoose(); return; }
@@ -1312,9 +2110,9 @@ document.addEventListener("click", e => {
   if (el.id === "demo-del") { Object.values(S.items).filter(r => r.demo).forEach(r => putItem(r.id, null)); toast("Exemples supprimés."); render(); return; }
   if (el.id === "wipe") {
     if (el.dataset.armed !== "1") { el.dataset.armed = "1"; el.textContent = "Confirmer : tout effacer définitivement"; return; }
-    Object.keys(S.items).forEach(id => putItem(id, null)); toast("Toutes les données ont été effacées."); render(); return;
+    Object.keys(S.items).filter(id => id !== GID).forEach(id => putItem(id, null)); toast("Toutes les données ont été effacées (le contenu des guides d'entretien est conservé)."); render(); return;
   }
-  if (d.exportPerson) { const c = get(d.exportPerson); downloadFile(`donnees-${norm(rname(c)).replace(/\s+/g, "-")}.json`, JSON.stringify({ personne:c, activites:all("act").filter(a => a.lie === c.id), exporte:new Date().toISOString() }, null, 2), "application/json"); toast("Données de la personne exportées."); return; }
+  if (d.exportPerson) { const c = get(d.exportPerson); downloadFile(`donnees-${norm(rname(c)).replace(/\s+/g, "-")}.json`, JSON.stringify({ personne:c, activites:all("act").filter(a => a.lie === c.id), entretiens:all("entretien").filter(e => (e.rep?.interlocuteurs || []).some(p => p.contact === c.id)), exporte:new Date().toISOString() }, null, 2), "application/json"); toast("Données de la personne exportées."); return; }
   if (d.href && !t.closest("a, input, button, label")) { location.hash = d.href; return; }
 });
 document.addEventListener("change", e => {
@@ -1327,6 +2125,12 @@ document.addEventListener("change", e => {
   if (d.repporteur !== undefined && t.matches("[data-repporteur]")) { S.ui.repPorteur = t.value; render(); return; }
   if (d.img && FORM) { processImage(t.files && t.files[0], d.img); t.value = ""; return; }
   if (t.id === "imp" && t.files[0]) { importData(t.files[0]); t.value = ""; return; }
+  if (t.id === "gimp" && t.files[0]) { guidesImport(t.files[0]); t.value = ""; return; }
+  if (d.gbool) { guidesSet(d.gbool, t.checked); return; }
+  if (d.gpath && t.tagName === "SELECT") { guidesSet(d.gpath, t.value); return; }
+  if (ENT && d.eperspick !== undefined && t.matches("[data-eperspick]")) { const c = get(t.value); if (c) { (ENT.r.rep.interlocuteurs = ENT.r.rep.interlocuteurs || []).push({ nom:rname(c), fonction:c.fonction || "", contact:c.id, decideur:c.role === "Décideur" }); entTouch(); render(); } return; }
+  if (ENT && d.epers && t.type === "checkbox") { const [j, k] = d.epers.split("|"); ENT.r.rep.interlocuteurs[+j][k] = t.checked; entTouch(); entLive(); return; }
+  if (ENT && d.ek && (t.type === "checkbox" || t.tagName === "SELECT")) { ENT.r.rep[d.ek] = t.type === "checkbox" ? t.checked : t.value; entTouch(); if (["baseLegale", "secteurInterdit"].includes(d.ek)) { const y = scrollY; render(); scrollTo(0, y); } else entLive(); return; }
   if (t.id === "csvfile" && t.files[0]) { importCsv(t.files[0], $("#csvobj").value); t.value = ""; return; }
   if (FORM && t.closest("#recform")) { // affichage conditionnel des champs
     collectForm(); if (FORM.o === "opp" && t.name === "etape") { FORM.r.proba = stageOf(t.value).p; const pi = $("#f-proba"); if (pi) pi.value = String(Math.round(FORM.r.proba * 1000) / 10).replace(".", ","); }
@@ -1337,11 +2141,21 @@ document.addEventListener("input", e => {
   const t = e.target, d = t.dataset;
   if (d.lq) { S.ui.q[d.lq] = t.value; const pos = t.selectionStart; render(); const n = $(`[data-lq="${d.lq}"]`); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch {} } return; }
   if (t.id === "sq") { searchRun(t.value); return; }
+  if (ENT && d.ek && t.type !== "checkbox" && t.tagName !== "SELECT") { const v = d.et === "num" ? num(t.value) : d.et === "pct" ? (num(t.value) === null ? null : num(t.value) / 100) : t.value; ENT.r.rep[d.ek] = v; entTouch(); entLive(); return; }
+  if (ENT && d.ereform) { ENT.r.rep.reformulation = t.value; ENT.r.rep.reformAuto = false; entTouch(); return; }
+  if (ENT && d.epers && t.type !== "checkbox") { const [j, k] = d.epers.split("|"); ENT.r.rep.interlocuteurs[+j][k] = t.value; entTouch(); entLive(); return; }
+  if (ENT && d.eobjrep !== undefined && t.matches("[data-eobjrep]")) { ENT.r.objections[+d.eobjrep].reponse = t.value; entTouch(); return; }
+  if (ENT && d.eobjq) { ENT.q = t.value; const dr = document.querySelector(".drawer"); if (dr) { dr.outerHTML = objDrawer(); const n = $("[data-eobjq]"); n.focus(); n.setSelectionRange(t.value.length, t.value.length); } return; }
+  if (ENT && d.esponso) { const v = num(t.value); ENT.r.rep.sponso = { ...(ENT.r.rep.sponso || {}), [d.esponso]:v === null ? null : Math.max(0, Math.min(20, v)) }; entTouch(); entLive(); return; }
+  if (d.gpath && t.tagName !== "SELECT") { guidesSet(d.gpath, d.gnum ? (num(t.value) ?? 0) : t.value); return; }
+  if (d.gopts) { guidesSet(d.gopts, t.value.split(";").map(x => x.trim()).filter(Boolean)); return; }
   if (d.cfg) { const v = num(t.value); if (v !== null) { cfgSet(d.cfg, v / (+d.m || 1)); save("cfg"); } return; }
+  if (d.proba) { const [o, st] = d.proba.split("|"), v = num(t.value); if (v !== null && v >= 0 && v <= 100) { S.cfg.proba = S.cfg.proba || {}; S.cfg.proba[o] = S.cfg.proba[o] || {}; S.cfg.proba[o][st] = v / 100; applyProba(); save("cfg"); } return; }
 });
 document.addEventListener("submit", e => {
   e.preventDefault();
   if (e.target.id === "recform") { submitForm(); return; }
+  if (e.target.id === "lossform") { const f = e.target, m = f.elements.motif.value; if (!m) { $("#ferr").textContent = "Choisissez un motif."; return; } closeModal(); setPath(f.dataset.id, f.dataset.k, "Perdu", m); return; }
   if (e.target.id === "composer") {
     const f = e.target, sujet = f.elements.sujet.value.trim(); if (!sujet) { f.elements.sujet.focus(); return; }
     const lie = f.dataset.for, a = { o:"act", type:f.elements.type.value, sujet, date:f.elements.date.value, statut:f.elements.statut.value, priorite:"Normale", lie, description:f.elements.description.value.trim() };
@@ -1351,6 +2165,14 @@ document.addEventListener("submit", e => {
   }
 });
 document.addEventListener("keydown", e => {
+  if (ENT && route().p[0] === "entretien" && !route().p[2] && $("#modal").hidden && $("#sov").hidden) {
+    const inField = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || ""), n = gPhases(ENT.r.guide).length, i = ENT.r.phase || 0;
+    const go = dir => { if (dir > 0 && i >= n - 1) { entClock(); ENT.dirty = true; entSave(); location.hash = "#/entretien/" + ENT.id + "/fin"; } else entGo(i + dir); };
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); go(e.shiftKey ? -1 : 1); return; }
+    if ((e.ctrlKey || e.metaKey) && !inField && (e.key === "ArrowRight" || e.key === "ArrowLeft")) { e.preventDefault(); go(e.key === "ArrowRight" ? 1 : -1); return; }
+    if (!inField && !e.ctrlKey && !e.metaKey && !e.altKey && (e.key === "o" || e.key === "O")) { e.preventDefault(); ENT.drawer = !ENT.drawer; render(); if (ENT.drawer) setTimeout(() => $("[data-eobjq]")?.focus({ preventScroll:true }), 30); return; }
+    if (e.key === "Escape" && ENT.drawer) { ENT.drawer = false; render(); return; }
+  }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openSearch(); return; }
   if (e.key === "/" && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && $("#sov").hidden) { e.preventDefault(); openSearch(); return; }
   if (e.key === "Escape") { if (!$("#sov").hidden) closeSearch(); else closeModal(); return; }
@@ -1367,10 +2189,10 @@ document.addEventListener("dragover", e => { const col = e.target.closest && e.t
 document.addEventListener("dragleave", e => { const col = e.target.closest && e.target.closest("[data-drop]"); if (col && !col.contains(e.relatedTarget)) col.classList.remove("over"); });
 document.addEventListener("drop", e => { const col = e.target.closest && e.target.closest("[data-drop]"); if (!col) return; e.preventDefault(); col.classList.remove("over"); const id = e.dataTransfer.getData("text/plain"); if (id) setPath(id, "etape", col.dataset.drop); });
 function newMenu() {
-  $("#modal").innerHTML = `<div class="dlg" style="max-width:460px"><header><h2>Créer</h2><button type="button" class="iconbtn" data-close="1" aria-label="Fermer">✕</button></header><div class="db" style="padding:8px">${Object.keys(OBJ).map(o => `<button class="lcard" style="width:100%;background:transparent;border:0;color:var(--tx);text-align:left" data-newpick="${o}">${oico(o, 32)}<div class="t"><b>${OBJ[o].l}</b></div></button>`).join("")}</div></div>`;
+  $("#modal").innerHTML = `<div class="dlg" style="max-width:460px"><header><h2>Créer</h2><button type="button" class="iconbtn" data-close="1" aria-label="Fermer">✕</button></header><div class="db" style="padding:8px">${Object.keys(OBJ).filter(o => !OBJ[o].hidden).map(o => `<button class="lcard" style="width:100%;background:transparent;border:0;color:var(--tx);text-align:left" data-newpick="${o}">${oico(o, 32)}<div class="t"><b>${OBJ[o].l}</b></div></button>`).join("")}</div></div>`;
   $("#modal").hidden = false;
 }
-function afterRender() {}
+function afterRender() { if (ENT && route().p[0] === "entretien" && !route().p[2]) entChronoDom(); }
 
 /* ═════════ thème ═════════ */
 function applyTheme() {
@@ -1437,6 +2259,7 @@ async function bkWrite(manual) {
     await bkFile("partenarium-crm-derniere.json", txt);
     await bkFile(`partenarium-crm-${d}.json`, txt);                       // copie du jour (la dernière version de la journée)
     try { await BK.dir.getFileHandle(month); } catch { await bkFile(month, txt); } // copie du mois : écrite une seule fois
+    if (GC()) await bkFile("partenarium-crm-guides.json", JSON.stringify(GC(), null, 2));  // contenu des guides, réimportable
     const lim = addDays(d, -90), mNow = +d.slice(0, 4) * 12 + +d.slice(5, 7), old = [];
     for await (const [name, h] of BK.dir.entries()) {
       if (h.kind !== "file") continue;
@@ -1452,12 +2275,14 @@ async function bkWrite(manual) {
     return false;
   } finally { bkBusy = false; }
 }
-document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && bkT) bkWrite(false); });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") { if (ENT) { entClock(); ENT.dirty = true; entTouch(); entSave(); } if (bkT) bkWrite(false); } });
+window.addEventListener("pagehide", () => { if (ENT) { entClock(); entTouch(); } });
 async function importData(file) {
   try {
     const d = JSON.parse(await file.text()); if (!d || typeof d.items !== "object") throw 0;
+    migrateAll(d.items);
     let n = 0; for (const [id, it] of Object.entries(d.items)) { const cur = S.items[id]; if (!cur || (it.updated || 0) >= (cur.updated || 0)) { S.items[id] = it; delete S.del[id]; n++; } }
-    if (d.cfg) { S.cfg = { ...S.cfg, ...d.cfg }; save("cfg"); }
+    if (d.cfg) { S.cfg = { ...S.cfg, ...d.cfg }; applyProba(); save("cfg"); }
     save("items"); save("del"); syncSoon(); render(); toast(`${n} enregistrement(s) restauré(s).`);
   } catch { toast("Ce fichier n'est pas une sauvegarde valide."); }
 }
@@ -1500,9 +2325,9 @@ async function copyText(txt) {
 function loadDemo() {
   if (Object.values(S.items).some(r => r.demo)) { toast("Les exemples sont déjà chargés."); return; }
   const t = today(), id = {}, mk = (k, r) => { id[k] = uid(); putItem(id[k], { ...r, id:id[k], demo:true }); };
-  mk("p1", { o:"porteur", nom:"HC Vallée de l'Arve (exemple)", type:"Association / club", discipline:"Hockey sur glace", niveau:"Régional", statutJur:"Association loi 1901", ville:"Cluses", mecenat:"Oui (intérêt général)", objectif:45000, budget:180000, ca:120000, subventions:0.35, membres:240, spectateurs:6000, abonnes:3100, relation:"Actif", offre:"Partenaires+", abo:250, mandatDebut:addMonths(t, -2), mandatFin:addMonths(t, 10), exclusif:true, projet:"Financer la saison et le déplacement de l'équipe U17 en finale nationale.", objectifs:"Trouver 8 partenaires locaux ; rénover la signalétique de la patinoire.", inventaire:[{ type:"Logo sur tenue", desc:"Maillot domicile, épaule", qte:1, valeur:6000 }, { type:"Panneau / banderole", desc:"Bande de patinoire 4 m", qte:6, valeur:1500 }, { type:"Hospitalité / VIP", desc:"Loge 8 places", qte:10, valeur:400 }] });
+  mk("p1", { o:"porteur", nom:"HC Vallée de l'Arve (exemple)", type:"Association / club", discipline:"Hockey sur glace", niveau:"Régional", statutJur:"Association loi 1901", ville:"Cluses", mecenat:"Oui (intérêt général)", objectif:45000, budget:180000, ca:120000, subventions:0.35, membres:240, spectateurs:6000, abonnes:3100, relation:"Mandat signé", offre:"Partenaires+", abo:250, mandatDebut:addMonths(t, -2), mandatFin:addMonths(t, 10), exclusif:true, projet:"Financer la saison et le déplacement de l'équipe U17 en finale nationale.", objectifs:"Trouver 8 partenaires locaux ; rénover la signalétique de la patinoire.", inventaire:[{ type:"Logo sur tenue", desc:"Maillot domicile, épaule", qte:1, valeur:6000 }, { type:"Panneau / banderole", desc:"Bande de patinoire 4 m", qte:6, valeur:1500 }, { type:"Hospitalité / VIP", desc:"Loge 8 places", qte:10, valeur:400 }] });
   mk("p2", { o:"porteur", nom:"Léa Martin – ski-alpinisme (exemple)", type:"Athlète", discipline:"Ski-alpinisme", niveau:"International", statutJur:"Entreprise individuelle", ville:"Sallanches", mecenat:"Non", objectif:25000, abonnes:18000, relation:"Mandat signé", offre:"Pack Lancement", prixPack:890, mandatDebut:addMonths(t, -1), mandatFin:addMonths(t, 11), objectifs:"Financer la saison de Coupe du monde.", inventaire:[{ type:"Logo sur tenue", desc:"Casque et combinaison", qte:1, valeur:8000 }, { type:"Intervention / conférence", desc:"Conférence en entreprise", qte:2, valeur:1500 }] });
-  mk("p3", { o:"porteur", nom:"Film « Les Aiguilles » (exemple)", type:"Réalisateur / film", discipline:"Documentaire montagne", statutJur:"Association loi 1901", ville:"Chamonix-Mont-Blanc", mecenat:"À vérifier", objectif:30000, relation:"En discussion" });
+  mk("p3", { o:"porteur", nom:"Film « Les Aiguilles » (exemple)", type:"Réalisateur / film", discipline:"Documentaire montagne", statutJur:"Association loi 1901", ville:"Chamonix-Mont-Blanc", mecenat:"À vérifier", objectif:30000, relation:"Échange réalisé" });
   mk("e1", { o:"entreprise", nom:"Décolletage Exemple SAS", secteur:"Décolletage / mécanique", taille:"PME (10 à 249)", effectif:85, ville:"Cluses", caHT:12000000, imposition:"is25", budgetSpon:15000, source:"Pappers", declencheur:"Recrutement de 20 techniciens", interets:["Marque employeur", "Ancrage territorial"] });
   mk("e2", { o:"entreprise", nom:"Boulangerie des Aravis (exemple)", secteur:"Commerce", taille:"TPE (moins de 10 salariés)", effectif:6, ville:"Scionzier", caHT:650000, imposition:"is15", budgetSpon:2000, source:"Réseau personnel", interets:["Visibilité locale"] });
   mk("e3", { o:"entreprise", nom:"Hôtel Les Cimes (exemple)", secteur:"Hôtellerie / restauration", taille:"PME (10 à 249)", effectif:22, ville:"Les Carroz", caHT:3200000, imposition:"ismix", benef:60000, source:"Salon / événement", interets:["Hospitalité / relations publiques", "Notoriété / image"] });
@@ -1511,11 +2336,11 @@ function loadDemo() {
   mk("c2", { o:"contact", prenom:"Sophie", nom:"Bernard (exemple)", compte:id.p1, fonction:"Présidente", role:"Signataire", email:"presidente@exemple.fr" });
   mk("c3", { o:"contact", prenom:"Marc", nom:"Petit (exemple)", compte:id.e3, fonction:"Gérant", role:"Décideur", email:"direction@exemple.fr", tel:"06 00 00 00 03" });
   mk("o1", { o:"opp", porteur:id.p1, entreprise:id.e1, contact:id.c1, type:"Parrainage", etape:"Signé", proba:1, montant:12000, cloture:addDays(t, -20), presente:addDays(t, -50), contreparties:[{ type:"Logo sur tenue", desc:"Maillot domicile", qte:1, valeur:6000 }, { type:"Hospitalité / VIP", desc:"Loge", qte:4, valeur:400 }] });
-  mk("o2", { o:"opp", porteur:id.p1, entreprise:id.e3, contact:id.c3, type:"Mixte", partMec:0.5, etape:"En cours de contractualisation", proba:0.8, montant:8000, cloture:addDays(t, 15), relance:addDays(t, 2), prochaine:"Envoyer le contrat tripartite", presente:addDays(t, -25) });
-  mk("o3", { o:"opp", porteur:id.p1, entreprise:id.e2, type:"Parrainage", etape:"Rendez-vous", proba:0.25, montant:1500, relance:addDays(t, -1), prochaine:"Confirmer le rendez-vous", presente:addDays(t, -10) });
+  mk("o2", { o:"opp", porteur:id.p1, entreprise:id.e3, contact:id.c3, type:"Mixte", partMec:0.5, etape:"Négociation", proba:0.7, montant:8000, cloture:addDays(t, 15), relance:addDays(t, 2), prochaine:"Envoyer le contrat tripartite", presente:addDays(t, -25) });
+  mk("o3", { o:"opp", porteur:id.p1, entreprise:id.e2, type:"Parrainage", etape:"Rendez-vous réalisé", proba:0.25, montant:1500, relance:addDays(t, -1), prochaine:"Confirmer le rendez-vous", presente:addDays(t, -10) });
   mk("o4", { o:"opp", porteur:id.p2, entreprise:id.e1, contact:id.c1, type:"Ambassadeur / influence", etape:"Proposition envoyée", proba:0.4, montant:10000, cloture:addDays(t, 30), relance:addDays(t, 5), presente:addDays(t, -30) });
-  mk("o5", { o:"opp", porteur:id.p2, entreprise:id.e3, type:"Parrainage", etape:"Première approche", proba:0.1, montant:5000, relance:addDays(t, 6) });
-  mk("o6", { o:"opp", porteur:id.p3, entreprise:id.e1, type:"Mécénat", etape:"Négociation", proba:0.6, montant:15000, forfait:1200, cloture:addDays(t, 45) });
+  mk("o5", { o:"opp", porteur:id.p2, entreprise:id.e3, type:"Parrainage", etape:"Contactée", proba:0.1, montant:5000, relance:addDays(t, 6) });
+  mk("o6", { o:"opp", porteur:id.p3, entreprise:id.e1, type:"Mécénat", etape:"Négociation", proba:0.7, montant:15000, forfait:1200, cloture:addDays(t, 45) });
   mk("o7", { o:"opp", porteur:id.p1, entreprise:id.e4, type:"Parrainage", etape:"Perdu", proba:0, montant:4000, raisonPerte:"Pas d'intérêt" });
   mk("k1", { o:"contrat", numero:"EXEMPLE-PAR-001", type:"Tripartite (délégation de paiement)", statut:"Actif", porteur:id.p1, entreprise:id.e1, opp:id.o1, signature:addDays(t, -18), debut:addDays(t, -15), fin:addMonths(t, 7), montant:12000, echeances:2, encaisse:1150, contreparties:[{ type:"Logo sur tenue", desc:"Maillot domicile", qte:1, valeur:6000, livre:true }, { type:"Hospitalité / VIP", desc:"Loge", qte:4, valeur:400, livre:false }, { type:"Réseaux sociaux", desc:"Post de présentation", qte:3, valeur:300, livre:false }] });
   mk("k2", { o:"contrat", numero:"EXEMPLE-MAN-001", type:"Mandat porteur", statut:"Actif", porteur:id.p1, signature:addMonths(t, -2), debut:addMonths(t, -2), fin:addMonths(t, 10), montant:3000, echeances:12, encaisse:500 });
@@ -1555,6 +2380,7 @@ async function syncNow(manual, retry) {
   try {
     const rem = await getRemote("crm.json"), R = rem.data || {}, fl = { local:false, remote:!rem.sha };
     const m = merge(S.items, R.items || {}, S.del, R.del || {}, fl);
+    if (migrateAll(m.out)) { fl.remote = true; fl.local = true; }
     if (fl.local) { S.items = m.out; S.del = m.del; save("items"); save("del"); bkSoon(3000); if (!FORM && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || "")) render(); }
     if (fl.remote || SYNC.dirty) await putRemote("crm.json", { v:1, updated:Date.now(), items:m.out, del:m.del }, rem.sha);
     SYNC.dirty = false; SYNC.last = Date.now(); lsSet(CONFIG.key + ":lastsync", SYNC.last); if (manual) toast("Synchronisé.");
@@ -1574,7 +2400,11 @@ window.addEventListener("online", () => syncNow());
 async function boot() {
   const [items, del, cfg] = await Promise.all(["items", "del", "cfg"].map(k => store.get(k)));
   S.items = items || {}; S.del = del || {};
-  if (cfg) S.cfg = { ...S.cfg, ...cfg, grid:{ ...GRID, ...(cfg.grid || {}) }, tax:{ ...TAX, ...(cfg.tax || {}) } };
+  if (cfg) S.cfg = { ...S.cfg, ...cfg, grid:{ ...GRID, ...(cfg.grid || {}) }, tax:{ ...TAX, ...(cfg.tax || {}) }, proba:{ opp:{ ...(cfg.proba?.opp || {}) }, porteur:{ ...(cfg.proba?.porteur || {}) } } };
+  applyProba();
+  if (migrateAll(S.items)) { save("items"); SYNC.dirty = true; }
+  const dr = lsGet(CONFIG.key + ":entdraft");                       // brouillon d'entretien non encore enregistré (fermeture brutale)
+  if (dr && dr.id && S.items[dr.id] && (dr._saved || 0) > (S.items[dr.id].updated || 0)) { const { _saved, ...x } = dr; S.items[dr.id] = { ...x, updated:Date.now() }; save("items"); SYNC.dirty = true; }
   await bkInit();
   applyTheme(); render(); syncNow();
   if ("serviceWorker" in navigator) {
