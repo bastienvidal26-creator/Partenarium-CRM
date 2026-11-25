@@ -393,7 +393,7 @@ if (typeof module !== "undefined") module.exports = { TAX, GRID, mecenat, isTax,
 (() => {
 "use strict";
 /* ═════════ CONFIGURATION ═════════ */
-const CONFIG = { name:"Partenarium CRM", key:"partcrm", version:"1.1.2", // à garder identique à VERSION dans sw.js (partcrm-1.1.2)
+const CONFIG = { name:"Partenarium CRM", key:"partcrm", version:"1.1.3", // à garder identique à VERSION dans sw.js (partcrm-1.1.3)
   gh:{ owner:"bastienvidal26-creator", privateRepo:"partenarium-crm-perso" } };
 
 /* ═════════ outils ═════════ */
@@ -731,8 +731,8 @@ function vHome() {
   ${day <= 5 && all("porteur").some(p => ["Mandat signé", "Actif"].includes(p.relation)) ? `<div class="alert" style="--c:var(--yellow);margin-top:14px"><div><b>Avant le 5 du mois :</b> envoyez à chaque porteur sous mandat la liste des entreprises présentées le mois dernier (preuve du droit de suite). <a href="#/rapports/presentations">Ouvrir le registre</a></div></div>` : ""}
   <div class="kpis">
     <div class="kpi"><div class="k">Revenus signés ${year}</div><div class="v">${eur(comSign)}</div><div class="progress" style="margin:6px 0 4px"><i style="width:${Math.min(100, obj ? comSign / obj * 100 : 0)}%;background:var(--acc)"></i></div><div class="s">Objectif ${eur(obj)} · ${obj ? pct(comSign / obj) : "—"}</div></div>
-    <div class="kpi"><div class="k">Pipeline ouvert</div><div class="v">${keur(pipe)}</div><div class="s">${open.length} opportunité${open.length > 1 ? "s" : ""}</div></div>
-    <div class="kpi"><div class="k">Pipeline pondéré</div><div class="v">${keur(pond)}</div><div class="s">selon la probabilité de chaque étape</div></div>
+    <div class="kpi"><div class="k">Ventes en cours</div><div class="v">${keur(pipe)}</div><div class="s">${open.length} opportunité${open.length > 1 ? "s" : ""}</div></div>
+    <div class="kpi"><div class="k">Ventes probables</div><div class="v">${keur(pond)}</div><div class="s">ventes en cours × probabilité de chaque étape</div></div>
     <div class="kpi"><div class="k">Signé en ${year}</div><div class="v">${keur(signe)}</div><div class="s">${won.length} partenariat${won.length > 1 ? "s" : ""} pour les porteurs</div></div>
     <div class="kpi"><div class="k">Revenus à encaisser</div><div class="v">${keur(comReste)}</div><div class="s">déjà encaissé : ${eur(comEnc)}</div></div>
   </div>
@@ -744,7 +744,7 @@ function vHome() {
         ${relances.length ? relances.slice(0, 8).map(o => `<div class="item" data-href="#/r/${o.id}"><div class="t"><b>${esc(rname(o))}</b><span>${esc(o.prochaine || "Relance")} · ${eur(o.montant || 0)}</span></div><span class="small ${o.relance < t ? "late" : "muted"}">${dfr(o.relance)}</span>${pill(o.etape, stageOf(o.etape).c)}</div>`).join("") : `<div class="empty">Aucune relance prévue.</div>`}</div></div>
     </div>
     <div class="col">
-      <div class="card"><div class="ch"><h2>${svg("kanban")} Pipeline par étape</h2><a class="btn sm" href="#/l/opp?k=1">Kanban</a></div><div class="cb bars">
+      <div class="card"><div class="ch"><h2>${svg("kanban")} Cycle de vente par étape</h2><a class="btn sm" href="#/l/opp?k=1">Vue en colonnes</a></div><div class="cb bars">
         ${byStage.map(x => `<div class="b"><span>${esc(x.s.v)} <span class="tiny">(${x.n})</span></span><span class="tr"><i style="width:${x.m / maxM * 100}%;--c:${x.s.c}"></i></span><span class="num" style="text-align:right">${keur(x.m)}</span></div>`).join("")}</div></div>
       <div class="card"><div class="ch"><h2>${svg("contrat")} Échéances des contrats</h2></div><div class="cb">
         ${ech.length ? ech.slice(0, 8).map(e => `<div class="item" data-href="#/r/${e.id}"><div class="t"><b>${esc(e.what)}</b><span>${esc(e.sub)}</span></div><span class="small ${e.date < t ? "late" : "muted"}">${dfr(e.date)}</span></div>`).join("") : `<div class="empty">Rien dans les 90 prochains jours.</div>`}</div></div>
@@ -803,7 +803,7 @@ function cols(o) {
   const first = F[o].find(f => f.list && ["nom", "numero", "sujet"].includes(f.k));
   const c = F[o].filter(f => f.list).map(f => f === first ? { k:f.k, l:o === "contact" ? "Nom" : f.l, v:r => rname(r), h:r => `<b>${esc(rname(r))}</b>` }
     : { k:f.k, l:f.l, f, v:r => r[f.k], h:r => fmt(f, r[f.k], r), n:["money", "number", "pct"].includes(f.t) });
-  if (o === "opp") c.splice(c.findIndex(x => x.k === "montant") + 1, 0, { k:"_com", l:"Commission", n:1, v:r => oc(r).com, h:r => `<span class="num">${eur(oc(r).com)}</span>` }, { k:"_pond", l:"Pondéré", n:1, v:r => oc(r).pondere, h:r => `<span class="num">${eur(oc(r).pondere)}</span>` });
+  if (o === "opp") c.splice(c.findIndex(x => x.k === "montant") + 1, 0, { k:"_com", l:"Commission", n:1, v:r => oc(r).com, h:r => `<span class="num">${eur(oc(r).com)}</span>` }, { k:"_pond", l:"Probable", n:1, v:r => oc(r).pondere, h:r => `<span class="num">${eur(oc(r).pondere)}</span>` });
   if (o === "porteur") c.push({ k:"_sig", l:"Signé", n:1, v:r => signedFor(r), h:r => `<span class="num">${eur(signedFor(r))}</span>` }, { k:"_nb", l:"Entreprises", n:1, v:r => all("opp").filter(x => x.porteur === r.id).length, h:r => nb(all("opp").filter(x => x.porteur === r.id).length) });
   if (o === "entreprise") c.push({ k:"_op", l:"Opportunités", n:1, v:r => all("opp").filter(x => x.entreprise === r.id).length, h:r => nb(all("opp").filter(x => x.entreprise === r.id).length) });
   if (o === "contrat") c.push({ k:"_cp", l:"Contreparties", v:r => cc(r).nbCp, h:r => { const k = cc(r); return k.nbCp ? `${k.livrees}/${k.nbCp} livrées` : "—"; } });
@@ -826,10 +826,10 @@ function vList(o) {
   if (kan) { const qq = norm(S.ui.q.opp || ""); rows = all("opp").filter(r => !stageOf(r.etape).closed && (!qq || norm(rname(r) + " " + rname(get(r.porteur)) + " " + rname(get(r.entreprise))).includes(qq))); }
   const sum = o === "opp" ? ` · ${eur(rows.reduce((s, r) => s + (+r.montant || 0), 0))}` : o === "contrat" ? ` · ${eur(rows.reduce((s, r) => s + (+r.montant || 0), 0))}` : "";
   return `<div class="lhead"><div class="t">${oico(o, 38)}<div><div class="tiny" style="text-transform:uppercase;font-weight:600;letter-spacing:.04em">${OBJ[o].lp}</div>
-      ${kan ? `<h1 style="font-size:24px">Pipeline</h1>` : `<select data-view="${o}" aria-label="Vue de liste">${VIEWS[o].map(([l], i) => `<option value="${i}"${(S.ui.view[o] || 0) === i ? " selected" : ""}>${l}</option>`).join("")}</select>`}
+      ${kan ? `<h1 style="font-size:24px">Cycle de vente</h1>` : `<select data-view="${o}" aria-label="Vue de liste">${VIEWS[o].map(([l], i) => `<option value="${i}"${(S.ui.view[o] || 0) === i ? " selected" : ""}>${l}</option>`).join("")}</select>`}
       <div class="tiny">${rows.length} élément${rows.length > 1 ? "s" : ""}${sum}</div></div></div>
     <label class="lsearch" style="color:var(--tx3)">${svg("search", 2)}<input type="search" data-lq="${o}" placeholder="Rechercher dans la liste" value="${esc(S.ui.q[o] || "")}" autocomplete="off"></label>
-    ${o === "opp" ? `<div class="seg"><button data-kan="0" aria-pressed="${!kan}" title="Tableau">${svg("table")}</button><button data-kan="1" aria-pressed="${kan}" title="Kanban">${svg("kanban")}</button></div>` : ""}
+    ${o === "opp" ? `<div class="seg"><button data-kan="0" aria-pressed="${!kan}" title="Vue en tableau">${svg("table")}</button><button data-kan="1" aria-pressed="${kan}" title="Vue en colonnes (étapes du cycle de vente)">${svg("kanban")}</button></div>` : ""}
     <button class="btn" data-csv="${o}" title="Exporter la vue en CSV">${svg("download")}<span>CSV</span></button>
     <button class="btn pri" data-new="${o}">${svg("plus", 2.2)}Nouveau</button></div>
   ${kan ? vKanban(rows) : rows.length ? `
@@ -944,7 +944,7 @@ function relatedHtml(r) {
     const opps = all("opp").filter(x => x.porteur === r.id).sort((a, b) => STAGES.findIndex(s => s.v === a.etape) - STAGES.findIndex(s => s.v === b.etape));
     const sig = signedFor(r), ob = +r.objectif || 0, pond = opps.filter(isOpen).reduce((s, x) => s + oc(x).pondere, 0);
     return `<div class="card"><div class="ch"><h2>${oico("entreprise", 24)} Entreprises rattachées (${opps.length})</h2><button class="btn sm" data-new="opp" data-pre="${esc(JSON.stringify({ porteur:r.id }))}">Ajouter</button></div><div class="cb">
-      ${ob ? `<div class="kv"><span>Objectif de financement</span><b>${eur(ob)}</b></div><div class="progress" style="margin:4px 0 6px"><i style="width:${Math.min(100, sig / ob * 100)}%;background:var(--green)"></i><i style="width:${Math.min(100 - Math.min(100, sig / ob * 100), pond / ob * 100)}%;background:color-mix(in srgb,var(--green) 40%,transparent)"></i></div><div class="tiny" style="margin-bottom:10px">Signé ${eur(sig)} (${pct(sig / ob)}) · pipeline pondéré ${eur(pond)} · reste à trouver ${eur(Math.max(0, ob - sig))}</div>` : ""}
+      ${ob ? `<div class="kv"><span>Objectif de financement</span><b>${eur(ob)}</b></div><div class="progress" style="margin:4px 0 6px"><i style="width:${Math.min(100, sig / ob * 100)}%;background:var(--green)"></i><i style="width:${Math.min(100 - Math.min(100, sig / ob * 100), pond / ob * 100)}%;background:color-mix(in srgb,var(--green) 40%,transparent)"></i></div><div class="tiny" style="margin-bottom:10px">Signé ${eur(sig)} (${pct(sig / ob)}) · ventes probables ${eur(pond)} · reste à trouver ${eur(Math.max(0, ob - sig))}</div>` : ""}
       ${opps.length ? stageBar(opps) + `<div class="rel"><table><thead><tr><th>Entreprise</th><th class="hm">Type</th><th class="n">Montant</th><th>Étape</th><th class="hm">Relance</th></tr></thead><tbody>${opps.map(x => `<tr data-href="#/r/${x.id}"><td><b>${esc(get(x.entreprise)?.nom || "—")}</b><div class="tiny">${esc(x.prochaine || "")}</div></td><td class="hm">${esc(x.type || "")}</td><td class="n num">${eur(x.montant || 0)}</td><td>${pill(x.etape, stageOf(x.etape).c)}</td><td class="hm ${isOpen(x) && x.relance && x.relance < t ? "late" : ""}">${dfr(x.relance)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">Aucune entreprise rattachée pour l'instant.</div>`}</div></div>
     <div class="card"><div class="ch"><h2>${oico("contrat", 24)} Contrats et contreparties</h2><button class="btn sm" data-new="contrat" data-pre="${esc(JSON.stringify({ porteur:r.id }))}">Ajouter</button></div><div class="cb">${contratCards(all("contrat").filter(c => c.porteur === r.id))}</div></div>
     ${contactsCard(r)}
@@ -975,7 +975,7 @@ function oppSide(r) {
     <div class="kv"><span>Montant HT</span><b>${eur(k.montant)}</b></div>${k.nature ? `<div class="kv"><span>Dotations en nature</span><b>${eur(k.nature)}</b></div>` : ""}
     <div class="kv"><span>Commission Partenarium${k.partMec === 1 ? " (forfait)" : ""}</span><b>${eur(k.com)}</b></div>
     <div class="kv"><span>Net pour le porteur</span><b>${eur(k.netPorteur)}</b></div>
-    <div class="kv"><span>Probabilité · pondéré</span><b>${pct(probaOf(r))} · ${eur(k.pondere)}</b></div>
+    <div class="kv"><span>Probabilité · montant probable</span><b>${pct(probaOf(r))} · ${eur(k.pondere)}</b></div>
     <div class="kv"><span>Coût net pour ${esc(ent?.nom || "l'entreprise")}</span><b>${eur(k.cout)}</b></div>
     <div class="kv"><span>Économie d'impôt estimée</span><b style="color:var(--green)">${eur(k.economie)}</b></div>
     <p class="tiny" style="margin:8px 0 0">Coût net calculé avec la fiscalité de la fiche entreprise (${esc(REGIMES[ent?.imposition || "is25"])}${ent?.caHT ? `, CA ${eur(ent.caHT)}` : ", CA non renseigné"}). Simulation indicative.</p></div></div>
@@ -1018,7 +1018,7 @@ function activityPanel(r) {
 }
 
 /* ═════════ RAPPORTS ═════════ */
-const REPORTS = [["pipeline", "Pipeline par étape"], ["objectifs", "Objectifs des porteurs"], ["mois", "Signé par mois"], ["secteurs", "Opportunités par secteur"], ["revenus", "Revenus Partenarium"], ["presentations", "Registre des présentations (droit de suite)"], ["contreparties", "Contreparties à livrer"], ["pertes", "Raisons des pertes"]];
+const REPORTS = [["pipeline", "Cycle de vente par étape"], ["objectifs", "Objectifs des porteurs"], ["mois", "Signé par mois"], ["secteurs", "Opportunités par secteur"], ["revenus", "Revenus Partenarium"], ["presentations", "Registre des présentations (droit de suite)"], ["contreparties", "Contreparties à livrer"], ["pertes", "Raisons des pertes"]];
 let REP_DATA = null;
 function vReports(id) {
   id = id || S.ui.report; S.ui.report = id;
@@ -1036,8 +1036,8 @@ function buildReport(id) {
   const title = (REPORTS.find(r => r[0] === id) || REPORTS[0])[1];
   if (id === "objectifs") {
     const rows = all("porteur").map(p => { const l = opps.filter(o => o.porteur === p.id), sig = signedFor(p), pond = l.filter(isOpen).reduce((s, o) => s + oc(o).pondere, 0), ob = +p.objectif || 0; return { p, sig, pond, ob, n:l.length }; }).sort((a, b) => b.sig - a.sig);
-    return { title, html:tableHtml(["Porteur", "Objectif", "Signé", "Pipeline pondéré", "Atteint", "Entreprises"], rows.map(x => ({ _href:"#/r/" + x.p.id, cells:[esc(x.p.nom), eur(x.ob), eur(x.sig), eur(x.pond), x.ob ? `<div style="display:flex;gap:8px;align-items:center;justify-content:flex-end"><span class="progress" style="width:90px"><i style="width:${Math.min(100, x.sig / x.ob * 100)}%;background:var(--green)"></i></span>${pct(x.sig / x.ob)}</div>` : "—", nb(x.n)] })), [1, 2, 3, 4, 5]),
-      rows:[["Porteur", "Objectif", "Signé", "Pipeline pondéré", "Entreprises"], ...rows.map(x => [x.p.nom, x.ob, x.sig, Math.round(x.pond), x.n])] };
+    return { title, html:tableHtml(["Porteur", "Objectif", "Signé", "Ventes probables", "Atteint", "Entreprises"], rows.map(x => ({ _href:"#/r/" + x.p.id, cells:[esc(x.p.nom), eur(x.ob), eur(x.sig), eur(x.pond), x.ob ? `<div style="display:flex;gap:8px;align-items:center;justify-content:flex-end"><span class="progress" style="width:90px"><i style="width:${Math.min(100, x.sig / x.ob * 100)}%;background:var(--green)"></i></span>${pct(x.sig / x.ob)}</div>` : "—", nb(x.n)] })), [1, 2, 3, 4, 5]),
+      rows:[["Porteur", "Objectif", "Signé", "Ventes probables", "Entreprises"], ...rows.map(x => [x.p.nom, x.ob, x.sig, Math.round(x.pond), x.n])] };
   }
   if (id === "mois") {
     const years = [...new Set(opps.filter(o => stageOf(o.etape).won && o.cloture).map(o => o.cloture.slice(0, 4)).concat([t.slice(0, 4)]))].sort();
@@ -1051,13 +1051,13 @@ function buildReport(id) {
   if (id === "secteurs") {
     const m = {}; opps.forEach(o => { const s = get(o.entreprise)?.secteur || "Non renseigné"; m[s] = m[s] || { n:0, open:0, won:0 }; m[s].n++; if (isOpen(o)) m[s].open += +o.montant || 0; if (stageOf(o.etape).won) m[s].won += +o.montant || 0; });
     const rows = Object.entries(m).sort((a, b) => b[1].won - a[1].won || b[1].open - a[1].open);
-    return { title, html:tableHtml(["Secteur", "Opportunités", "Pipeline ouvert", "Signé", "Taux de signature"], rows.map(([s, x]) => ({ cells:[esc(s), nb(x.n), eur(x.open), eur(x.won), pct(x.n ? opps.filter(o => (get(o.entreprise)?.secteur || "Non renseigné") === s && stageOf(o.etape).won).length / x.n : 0)] })), [1, 2, 3, 4]),
-      rows:[["Secteur", "Opportunités", "Pipeline ouvert", "Signé"], ...rows.map(([s, x]) => [s, x.n, x.open, x.won])] };
+    return { title, html:tableHtml(["Secteur", "Opportunités", "Ventes en cours", "Signé", "Taux de signature"], rows.map(([s, x]) => ({ cells:[esc(s), nb(x.n), eur(x.open), eur(x.won), pct(x.n ? opps.filter(o => (get(o.entreprise)?.secteur || "Non renseigné") === s && stageOf(o.etape).won).length / x.n : 0)] })), [1, 2, 3, 4]),
+      rows:[["Secteur", "Opportunités", "Ventes en cours", "Signé"], ...rows.map(([s, x]) => [s, x.n, x.open, x.won])] };
   }
   if (id === "revenus") {
     const cs = all("contrat").filter(c => !["Brouillon", "Résilié"].includes(c.statut)).map(c => ({ c, k:cc(c) }));
     const pipeCom = opps.filter(isOpen).reduce((s, o) => s + oc(o).comPond, 0);
-    return { title, html:`<div class="kv"><span>Revenus signés (contrats)</span><b>${eur(cs.reduce((s, x) => s + x.k.due, 0))}</b></div><div class="kv"><span>Encaissé</span><b>${eur(cs.reduce((s, x) => s + x.k.encaisse, 0))}</b></div><div class="kv"><span>Reste à encaisser</span><b>${eur(cs.reduce((s, x) => s + x.k.reste, 0))}</b></div><div class="kv"><span>Commissions pondérées du pipeline ouvert</span><b>${eur(pipeCom)}</b></div><div style="height:12px"></div>` +
+    return { title, html:`<div class="kv"><span>Revenus signés (contrats)</span><b>${eur(cs.reduce((s, x) => s + x.k.due, 0))}</b></div><div class="kv"><span>Encaissé</span><b>${eur(cs.reduce((s, x) => s + x.k.encaisse, 0))}</b></div><div class="kv"><span>Reste à encaisser</span><b>${eur(cs.reduce((s, x) => s + x.k.reste, 0))}</b></div><div class="kv"><span>Commissions probables des ventes en cours</span><b>${eur(pipeCom)}</b></div><div style="height:12px"></div>` +
       tableHtml(["Contrat", "Type", "Statut", "Revenu", "Encaissé", "Reste"], cs.map(x => ({ _href:"#/r/" + x.c.id, cells:[esc(rname(x.c)), esc(x.c.type || ""), pill(x.c.statut, pathColor("contrat", x.c.statut)), eur(x.k.due), eur(x.k.encaisse), eur(x.k.reste)] })), [3, 4, 5]),
       rows:[["Contrat", "Type", "Statut", "Revenu", "Encaissé", "Reste"], ...cs.map(x => [rname(x.c), x.c.type, x.c.statut, Math.round(x.k.due), x.k.encaisse, Math.round(x.k.reste)])], note:"Les revenus comprennent les commissions (grille), les forfaits de mécénat et les honoraires (packs, business club, activation). À rapprocher du livre des recettes." };
   }
@@ -1085,8 +1085,8 @@ function buildReport(id) {
   }
   const st = STAGES.map(s => { const l = opps.filter(o => o.etape === s.v); return { s, n:l.length, m:l.reduce((x, o) => x + (+o.montant || 0), 0), p:l.reduce((x, o) => x + oc(o).pondere, 0), c:l.reduce((x, o) => x + oc(o).com, 0) }; });
   const max = Math.max(1, ...st.map(x => x.m));
-  return { title:"Pipeline par étape", html:`<div class="bars">${st.map(x => `<div class="b"><span>${esc(x.s.v)} <span class="tiny">(${x.n})</span></span><span class="tr"><i style="width:${x.m / max * 100}%;--c:${x.s.c}"></i></span><span class="num" style="text-align:right">${eur(x.m)}</span></div>`).join("")}</div><div style="height:12px"></div>` + tableHtml(["Étape", "Nombre", "Montant", "Pondéré", "Commissions"], st.map(x => ({ cells:[pill(x.s.v, x.s.c), nb(x.n), eur(x.m), eur(x.p), eur(x.c)] })), [1, 2, 3, 4]),
-    rows:[["Étape", "Nombre", "Montant", "Pondéré", "Commissions"], ...st.map(x => [x.s.v, x.n, x.m, Math.round(x.p), Math.round(x.c)])] };
+  return { title:"Cycle de vente par étape", html:`<div class="bars">${st.map(x => `<div class="b"><span>${esc(x.s.v)} <span class="tiny">(${x.n})</span></span><span class="tr"><i style="width:${x.m / max * 100}%;--c:${x.s.c}"></i></span><span class="num" style="text-align:right">${eur(x.m)}</span></div>`).join("")}</div><div style="height:12px"></div>` + tableHtml(["Étape", "Nombre", "Montant", "Probable", "Commissions"], st.map(x => ({ cells:[pill(x.s.v, x.s.c), nb(x.n), eur(x.m), eur(x.p), eur(x.c)] })), [1, 2, 3, 4]),
+    rows:[["Étape", "Nombre", "Montant", "Probable", "Commissions"], ...st.map(x => [x.s.v, x.n, x.m, Math.round(x.p), Math.round(x.c)])] };
 }
 
 /* ═════════ PLUS (téléphone) et RÉGLAGES ═════════ */
