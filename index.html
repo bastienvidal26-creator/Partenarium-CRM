@@ -553,20 +553,30 @@ function coutNetEntretien(montant, type, ent, G, P) {
 /* Remplit un modèle de phrase « {champ} » ; un champ vide reste visible pour être complété */
 function fillTpl(tpl, vals, empty) { empty = empty === undefined ? "[…]" : empty; return String(tpl || "").replace(/\{(\w+)\}/g, (_, k) => vals && vals[k] !== undefined && vals[k] !== null && vals[k] !== "" ? String(vals[k]) : empty); }
 /* segments [[ … ]] : gardés seulement si toutes leurs variables sont remplies (ex. « il reste à régler {conditions} ; ») */
+/* Règle de forme (Bastien, 26/11/2026) : aucun tiret long ni demi-long (U+2010 à U+2015) ni signe moins U+2212, seul le tiret du clavier « - ». */
+const DASH_RE = /[\u2010-\u2015\u2212]/g;
+function noDash(s) { return typeof s === "string" ? s.replace(DASH_RE, "-") : s; }
+function hasDash(x) { if (typeof x === "string") return /[\u2010-\u2015\u2212]/.test(x); if (x && typeof x === "object") return Object.keys(x).some(k => hasDash(k) || hasDash(x[k])); return false; }
+function cleanDeep(x) {            // remplace sur place, dans un objet ou un tableau, tout tiret interdit (clés comprises)
+  if (typeof x === "string") return noDash(x);
+  if (Array.isArray(x)) { for (let i = 0; i < x.length; i++) x[i] = cleanDeep(x[i]); return x; }
+  if (x && typeof x === "object") { for (const k of Object.keys(x)) { const v = cleanDeep(x[k]), nk = noDash(k); if (nk !== k) delete x[k]; x[nk] = v; } return x; }
+  return x;
+}
 function fillTplCond(tpl, vals, empty) {
   const has = k => vals && vals[k] !== undefined && vals[k] !== null && vals[k] !== "";
   const t = String(tpl || "").replace(/\[\[([\s\S]*?)\]\]/g, (_, seg) => (seg.match(/\{(\w+)\}/g) || []).every(m => has(m.slice(1, -1))) ? seg : "");
   return fillTpl(t, vals, empty);
 }
 
-if (typeof module !== "undefined") module.exports = { TAX, GRID, mecenat, isTax, parrainage, commission, oppCalc, contratCalc, addMonths, addDays, daysBetween, ymd, parseYmd, eligMecenat, qualifPorteur, grilleTotal, grilleNiveau, grilleSuggest, packSuggere, sponsoTotal, sponsoCalc, palierOf, coutNetEntretien, fillTpl, fillTplCond };
+if (typeof module !== "undefined") module.exports = { TAX, GRID, mecenat, isTax, parrainage, commission, oppCalc, contratCalc, addMonths, addDays, daysBetween, ymd, parseYmd, eligMecenat, qualifPorteur, grilleTotal, grilleNiveau, grilleSuggest, packSuggere, sponsoTotal, sponsoCalc, palierOf, coutNetEntretien, fillTpl, fillTplCond, noDash, hasDash, cleanDeep };
 </script>
 
 <script>
 (() => {
 "use strict";
 /* ═════════ CONFIGURATION ═════════ */
-const CONFIG = { name:"Partenarium CRM", key:"partcrm", version:"1.3.0", // à garder identique à VERSION dans sw.js (partcrm-1.3.0)
+const CONFIG = { name:"Partenarium CRM", key:"partcrm", version:"1.3.1", // à garder identique à VERSION dans sw.js (partcrm-1.3.1)
   gh:{ owner:"bastienvidal26-creator", privateRepo:"partenarium-crm-perso" } };
 
 /* ═════════ outils ═════════ */
@@ -631,6 +641,7 @@ const OLD_REL = { "Prospect":"Identifié", "En discussion":"Échange réalisé",
 const OLD_P = { "À contacter":0.05, "Première approche":0.10, "Rendez-vous":0.25, "Négociation":0.60, "En cours de contractualisation":0.80 };
 function migrateItem(r) {
   if (!r || typeof r !== "object") return false;
+  if (hasDash(r)) { cleanDeep(r); migrateItem(r); return true; }      /* v1.3.1 : tirets longs remplacés par « - » (fiches, contenu des guides) */
   if (r.o === "opp" && OLD_STAGE[r.etape]) { const old = r.etape; r.etape = OLD_STAGE[old]; if (r.proba === undefined || r.proba === null || r.proba === "" || Math.abs(+r.proba - OLD_P[old]) < 1e-9) r.proba = PROBA0.opp[r.etape]; return true; }
   if (r.o === "opp" && r.etape === "Négociation" && Math.abs(+r.proba - 0.6) < 1e-9 && !r.v12) { r.proba = PROBA0.opp["Négociation"]; r.v12 = 1; return true; }
   if (r.o === "porteur" && OLD_REL[r.relation]) { r.relation = OLD_REL[r.relation]; return true; }
@@ -843,10 +854,10 @@ const store = (() => {
 const CFG0 = { grid:{ ...GRID }, tax:{ ...TAX }, objectif:16240, packDefaut:890, proba:{ opp:{}, porteur:{} } };
 const S = { items:{}, del:{}, cfg:JSON.parse(JSON.stringify(CFG0)), ui:{ sort:{}, view:{}, q:{}, kanban:matchMedia("(min-width:1024px)").matches, tab:{}, report:"pipeline", repMonth:"", repPorteur:"", repYear:"" } };
 const saveT = {};
-function save(key) { clearTimeout(saveT[key]); saveT[key] = setTimeout(() => store.set(key, S[key]), 200); }
+function save(key) { clearTimeout(saveT[key]); saveT[key] = setTimeout(() => { if (key === "cfg") cleanDeep(S.cfg); store.set(key, S[key]); }, 200); }
 function putItem(id, data) {
   if (data === null) { delete S.items[id]; S.del[id] = Date.now(); }
-  else { data.updated = Date.now(); if (!data.created) data.created = Date.now(); S.items[id] = data; delete S.del[id]; }
+  else { cleanDeep(data); data.updated = Date.now(); if (!data.created) data.created = Date.now(); S.items[id] = data; delete S.del[id]; }
   save("items"); save("del"); syncSoon(); bkSoon();
 }
 const all = o => Object.values(S.items).filter(r => r.o === o);
@@ -871,7 +882,7 @@ const cc = r => contratCalc(r, G(), P());
 const pathColor = (obj, v) => { const p = PATHS[obj]; return (p && (p[1].find(x => x.v === v) || {}).c) || "var(--gray)"; };
 const pill = (v, c) => v ? `<span class="pill" style="--c:${c}">${esc(v)}</span>` : "";
 const oico = (o, size = 30) => `<span class="oico" style="--c:${OBJ[o].c};width:${size}px;height:${size}px">${svg(OBJ[o].ic, 2)}</span>`;
-const link = r => r ? `<a href="#/r/${esc(r.id)}">${esc(rname(r))}</a>` : `<span class="muted">—</span>`;
+const link = r => r ? `<a href="#/r/${esc(r.id)}">${esc(rname(r))}</a>` : `<span class="muted">-</span>`;
 /* tout ce qui est rattaché à un enregistrement (pour la chronologie et les listes associées) */
 function related(r) {
   const ids = new Set([r.id]);
@@ -887,7 +898,7 @@ const actsFor = r => { const ids = related(r); return all("act").filter(a => ids
 
 /* ═════════ formats d'affichage ═════════ */
 function fmt(f, v, r) {
-  if (v === undefined || v === null || v === "" || (Array.isArray(v) && !v.length)) return `<span class="muted">—</span>`;
+  if (v === undefined || v === null || v === "" || (Array.isArray(v) && !v.length)) return `<span class="muted">-</span>`;
   switch (f.t) {
     case "money": return `<span class="num">${eur(v)}</span>`;
     case "pct": return pct(v);
@@ -985,7 +996,7 @@ function vHome() {
   ${!Object.keys(S.items).length ? `<div class="alert" style="--c:var(--blue);margin-top:14px"><div><b>Bienvenue dans votre CRM.</b> Commencez par créer un porteur de projet ou une entreprise avec le bouton <b>+</b>, ou chargez des données d'exemple pour découvrir l'outil : <a href="#/reglages">Réglages › Données d'exemple</a>.</div></div>` : ""}
   ${day <= 5 && all("porteur").some(p => MANDAT.includes(p.relation)) ? `<div class="alert" style="--c:var(--yellow);margin-top:14px"><div><b>Avant le 5 du mois :</b> envoyez à chaque porteur sous mandat la liste des entreprises présentées le mois dernier (preuve du droit de suite). <a href="#/rapports/presentations">Ouvrir le registre</a></div></div>` : ""}
   <div class="kpis">
-    <div class="kpi"><div class="k">Revenus signés ${year}</div><div class="v">${eur(comSign)}</div><div class="progress" style="margin:6px 0 4px"><i style="width:${Math.min(100, obj ? comSign / obj * 100 : 0)}%;background:var(--acc)"></i></div><div class="s">Objectif ${eur(obj)} · ${obj ? pct(comSign / obj) : "—"}</div></div>
+    <div class="kpi"><div class="k">Revenus signés ${year}</div><div class="v">${eur(comSign)}</div><div class="progress" style="margin:6px 0 4px"><i style="width:${Math.min(100, obj ? comSign / obj * 100 : 0)}%;background:var(--acc)"></i></div><div class="s">Objectif ${eur(obj)} · ${obj ? pct(comSign / obj) : "-"}</div></div>
     <div class="kpi"><div class="k">Ventes en cours</div><div class="v">${keur(pipe)}</div><div class="s">${open.length} opportunité${open.length > 1 ? "s" : ""}</div></div>
     <div class="kpi"><div class="k">Ventes probables</div><div class="v">${keur(pond)}</div><div class="s">ventes en cours × probabilité de chaque étape</div></div>
     <div class="kpi"><div class="k">Signé en ${year}</div><div class="v">${keur(signe)}</div><div class="s">${won.length} partenariat${won.length > 1 ? "s" : ""} pour les porteurs</div></div>
@@ -1062,7 +1073,7 @@ function cols(o) {
   if (o === "opp") c.splice(c.findIndex(x => x.k === "montant") + 1, 0, { k:"_com", l:"Commission", n:1, v:r => oc(r).com, h:r => `<span class="num">${eur(oc(r).com)}</span>` }, { k:"_pond", l:"Probable", n:1, v:r => oc(r).pondere, h:r => `<span class="num">${eur(oc(r).pondere)}</span>` });
   if (o === "porteur") c.push({ k:"_sig", l:"Signé", n:1, v:r => signedFor(r), h:r => `<span class="num">${eur(signedFor(r))}</span>` }, { k:"_nb", l:"Entreprises", n:1, v:r => all("opp").filter(x => x.porteur === r.id).length, h:r => nb(all("opp").filter(x => x.porteur === r.id).length) });
   if (o === "entreprise") c.push({ k:"_op", l:"Opportunités", n:1, v:r => all("opp").filter(x => x.entreprise === r.id).length, h:r => nb(all("opp").filter(x => x.entreprise === r.id).length) });
-  if (o === "contrat") c.push({ k:"_cp", l:"Contreparties", v:r => cc(r).nbCp, h:r => { const k = cc(r); return k.nbCp ? `${k.livrees}/${k.nbCp} livrées` : "—"; } });
+  if (o === "contrat") c.push({ k:"_cp", l:"Contreparties", v:r => cc(r).nbCp, h:r => { const k = cc(r); return k.nbCp ? `${k.livrees}/${k.nbCp} livrées` : "-"; } });
   return c;
 }
 const signedFor = p => all("opp").filter(o => o.porteur === p.id && stageOf(o.etape).won).reduce((s, o) => s + (+o.montant || 0), 0);
@@ -1149,12 +1160,12 @@ function newActions(r) {
 }
 function highlights(r) {
   const o = r.o;
-  if (o === "porteur") { const sig = signedFor(r), ob = +r.objectif || 0; return [["Type", esc(r.type || "—")], ["Discipline", esc(r.discipline || "—")], ["Ville", esc(r.ville || "—")], ["Relation", pill(r.relation || REL0, pathColor("porteur", r.relation || REL0))], ["Objectif de financement", ob ? eur(ob) : "—"], ["Signé", `${eur(sig)}${ob ? ` <span class="tiny">(${pct(sig / ob)})</span>` : ""}`]]; }
-  if (o === "entreprise") { const op = all("opp").filter(x => x.entreprise === r.id); return [["Secteur", esc(r.secteur || "—")], ["Ville", esc(r.ville || "—")], ["CA HT", r.caHT ? eur(r.caHT) : "—"], ["Imposition", esc(REGIMES[r.imposition || "is25"])], ["Opportunités", `${op.filter(isOpen).length} ouvertes · ${op.filter(x => stageOf(x.etape).won).length} signées`], ["Engagé (signé)", eur(op.filter(x => stageOf(x.etape).won).reduce((s, x) => s + (+x.montant || 0), 0))]]; }
-  if (o === "contact") return [["Rattaché à", link(get(r.compte))], ["Fonction", esc(r.fonction || "—")], ["E-mail", fmt(fdef("contact", "email"), r.email)], ["Téléphone", fmt(fdef("contact", "tel"), r.tel)], ["Rôle", esc(r.role || "—")]];
-  if (o === "opp") { const k = oc(r); return [["Entreprise", link(get(r.entreprise))], ["Porteur", link(get(r.porteur))], ["Type", esc(r.type || "—")], ["Montant HT", eur(k.montant)], ["Commission Partenarium", eur(k.com)], ["Clôture prévue", dfr(r.cloture) || "—"]]; }
-  if (o === "contrat") { const k = cc(r); return [["Type", esc(r.type || "—")], ["Porteur", link(get(r.porteur))], ["Entreprise", link(get(r.entreprise))], ["Montant HT", eur(r.montant || 0)], ["Période", r.debut || r.fin ? `${dfr(r.debut) || "?"} → ${dfr(r.fin) || "?"}` : "—"], ["Revenu Partenarium", `${eur(k.due)} <span class="tiny">(reste ${eur(k.reste)})</span>`]]; }
-  return [["Type", esc(r.type || "—")], ["Date", dfr(r.date) || "—"], ["Statut", pill(r.statut, r.statut === "Fait" ? "var(--green)" : "var(--orange)")], ["Lié à", link(get(r.lie))]];
+  if (o === "porteur") { const sig = signedFor(r), ob = +r.objectif || 0; return [["Type", esc(r.type || "-")], ["Discipline", esc(r.discipline || "-")], ["Ville", esc(r.ville || "-")], ["Relation", pill(r.relation || REL0, pathColor("porteur", r.relation || REL0))], ["Objectif de financement", ob ? eur(ob) : "-"], ["Signé", `${eur(sig)}${ob ? ` <span class="tiny">(${pct(sig / ob)})</span>` : ""}`]]; }
+  if (o === "entreprise") { const op = all("opp").filter(x => x.entreprise === r.id); return [["Secteur", esc(r.secteur || "-")], ["Ville", esc(r.ville || "-")], ["CA HT", r.caHT ? eur(r.caHT) : "-"], ["Imposition", esc(REGIMES[r.imposition || "is25"])], ["Opportunités", `${op.filter(isOpen).length} ouvertes · ${op.filter(x => stageOf(x.etape).won).length} signées`], ["Engagé (signé)", eur(op.filter(x => stageOf(x.etape).won).reduce((s, x) => s + (+x.montant || 0), 0))]]; }
+  if (o === "contact") return [["Rattaché à", link(get(r.compte))], ["Fonction", esc(r.fonction || "-")], ["E-mail", fmt(fdef("contact", "email"), r.email)], ["Téléphone", fmt(fdef("contact", "tel"), r.tel)], ["Rôle", esc(r.role || "-")]];
+  if (o === "opp") { const k = oc(r); return [["Entreprise", link(get(r.entreprise))], ["Porteur", link(get(r.porteur))], ["Type", esc(r.type || "-")], ["Montant HT", eur(k.montant)], ["Commission Partenarium", eur(k.com)], ["Clôture prévue", dfr(r.cloture) || "-"]]; }
+  if (o === "contrat") { const k = cc(r); return [["Type", esc(r.type || "-")], ["Porteur", link(get(r.porteur))], ["Entreprise", link(get(r.entreprise))], ["Montant HT", eur(r.montant || 0)], ["Période", r.debut || r.fin ? `${dfr(r.debut) || "?"} → ${dfr(r.fin) || "?"}` : "-"], ["Revenu Partenarium", `${eur(k.due)} <span class="tiny">(reste ${eur(k.reste)})</span>`]]; }
+  return [["Type", esc(r.type || "-")], ["Date", dfr(r.date) || "-"], ["Statut", pill(r.statut, r.statut === "Fait" ? "var(--green)" : "var(--orange)")], ["Lié à", link(get(r.lie))]];
 }
 function pathHtml(r) {
   const p = PATHS[r.o]; if (!p) return "";
@@ -1206,7 +1217,7 @@ function relatedHtml(r) {
     const sig = signedFor(r), ob = +r.objectif || 0, pond = opps.filter(isOpen).reduce((s, x) => s + oc(x).pondere, 0);
     return `<div class="card"><div class="ch"><h2>${oico("entreprise", 24)} Entreprises rattachées (${opps.length})</h2><button class="btn sm" data-new="opp" data-pre="${esc(JSON.stringify({ porteur:r.id }))}">Ajouter</button></div><div class="cb">
       ${ob ? `<div class="kv"><span>Objectif de financement</span><b>${eur(ob)}</b></div><div class="progress" style="margin:4px 0 6px"><i style="width:${Math.min(100, sig / ob * 100)}%;background:var(--green)"></i><i style="width:${Math.min(100 - Math.min(100, sig / ob * 100), pond / ob * 100)}%;background:color-mix(in srgb,var(--green) 40%,transparent)"></i></div><div class="tiny" style="margin-bottom:10px">Signé ${eur(sig)} (${pct(sig / ob)}) · ventes probables ${eur(pond)} · reste à trouver ${eur(Math.max(0, ob - sig))}</div>` : ""}
-      ${opps.length ? stageBar(opps) + `<div class="rel"><table><thead><tr><th>Entreprise</th><th class="hm">Type</th><th class="n">Montant</th><th>Étape</th><th class="hm">Relance</th></tr></thead><tbody>${opps.map(x => `<tr data-href="#/r/${x.id}"><td><b>${esc(get(x.entreprise)?.nom || "—")}</b><div class="tiny">${esc(x.prochaine || "")}</div></td><td class="hm">${esc(x.type || "")}</td><td class="n num">${eur(x.montant || 0)}</td><td>${pill(x.etape, stageOf(x.etape).c)}</td><td class="hm ${isOpen(x) && x.relance && x.relance < t ? "late" : ""}">${dfr(x.relance)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">Aucune entreprise rattachée pour l'instant.</div>`}</div></div>
+      ${opps.length ? stageBar(opps) + `<div class="rel"><table><thead><tr><th>Entreprise</th><th class="hm">Type</th><th class="n">Montant</th><th>Étape</th><th class="hm">Relance</th></tr></thead><tbody>${opps.map(x => `<tr data-href="#/r/${x.id}"><td><b>${esc(get(x.entreprise)?.nom || "-")}</b><div class="tiny">${esc(x.prochaine || "")}</div></td><td class="hm">${esc(x.type || "")}</td><td class="n num">${eur(x.montant || 0)}</td><td>${pill(x.etape, stageOf(x.etape).c)}</td><td class="hm ${isOpen(x) && x.relance && x.relance < t ? "late" : ""}">${dfr(x.relance)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">Aucune entreprise rattachée pour l'instant.</div>`}</div></div>
     <div class="card"><div class="ch"><h2>${oico("contrat", 24)} Contrats et contreparties</h2><button class="btn sm" data-new="contrat" data-pre="${esc(JSON.stringify({ porteur:r.id }))}">Ajouter</button></div><div class="cb">${contratCards(all("contrat").filter(c => c.porteur === r.id))}</div></div>
     ${entretiensCard(r)}
     ${contactsCard(r)}
@@ -1215,7 +1226,7 @@ function relatedHtml(r) {
   if (o === "entreprise") {
     const opps = all("opp").filter(x => x.entreprise === r.id);
     return `<div class="card"><div class="ch"><h2>${oico("porteur", 24)} Porteurs de projet rattachés (${opps.length})</h2><button class="btn sm" data-new="opp" data-pre="${esc(JSON.stringify({ entreprise:r.id }))}">Ajouter</button></div><div class="cb">
-      ${opps.length ? stageBar(opps) + `<div class="rel"><table><thead><tr><th>Porteur</th><th class="hm">Type</th><th class="n">Montant</th><th class="n hm">Coût net</th><th>Étape</th></tr></thead><tbody>${opps.map(x => `<tr data-href="#/r/${x.id}"><td><b>${esc(get(x.porteur)?.nom || "—")}</b></td><td class="hm">${esc(x.type || "")}</td><td class="n num">${eur(x.montant || 0)}</td><td class="n num hm">${eur(oc(x).cout)}</td><td>${pill(x.etape, stageOf(x.etape).c)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">Aucun porteur rattaché pour l'instant.</div>`}</div></div>
+      ${opps.length ? stageBar(opps) + `<div class="rel"><table><thead><tr><th>Porteur</th><th class="hm">Type</th><th class="n">Montant</th><th class="n hm">Coût net</th><th>Étape</th></tr></thead><tbody>${opps.map(x => `<tr data-href="#/r/${x.id}"><td><b>${esc(get(x.porteur)?.nom || "-")}</b></td><td class="hm">${esc(x.type || "")}</td><td class="n num">${eur(x.montant || 0)}</td><td class="n num hm">${eur(oc(x).cout)}</td><td>${pill(x.etape, stageOf(x.etape).c)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">Aucun porteur rattaché pour l'instant.</div>`}</div></div>
     ${entretiensCard(r)}
     <div class="card"><div class="ch"><h2>${oico("contrat", 24)} Contrats et contreparties</h2></div><div class="cb">${contratCards(all("contrat").filter(c => c.entreprise === r.id))}</div></div>
     ${contactsCard(r)}`;
@@ -1300,7 +1311,7 @@ function buildReport(id) {
   const title = (REPORTS.find(r => r[0] === id) || REPORTS[0])[1];
   if (id === "objectifs") {
     const rows = all("porteur").map(p => { const l = opps.filter(o => o.porteur === p.id), sig = signedFor(p), pond = l.filter(isOpen).reduce((s, o) => s + oc(o).pondere, 0), ob = +p.objectif || 0; return { p, sig, pond, ob, n:l.length }; }).sort((a, b) => b.sig - a.sig);
-    return { title, html:tableHtml(["Porteur", "Objectif", "Signé", "Ventes probables", "Atteint", "Entreprises"], rows.map(x => ({ _href:"#/r/" + x.p.id, cells:[esc(x.p.nom), eur(x.ob), eur(x.sig), eur(x.pond), x.ob ? `<div style="display:flex;gap:8px;align-items:center;justify-content:flex-end"><span class="progress" style="width:90px"><i style="width:${Math.min(100, x.sig / x.ob * 100)}%;background:var(--green)"></i></span>${pct(x.sig / x.ob)}</div>` : "—", nb(x.n)] })), [1, 2, 3, 4, 5]),
+    return { title, html:tableHtml(["Porteur", "Objectif", "Signé", "Ventes probables", "Atteint", "Entreprises"], rows.map(x => ({ _href:"#/r/" + x.p.id, cells:[esc(x.p.nom), eur(x.ob), eur(x.sig), eur(x.pond), x.ob ? `<div style="display:flex;gap:8px;align-items:center;justify-content:flex-end"><span class="progress" style="width:90px"><i style="width:${Math.min(100, x.sig / x.ob * 100)}%;background:var(--green)"></i></span>${pct(x.sig / x.ob)}</div>` : "-", nb(x.n)] })), [1, 2, 3, 4, 5]),
       rows:[["Porteur", "Objectif", "Signé", "Ventes probables", "Entreprises"], ...rows.map(x => [x.p.nom, x.ob, x.sig, Math.round(x.pond), x.n])] };
   }
   if (id === "mois") {
@@ -1332,7 +1343,7 @@ function buildReport(id) {
     const ports = all("porteur").sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
     const byP = {}; l.forEach(o => (byP[o.porteur] = byP[o.porteur] || []).push(o));
     const moLab = parseYmd(mo + "-01") ? parseYmd(mo + "-01").toLocaleDateString("fr-FR", { month:"long", year:"numeric" }) : mo;
-    const copy = Object.entries(byP).map(([pid, os]) => `Objet : Entreprises présentées en ${moLab} — ${get(pid)?.nom || ""}\n\nBonjour,\n\nConformément à notre mandat, voici la liste des entreprises que Partenarium vous a présentées en ${moLab} :\n${os.map(o => { const e = get(o.entreprise), c = get(o.contact); return `- ${e?.nom || "?"}${e?.siren ? ` (SIREN ${e.siren})` : ""}${c ? `, interlocuteur : ${rname(c)}` : ""}, présentée le ${dfr(o.presente)}${o.montant ? `, proposition de ${eur(o.montant)} HT` : ""}`; }).join("\n")}\n\nMerci de m'accuser réception de ce message.\n\nBastien Vidal — Partenarium`).join("\n\n——————\n\n");
+    const copy = Object.entries(byP).map(([pid, os]) => `Objet : Entreprises présentées en ${moLab} - ${get(pid)?.nom || ""}\n\nBonjour,\n\nConformément à notre mandat, voici la liste des entreprises que Partenarium vous a présentées en ${moLab} :\n${os.map(o => { const e = get(o.entreprise), c = get(o.contact); return `- ${e?.nom || "?"}${e?.siren ? ` (SIREN ${e.siren})` : ""}${c ? `, interlocuteur : ${rname(c)}` : ""}, présentée le ${dfr(o.presente)}${o.montant ? `, proposition de ${eur(o.montant)} HT` : ""}`; }).join("\n")}\n\nMerci de m'accuser réception de ce message.\n\nBastien Vidal - Partenarium`).join("\n\n------\n\n");
     return { title, copy, filters:`<div class="lhead" style="gap:10px"><label class="small muted">Mois <input class="inp" type="month" data-repmonth="1" value="${esc(mo)}" style="width:auto;display:inline-block"></label><label class="small muted">Porteur <select class="inp" data-repporteur="1" style="width:auto;display:inline-block"><option value="">Tous</option>${ports.map(p => `<option value="${p.id}"${p.id === po ? " selected" : ""}>${esc(p.nom)}</option>`).join("")}</select></label></div>`,
       html:tableHtml(["Porteur", "Entreprise", "SIREN", "Interlocuteur", "Présentée le", "Proposition HT", "Étape"], l.map(o => { const e = get(o.entreprise), c = get(o.contact); return { _href:"#/r/" + o.id, cells:[esc(get(o.porteur)?.nom || ""), esc(e?.nom || ""), esc(e?.siren || ""), esc(c ? rname(c) : ""), dfr(o.presente), eur(o.montant || 0), pill(o.etape, stageOf(o.etape).c)] }; }), [5]),
       rows:[["Porteur", "Entreprise", "SIREN", "Interlocuteur", "Présentée le", "Proposition HT"], ...l.map(o => { const e = get(o.entreprise), c = get(o.contact); return [get(o.porteur)?.nom || "", e?.nom || "", e?.siren || "", c ? rname(c) : "", o.presente, +o.montant || 0]; })],
@@ -1399,7 +1410,7 @@ function vSettings() {
     <h3 class="tiny" style="text-transform:uppercase;font-weight:600;margin:16px 0 6px">Import CSV</h3>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><select class="inp" id="csvobj" style="width:auto">${["entreprise", "porteur", "contact"].map(o => `<option value="${o}">${OBJ[o].lp}</option>`).join("")}</select><label class="btn filebtn" tabindex="0" role="button">Choisir un fichier CSV<input type="file" accept=".csv,text/csv" class="vh-file" id="csvfile" tabindex="-1"></label></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">${["porteur", "entreprise", "contact"].map(o => `<button class="btn sm" data-csvtpl="${o}">${svg("download")}Modèle ${OBJ[o].lp.toLowerCase()}</button>`).join("")}</div>
-    <p class="tiny">Séparateur ; ou , — la première ligne contient les libellés des colonnes, ceux des modèles (les colonnes inconnues sont ignorées et signalées). Importez les porteurs et les entreprises <b>avant</b> les contacts : la colonne « Rattaché à » d'un contact est reconnue par le n° RNA, le SIREN ou le nom exact. Dates au format JJ/MM/AAAA. Les doublons (même SIREN, même n° RNA ou même nom) sont ignorés.</p>${importReportHtml()}
+    <p class="tiny">Séparateur ; ou , - la première ligne contient les libellés des colonnes, ceux des modèles (les colonnes inconnues sont ignorées et signalées). Importez les porteurs et les entreprises <b>avant</b> les contacts : la colonne « Rattaché à » d'un contact est reconnue par le n° RNA, le SIREN ou le nom exact. Dates au format JJ/MM/AAAA. Les doublons (même SIREN, même n° RNA ou même nom) sont ignorés.</p>${importReportHtml()}
     <h3 class="tiny" style="text-transform:uppercase;font-weight:600;margin:16px 0 6px">Données d'exemple</h3>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="demo-load">Charger des exemples</button>${demo ? `<button class="btn danger" id="demo-del">Supprimer les ${demo} exemples</button>` : ""}</div>
     <p class="tiny">Porteurs et entreprises fictifs, marqués « (exemple) », pour découvrir l'outil.</p>
@@ -1410,7 +1421,7 @@ function vSettings() {
     <input class="inp" type="password" id="tok" placeholder="Jeton GitHub (github_pat_…)" value="${esc(GH.token)}" autocomplete="off">
     <div style="display:flex;gap:8px;margin-top:8px"><button class="btn" id="savetok">Enregistrer le jeton</button><button class="btn" id="syncnow">Synchroniser</button></div>
     <p class="tiny">${esc(st)}</p></div></div>
-  <div class="card"><div class="ch"><h2>Mentions légales</h2></div><div class="cb small" style="line-height:20px">Éditeur : Bastien Vidal EI – Partenarium, SIREN 132 437 542, 2 avenue du Docteur Jacques Arnaud, A24, 74300 Cluses · contact@partenarium.fr. Directeur de la publication : Bastien Vidal.<br>Hébergeur : GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis.<br>Aucune donnée n'est collectée par ce site : les données saisies restent sur l'appareil (et dans le dépôt privé si la synchronisation est activée).</div></div>
+  <div class="card"><div class="ch"><h2>Mentions légales</h2></div><div class="cb small" style="line-height:20px">Éditeur : Bastien Vidal EI - Partenarium, SIREN 132 437 542, 2 avenue du Docteur Jacques Arnaud, A24, 74300 Cluses · contact@partenarium.fr. Directeur de la publication : Bastien Vidal.<br>Hébergeur : GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis.<br>Aucune donnée n'est collectée par ce site : les données saisies restent sur l'appareil (et dans le dépôt privé si la synchronisation est activée).</div></div>
   <p class="tiny">${esc(CONFIG.name)} · version ${esc(CONFIG.version)} · Police Inter (licence SIL OFL)</p>
   </div></div>`;
 }
@@ -1427,7 +1438,7 @@ function openForm(o, id, pre) {
 function refOptions(f, val) {
   const groups = f.ref.map(o => [o, all(o).sort((a, b) => rname(a).localeCompare(rname(b), "fr"))]);
   const opts = g => g[1].map(r => `<option value="${r.id}"${r.id === val ? " selected" : ""}>${esc(rname(r))}</option>`).join("");
-  return `<option value="">—</option>` + (groups.length > 1 ? groups.filter(g => g[1].length).map(g => `<optgroup label="${OBJ[g[0]].lp}">${opts(g)}</optgroup>`).join("") : opts(groups[0]));
+  return `<option value="">-</option>` + (groups.length > 1 ? groups.filter(g => g[1].length).map(g => `<optgroup label="${OBJ[g[0]].lp}">${opts(g)}</optgroup>`).join("") : opts(groups[0]));
 }
 function inputHtml(f, v) {
   const id = "f-" + f.k, n = `name="${f.k}" id="${id}"`;
@@ -1437,7 +1448,7 @@ function inputHtml(f, v) {
     case "pct": return `<input ${n} inputmode="decimal" autocomplete="off" placeholder="%" value="${v === undefined || v === null || v === "" ? "" : String(Math.round(v * 1000) / 10).replace(".", ",")}">`;
     case "date": return `<input type="date" ${n} value="${esc(v || "")}">`;
     case "bool": return `<input type="checkbox" class="switch" ${n} ${v ? "checked" : ""}>`;
-    case "select": return `<select ${n}><option value="">—</option>${f.o.map(x => `<option value="${esc(x)}"${String(v) === String(x) ? " selected" : ""}>${esc(f.lab ? f.lab[x] || x : x)}</option>`).join("")}</select>`;
+    case "select": return `<select ${n}><option value="">-</option>${f.o.map(x => `<option value="${esc(x)}"${String(v) === String(x) ? " selected" : ""}>${esc(f.lab ? f.lab[x] || x : x)}</option>`).join("")}</select>`;
     case "multi": return `<div class="multi">${f.o.map(x => `<label><input type="checkbox" name="${f.k}" value="${esc(x)}" ${(v || []).includes(x) ? "checked" : ""}>${esc(x)}</label>`).join("")}</div>`;
     case "ref": return `<select ${n}>${refOptions(f, v)}</select>`;
     case "image": return `<div style="display:flex;gap:10px;align-items:center"><img id="pv-${f.k}" src="${esc(v || "")}" alt="" style="width:56px;height:56px;border-radius:10px;object-fit:contain;background:#fff" ${v ? "" : "hidden"}><label class="btn sm filebtn" tabindex="0" role="button">${v ? "Changer" : "Choisir une image"}<input type="file" accept="image/*" class="vh-file" data-img="${f.k}" tabindex="-1"></label>${v ? `<button type="button" class="btn sm danger" data-noimg="${f.k}">Retirer</button>` : ""}</div>`;
@@ -1512,7 +1523,7 @@ function nextNumero(r) {
 function askLoss(id, k) {
   const r = get(id), lk = LOSS_K[r.o], f = fdef(r.o, lk);
   $("#modal").innerHTML = `<form class="dlg" id="lossform" data-id="${esc(id)}" data-k="${esc(k)}" style="max-width:480px" novalidate><header><h2>Motif de la perte</h2><button type="button" class="iconbtn" data-close="1" aria-label="Fermer">✕</button></header>
-    <div class="db"><div class="fld" style="margin:12px 0"><label for="lossmotif">Pourquoi passer « ${esc(rname(r))} » à « Perdu » ? <i>*</i></label><select id="lossmotif" name="motif"><option value="">—</option>${f.o.map(x => `<option${r[lk] === x ? " selected" : ""}>${esc(x)}</option>`).join("")}</select><div class="help">Le motif est obligatoire : il alimente le rapport « Raisons des pertes ».</div></div><div id="ferr" class="ferr"></div></div>
+    <div class="db"><div class="fld" style="margin:12px 0"><label for="lossmotif">Pourquoi passer « ${esc(rname(r))} » à « Perdu » ? <i>*</i></label><select id="lossmotif" name="motif"><option value="">-</option>${f.o.map(x => `<option${r[lk] === x ? " selected" : ""}>${esc(x)}</option>`).join("")}</select><div class="help">Le motif est obligatoire : il alimente le rapport « Raisons des pertes ».</div></div><div id="ferr" class="ferr"></div></div>
     <footer><button type="button" class="btn" data-close="1">Annuler</button><button class="btn pri">Passer à « Perdu »</button></footer></form>`;
   $("#modal").hidden = false; setTimeout(() => $("#lossmotif")?.focus(), 30);
 }
@@ -1836,12 +1847,12 @@ function fieldHtml(f) {
     }
     case "offre": {
       const cat = (GC().catalogue || []).filter(c => c.pour === pubOf(ENT.r)), arg = v && GC().argumentaires?.[v];
-      return `<div class="fld">${lab}<select id="${id}" data-ek="${f.k}"><option value="">—</option>${cat.map(c => `<option value="${esc(c.code)}"${v === c.code ? " selected" : ""}>${esc(c.code)} · ${esc(c.nom)} (${esc(c.prix)})</option>`).join("")}</select></div>
+      return `<div class="fld">${lab}<select id="${id}" data-ek="${f.k}"><option value="">-</option>${cat.map(c => `<option value="${esc(c.code)}"${v === c.code ? " selected" : ""}>${esc(c.code)} · ${esc(c.nom)} (${esc(c.prix)})</option>`).join("")}</select></div>
         ${arg ? `<div class="fld wide"><div class="alert" style="--c:var(--blue)"><div><b>Promesse :</b> « ${esc(arg.promesse)} »${(arg.benefices || []).length ? `<ul style="margin:6px 0 0;padding-left:18px">${arg.benefices.map(b => `<li>${esc(b)}</li>`).join("")}</ul>` : ""}${arg.note ? `<p class="tiny" style="margin:6px 0 0">${esc(arg.note)}</p>` : ""}</div></div></div>` : ""}`;
     }
     case "persona": {
       const ps = (GC().personas || []).filter(p => p.pour === pubOf(ENT.r)), cur = ps.find(p => p.k === v);
-      return `<div class="fld wide">${lab}<select id="${id}" data-ek="${f.k}"><option value="">—</option>${ps.map(p => `<option value="${esc(p.k)}"${v === p.k ? " selected" : ""}>${esc(p.k)}. ${esc(p.titre)}</option>`).join("")}</select>
+      return `<div class="fld wide">${lab}<select id="${id}" data-ek="${f.k}"><option value="">-</option>${ps.map(p => `<option value="${esc(p.k)}"${v === p.k ? " selected" : ""}>${esc(p.k)}. ${esc(p.titre)}</option>`).join("")}</select>
         ${cur ? `<div class="persona">${[["Profil type", cur.profil], ["Problème principal", cur.probleme], ["Ce qu'il veut", cur.veut], ["Décideur", cur.decideur], ["Offres adaptées", cur.offres]].filter(x => x[1]).map(([k, x]) => `<div><span class="tiny">${k}</span><span class="small">${esc(x)}</span></div>`).join("")}${cur.ton ? `<p class="tiny" style="margin:6px 0 0">${esc(cur.ton)}</p>` : ""}</div>` : ""}</div>`;
     }
     default: return `<div class="fld${wide}">${lab}<input id="${id}" data-ek="${f.k}" autocomplete="off" value="${esc(v ?? "")}"></div>`;
@@ -1856,14 +1867,14 @@ const subOfK = (sp, k) => (sp.criteres || []).flatMap(c => c.sous || []).find(s 
 const palierColor = (tot, sp) => tot >= 65 ? "var(--green)" : tot >= (sp.seuil ?? 50) ? "var(--orange)" : "var(--red)";
 function sponsoTotHtml() {
   const sp = GC().sponsorabilite || {}, notes = ENT.r.rep.sponso || {}, seuil = sp.seuil ?? 50, any = Object.keys(notes).some(k => notes[k] !== null && notes[k] !== "" && notes[k] !== undefined);
-  if (!(sp.criteres || [])[0]?.sous) { const tot = sponsoTotal(notes); return `<b id="e-sponso">${any ? `${pill(`${tot}/100`, tot >= seuil ? "var(--green)" : "var(--red)")}${tot < seuil ? ` <span class="small muted">sous ${seuil} : ${esc(sp.sousSeuil || "pas de proposition")}</span>` : ""}` : "—"}</b>`; }
-  if (!any) return `<div id="e-sponso" class="sc-sum"><div class="kv"><span>Total</span><b>—</b></div></div>`;
+  if (!(sp.criteres || [])[0]?.sous) { const tot = sponsoTotal(notes); return `<b id="e-sponso">${any ? `${pill(`${tot}/100`, tot >= seuil ? "var(--green)" : "var(--red)")}${tot < seuil ? ` <span class="small muted">sous ${seuil} : ${esc(sp.sousSeuil || "pas de proposition")}</span>` : ""}` : "-"}</b>`; }
+  if (!any) return `<div id="e-sponso" class="sc-sum"><div class="kv"><span>Total</span><b>-</b></div></div>`;
   const d = sponsoCalc(notes, sp), lab = k => esc(subOfK(sp, k)?.libelle || k);
   return `<div id="e-sponso" class="sc-sum"><div class="kv"><span>Total</span><b>${pill(`${d.total}/100`, palierColor(d.total, sp))} ${d.palier ? `<span class="small">${esc(d.palier.libelle)}</span>` : ""}</b></div>
     ${d.palier?.suite ? `<p class="small" style="margin:4px 0">${esc(d.palier.suite)}</p>` : ""}
     ${d.alertes.length ? `<div class="alert" style="--c:var(--red)"><div><b>Point bloquant :</b> ${d.alertes.map(k => { const c = sp.criteres.find(x => x.k === k); return `${esc(c.libelle)} à ${d.crit[k]}/20`; }).join(" · ")} (sous ${sp.alerteCritere ?? 6}/20, à signaler même si le total dépasse ${seuil}).</div></div>` : ""}
     ${d.vides ? `<div class="alert" style="--c:var(--orange)"><div>${d.vides} sous-critère${d.vides > 1 ? "s" : ""} non noté${d.vides > 1 ? "s" : ""} : compté${d.vides > 1 ? "s" : ""} 0 dans le total.</div></div>` : ""}
-    <div class="sc-fm"><div><span class="tiny up">Forces</span>${d.forces.map(k => `<div class="small">✓ ${lab(k)}</div>`).join("") || `<div class="small muted">—</div>`}</div><div><span class="tiny up">Manques</span>${d.manques.map(k => `<div class="small">• ${lab(k)}</div>`).join("") || `<div class="small muted">—</div>`}</div></div></div>`;
+    <div class="sc-fm"><div><span class="tiny up">Forces</span>${d.forces.map(k => `<div class="small">✓ ${lab(k)}</div>`).join("") || `<div class="small muted">-</div>`}</div><div><span class="tiny up">Manques</span>${d.manques.map(k => `<div class="small">• ${lab(k)}</div>`).join("") || `<div class="small muted">-</div>`}</div></div></div>`;
 }
 function entLive() {          // met à jour les blocs calculés sans redessiner l'écran (le curseur reste en place)
   if (!ENT) return;
@@ -1943,22 +1954,22 @@ function entProposals(r) {
   if (compte) gFields(r.guide).filter(f => f.cible).forEach(f => {
     if (out.some(x => x.k === f.cible)) return;
     const v = rep[f.k]; if (isEmptyV(v) || (v === false && isEmptyV(compte[f.cible]))) return;
-    if (f.cible === "objectifs") { if (!(compte.objectifs || "").includes(v)) out.push({ kind:"fiche", id:compte.id, k:"objectifs", lab:"Objectifs (critère de réussite)", from:compte.objectifs ? "…" : "—", to:`ajouter « ${v} »`, val:[compte.objectifs, `Critère de réussite (entretien du ${dfr(r.date)}) : ${v}`].filter(Boolean).join("\n") }); return; }
+    if (f.cible === "objectifs") { if (!(compte.objectifs || "").includes(v)) out.push({ kind:"fiche", id:compte.id, k:"objectifs", lab:"Objectifs (critère de réussite)", from:compte.objectifs ? "…" : "-", to:`ajouter « ${v} »`, val:[compte.objectifs, `Critère de réussite (entretien du ${dfr(r.date)}) : ${v}`].filter(Boolean).join("\n") }); return; }
     const nv = guideToFiche(f, v); if (nv === undefined || nv === null || nv === "") return;
     if (f.cible === "imposition" && compte.imposition === "ismix" && nv === "is15") return;
     if (String(compte[f.cible] ?? "") === String(nv)) return;
     const fd = fdef(compte.o, f.cible); if (!fd) return;
-    out.push({ kind:"fiche", id:compte.id, k:f.cible, lab:fd.l, from:isEmptyV(compte[f.cible]) ? "—" : stripTags(fmt(fd, compte[f.cible], compte)), to:stripTags(fmt(fd, nv, compte)), val:nv });
+    out.push({ kind:"fiche", id:compte.id, k:f.cible, lab:fd.l, from:isEmptyV(compte[f.cible]) ? "-" : stripTags(fmt(fd, compte[f.cible], compte)), to:stripTags(fmt(fd, nv, compte)), val:nv });
   });
   if (compte && r.guide === "A" && sc.sponso !== null && sc.sponso !== undefined) {
     const dt = rep.sponsoDate || r.date;
-    if (compte.scoreSpon !== sc.sponso || compte.scoreDate !== dt) out.push({ kind:"fiche", id:compte.id, k:"scoreSpon", lab:"Score de sponsorabilité", from:compte.scoreSpon !== undefined && compte.scoreSpon !== null && compte.scoreSpon !== "" ? `${compte.scoreSpon}/100${compte.scoreDate ? ` (${dfr(compte.scoreDate)})` : ""}` : "—", to:`${sc.sponso}/100 (${dfr(dt)})`, val:sc.sponso, also:{ scoreDate:dt } });
+    if (compte.scoreSpon !== sc.sponso || compte.scoreDate !== dt) out.push({ kind:"fiche", id:compte.id, k:"scoreSpon", lab:"Score de sponsorabilité", from:compte.scoreSpon !== undefined && compte.scoreSpon !== null && compte.scoreSpon !== "" ? `${compte.scoreSpon}/100${compte.scoreDate ? ` (${dfr(compte.scoreDate)})` : ""}` : "-", to:`${sc.sponso}/100 (${dfr(dt)})`, val:sc.sponso, also:{ scoreDate:dt } });
   }
   if (compte && sc.elig) {
     const map = { "Probable":"Probable (à confirmer)", "Non":"Non", "À vérifier":"À vérifier" }, nv = map[sc.elig], cur = compte.mecenat || "À vérifier";
     if (nv !== cur && (["À vérifier", ""].includes(cur) || sc.elig === "Non" || (cur === "Probable (à confirmer)" && sc.elig !== "À vérifier"))) out.push({ kind:"fiche", id:compte.id, k:"mecenat", lab:"Éligible au mécénat", from:cur, to:nv, val:nv, warn:cur === "Oui (intérêt général)" ? "La fiche indique une éligibilité vérifiée." : "" });
   }
-  (rep.interlocuteurs || []).forEach((p, j) => { if (!p.contact && (p.nom || "").trim()) out.push({ kind:"contact", j, lab:"Nouveau contact", from:"—", to:[p.nom, p.fonction].filter(Boolean).join(", ") }); });
+  (rep.interlocuteurs || []).forEach((p, j) => { if (!p.contact && (p.nom || "").trim()) out.push({ kind:"contact", j, lab:"Nouveau contact", from:"-", to:[p.nom, p.fonction].filter(Boolean).join(", ") }); });
   /* étapes du cycle de vente */
   const stOpp = (o, v, why) => { if (o && o.etape !== v && STAGES.findIndex(s => s.v === v) > STAGES.findIndex(s => s.v === o.etape) || (o && v === "Perdu" && o.etape !== "Perdu")) out.push({ kind:"etape", id:o.id, lab:`Étape · ${rname(o)}`, from:o.etape, to:v, val:v, why }); };
   const stPor = (p, v) => { const ci = REL.findIndex(s => s.v === (p.relation || REL0)), ni = REL.findIndex(s => s.v === v); if (p && p.relation !== v && (ni > ci || v === "Perdu")) out.push({ kind:"relation", id:p.id, lab:`Relation · ${p.nom}`, from:p.relation || REL0, to:v, val:v }); };
@@ -1968,7 +1979,7 @@ function entProposals(r) {
     (rep.porteurs || []).filter(pid => !r.opp || get(r.opp)?.porteur !== pid).forEach(pid => {
       const o = all("opp").find(x => x.entreprise === compte.id && x.porteur === pid);
       if (o) stOpp(o, "Rendez-vous réalisé");
-      else if (get(pid)) out.push({ kind:"newopp", porteur:pid, lab:"Nouvelle opportunité", from:"—", to:`${compte.nom} · ${get(pid).nom} (Rendez-vous réalisé${rep.montantEnvisage ? `, ${eur(rep.montantEnvisage)}` : ""})` });
+      else if (get(pid)) out.push({ kind:"newopp", porteur:pid, lab:"Nouvelle opportunité", from:"-", to:`${compte.nom} · ${get(pid).nom} (Rendez-vous réalisé${rep.montantEnvisage ? `, ${eur(rep.montantEnvisage)}` : ""})` });
     });
   }
   if (r.guide === "C") {
@@ -1990,7 +2001,7 @@ function vEntretienFin() {
     <div class="card"><div class="ch"><h2>Points à vérifier</h2></div><div class="cb">${pts.length ? `<ul class="pts">${pts.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : `<div class="empty" style="padding:10px">Rien à signaler.</div>`}</div></div>
   </div><div class="col">
     <div class="card"><div class="ch"><h2>Mise à jour de la fiche</h2></div><div class="cb">${props.length ? `<p class="tiny" style="margin-top:0">Rien n'est modifié sans votre accord : décochez ce que vous ne voulez pas reporter.</p>${props.map((p, j) => `<label class="upd"><input type="checkbox" data-eprop="${j}" ${p.warn ? "" : "checked"}><span><b>${esc(p.lab)}</b> : ${esc(p.from)} → <b>${esc(p.to)}</b>${p.warn ? `<br><span class="tiny" style="color:var(--orange)">${esc(p.warn)}</span>` : ""}</span></label>`).join("")}` : `<div class="empty" style="padding:10px">Aucune modification proposée.</div>`}
-      ${lossNeeded ? `<div class="fld" style="margin-top:10px"><label for="e-loss">Motif de la perte <i class="dot">●</i></label><select id="e-loss"><option value="">—</option>${(fdef(r.compteO === "porteur" && !r.opp ? "porteur" : "opp", r.compteO === "porteur" && !r.opp ? "motifPerte" : "raisonPerte")?.o || []).map(x => `<option>${esc(x)}</option>`).join("")}</select></div>` : ""}</div></div>
+      ${lossNeeded ? `<div class="fld" style="margin-top:10px"><label for="e-loss">Motif de la perte <i class="dot">●</i></label><select id="e-loss"><option value="">-</option>${(fdef(r.compteO === "porteur" && !r.opp ? "porteur" : "opp", r.compteO === "porteur" && !r.opp ? "motifPerte" : "raisonPerte")?.o || []).map(x => `<option>${esc(x)}</option>`).join("")}</select></div>` : ""}</div></div>
     <div class="card"><div class="ch"><h2>Ce qui sera créé</h2></div><div class="cb">
       <div class="kv"><span>Activité « Entretien réalisé »</span><b>${dfr(r.date)}</b></div>
       ${rep.prochaine && rep.prochaine !== "Aucune" ? `<div class="kv"><span>Tâche : ${esc(rep.prochaine)}${act.j2 ? " (sous 48 h)" : ""}</span><b>${dfr(rep.prochaineDate) || "date à saisir"}</b></div>` : `<div class="kv"><span>Prochaine action</span><b>aucune</b></div>`}
@@ -2008,7 +2019,7 @@ function qualifHtml(r, sc) {
   if (sc.pack) out.push(`<div class="kv"><span>Pack suggéré</span><b>${esc(sc.pack.nom)} · ${nb(sc.pack.entreprises)} entreprises · ${eur(sc.pack.prix)} HT</b></div>`);
   if (sc.cout) out.push(`<div class="kv"><span>Coût net pour l'entreprise</span><b>${eur(sc.cout.cout)} <span class="tiny">pour ${eur(sc.cout.brut)}</span></b></div>`);
   if (r.guide === "C" && rep.engagement) out.push(`<div class="kv"><span>Réponse</span><b>${esc(rep.engagement)}</b></div>`);
-  return out.join("") || `<div class="empty" style="padding:10px">—</div>`;
+  return out.join("") || `<div class="empty" style="padding:10px">-</div>`;
 }
 function entFinish() {
   const r = ENT.r, rep = r.rep, miss = entMissing(r); if (miss.length) { toast("Complétez d'abord les champs obligatoires."); return; }
@@ -2079,8 +2090,8 @@ function vEntretienRecap(r) {
   ${r.statut !== "terminé" ? `<div class="alert noprint" style="--c:var(--orange)"><div><b>Brouillon.</b> <a href="#/entretien/${r.id}">Reprendre l'entretien</a></div></div>` : ""}
   <article class="card recap"><div class="cb">
     <div class="rc-print"><img src="icons/icon-192.png" alt=""><b>Partenarium</b><span>Fiche récapitulative d'entretien</span></div>
-    <header class="rc-head"><div><h2>${d.compte?.o ? `<a href="#/r/${d.compte.id}">${esc(rname(d.compte))}</a>` : "—"}</h2><div class="small muted">${esc(gTitle(r))} · ${dfr(r.date)}${dur ? ` · ${dur} min` : ""}${r.opp && get(r.opp) ? ` · ${esc(rname(get(r.opp)))}` : ""}</div>
-      <div class="small">${pers.map(p => `${esc(p.nom)}${p.fonction ? `, ${esc(p.fonction)}` : ""}${p.decideur ? " (décideur)" : ""}`).join(" · ") || "—"} · décideur présent : <b>${esc(rep.decideur || "—")}</b></div></div></header>
+    <header class="rc-head"><div><h2>${d.compte?.o ? `<a href="#/r/${d.compte.id}">${esc(rname(d.compte))}</a>` : "-"}</h2><div class="small muted">${esc(gTitle(r))} · ${dfr(r.date)}${dur ? ` · ${dur} min` : ""}${r.opp && get(r.opp) ? ` · ${esc(rname(get(r.opp)))}` : ""}</div>
+      <div class="small">${pers.map(p => `${esc(p.nom)}${p.fonction ? `, ${esc(p.fonction)}` : ""}${p.decideur ? " (décideur)" : ""}`).join(" · ") || "-"} · décideur présent : <b>${esc(rep.decideur || "-")}</b></div></div></header>
     <section class="rc-one"><h3>En une phrase</h3><p>${esc(d.reform)}</p>${rep.reformValidee ? `<span class="tiny">✓ validée par l'interlocuteur</span>` : `<span class="tiny">non validée</span>`}${rep.reformCorrections ? `<p class="small muted">Corrections : ${esc(rep.reformCorrections)}</p>` : ""}</section>
     ${ind.length ? `<div class="chips rc-ind">${ind.join("")}</div>` : ""}
     ${d.situ.length ? `<section><h3>Situation</h3><div class="rc-kv">${d.situ.map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("")}</div></section>` : ""}
@@ -2089,20 +2100,20 @@ function vEntretienRecap(r) {
     ${(r.objections || []).length ? `<section><h3>Objections soulevées</h3>${r.objections.map(o => `<p><b>« ${esc(o.texte)} »</b><br>${esc(o.reponse || "")}</p>`).join("")}</section>` : ""}
     ${d.offre ? `<section><h3>Offre conseillée</h3><p>${esc(d.offre)}</p></section>` : ""}
     ${(r.points || entPoints(r)).length ? `<section><h3>Points à vérifier</h3><ul>${(r.points || entPoints(r)).map(x => `<li>${esc(x)}</li>`).join("")}</ul></section>` : ""}
-    <section class="rc-next"><h3>Prochaine action</h3><p><b>${esc(rep.prochaine || "—")}</b>${rep.prochaineDate ? ` · ${dfr(rep.prochaineDate)}` : ""}</p>${rep.convenu ? `<p class="small">Convenu avec le client : ${esc(rep.convenu)}</p>` : ""}</section>
+    <section class="rc-next"><h3>Prochaine action</h3><p><b>${esc(rep.prochaine || "-")}</b>${rep.prochaineDate ? ` · ${dfr(rep.prochaineDate)}` : ""}</p>${rep.convenu ? `<p class="small">Convenu avec le client : ${esc(rep.convenu)}</p>` : ""}</section>
   </div></article>`;
 }
 function recapText(r) {
   const d = recapData(r), rep = d.rep, pers = rep.interlocuteurs || [], L = [];
-  L.push(`FICHE RÉCAPITULATIVE — ${gTitle(r)}`, `${rname(d.compte)} · ${dfr(r.date)}${r.duree ? ` · ${Math.round(r.duree / 60)} min` : ""}`, `Interlocuteurs : ${pers.map(p => [p.nom, p.fonction].filter(Boolean).join(", ")).join(" ; ") || "—"} · décideur présent : ${rep.decideur || "—"}`, "", `EN UNE PHRASE : ${d.reform}`, "");
+  L.push(`FICHE RÉCAPITULATIVE - ${gTitle(r)}`, `${rname(d.compte)} · ${dfr(r.date)}${r.duree ? ` · ${Math.round(r.duree / 60)} min` : ""}`, `Interlocuteurs : ${pers.map(p => [p.nom, p.fonction].filter(Boolean).join(", ")).join(" ; ") || "-"} · décideur présent : ${rep.decideur || "-"}`, "", `EN UNE PHRASE : ${d.reform}`, "");
   const sc = d.sc; if (sc.qualif) L.push(`Prêt pour une proposition : ${sc.qualif.score}/4`); if (sc.grille !== undefined) L.push(`Qualification : ${sc.grille}/12`); if (sc.sponso !== undefined && sc.sponso !== null) L.push(`Sponsorabilité : ${sc.sponso}/100`); if (sc.elig) L.push(`Éligibilité au mécénat : ${sc.elig}`); if (sc.cout) L.push(`Coût net pour l'entreprise : ${eur(sc.cout.cout)}`);
   if (d.situ.length) L.push("", "SITUATION", ...d.situ.map(([k, v]) => `- ${k} : ${v}`));
   [["PROBLÈME", d.probleme], ["IMPLICATION", d.impl], ["GAIN", d.gain]].forEach(([t, a]) => { if (a.length) L.push("", t, ...a.map(x => `- ${x}`)); });
-  if (sc.sponsoDet) { const sp = GC()?.sponsorabilite || {}; L.push("", `SCORE DE SPONSORABILITÉ : ${sc.sponso}/100${sc.sponsoDet.palier ? ` (${sc.sponsoDet.palier})` : ""}, noté le ${dfr(sc.sponsoDet.date)}`, ...(sp.criteres || []).map(c => `- ${c.libelle} : ${sc.sponsoDet.crit[c.k] ?? 0}/20`), `Forces : ${sc.sponsoDet.forces.map(k => subOfK(sp, k)?.libelle || k).join(", ") || "—"}`, `Manques : ${sc.sponsoDet.manques.map(k => subOfK(sp, k)?.libelle || k).join(", ") || "—"}`); }
+  if (sc.sponsoDet) { const sp = GC()?.sponsorabilite || {}; L.push("", `SCORE DE SPONSORABILITÉ : ${sc.sponso}/100${sc.sponsoDet.palier ? ` (${sc.sponsoDet.palier})` : ""}, noté le ${dfr(sc.sponsoDet.date)}`, ...(sp.criteres || []).map(c => `- ${c.libelle} : ${sc.sponsoDet.crit[c.k] ?? 0}/20`), `Forces : ${sc.sponsoDet.forces.map(k => subOfK(sp, k)?.libelle || k).join(", ") || "-"}`, `Manques : ${sc.sponsoDet.manques.map(k => subOfK(sp, k)?.libelle || k).join(", ") || "-"}`); }
   if ((r.objections || []).length) L.push("", "OBJECTIONS", ...r.objections.map(o => `- « ${o.texte} » → ${o.reponse || ""}`));
   if (d.offre) L.push("", `OFFRE CONSEILLÉE : ${d.offre}`);
   const pts = r.points || entPoints(r); if (pts.length) L.push("", "POINTS À VÉRIFIER", ...pts.map(x => `- ${x}`));
-  L.push("", `PROCHAINE ACTION : ${rep.prochaine || "—"}${rep.prochaineDate ? ` · ${dfr(rep.prochaineDate)}` : ""}`);
+  L.push("", `PROCHAINE ACTION : ${rep.prochaine || "-"}${rep.prochaineDate ? ` · ${dfr(rep.prochaineDate)}` : ""}`);
   return L.join("\n");
 }
 function scoreRecapHtml(r, sc) {
@@ -2112,7 +2123,7 @@ function scoreRecapHtml(r, sc) {
   const lab = k => esc(subOfK(sp, k)?.libelle || k), pr = r.rep?.sponsoPreuve || {};
   return `<section><h3>Score de sponsorabilité · ${sc.sponso}/100</h3><p class="small">${esc(det.palier || "")}${det.date ? ` · noté le ${dfr(det.date)}` : ""}</p>
     <div class="rc-kv">${sp.criteres.map(c => `<div><span>${esc(c.libelle)}</span><b style="${det.crit[c.k] < (sp.alerteCritere ?? 6) ? "color:var(--red)" : ""}">${det.crit[c.k] ?? 0}/20</b></div>`).join("")}</div>
-    <p class="small"><b>Forces :</b> ${det.forces.map(lab).join(", ") || "—"}<br><b>Manques :</b> ${det.manques.map(lab).join(", ") || "—"}</p>
+    <p class="small"><b>Forces :</b> ${det.forces.map(lab).join(", ") || "-"}<br><b>Manques :</b> ${det.manques.map(lab).join(", ") || "-"}</p>
     ${Object.values(pr).some(Boolean) ? `<details class="small"><summary>Preuves notées</summary><ul>${(sp.criteres || []).flatMap(c => c.sous || []).filter(s => pr[s.k]).map(s => `<li>${esc(s.libelle)} : ${esc(pr[s.k])}</li>`).join("")}</ul></details>` : ""}</section>`;
 }
 /* e-mail de restitution du score au porteur (modèle du Marketing) : total, sous-totaux, forces et manques ; jamais les notes internes */
@@ -2124,7 +2135,7 @@ function mailtoScore(r) {
   const mois = new Date(addMonths(r.date || today(), 6) + "T12:00:00").toLocaleDateString("fr-FR", { month:"long", year:"numeric" });
   const vals = { club:rname(compte), prenom:c?.prenom ? ` ${c.prenom}` : "", date:dfr(r.date), total:String(sc.sponso), criteres:(sp.criteres || []).map(x => `${x.libelle} : ${det.crit[x.k] ?? 0}/20`).join("\n"), forces:det.forces.map(lab).join(", "), manques:det.manques.map(lab).join(", "), dateProchaine:rep.prochaineDate ? dfr(rep.prochaineDate) : "[date]", moisRelance:mois };
   vals.suite = fillTpl(sc.sponso >= (sp.seuil ?? 50) ? tpl.siOK || "" : tpl.siKO || "", vals, "");
-  return `mailto:${encodeURIComponent(c?.email || compte?.emailPublic || "")}?subject=${encodeURIComponent(fillTpl(tpl.objet || "Votre score de sponsorabilité – {club}", vals, ""))}&body=${encodeURIComponent(fillTpl(tpl.corps || "{criteres}", vals, ""))}`;
+  return `mailto:${encMail(c?.email || compte?.emailPublic || "")}?subject=${encMail(fillTpl(tpl.objet || "Votre score de sponsorabilité - {club}", vals, ""))}&body=${encMail(fillTpl(tpl.corps || "{criteres}", vals, ""))}`;
 }
 /* e-mail au client : reformulation, ce qui a été convenu et prochaine étape. Jamais les notes internes, scores ni points à vérifier. */
 function mailtoFor(r) {
@@ -2136,8 +2147,8 @@ function mailtoFor(r) {
   const vals = { date:dfr(r.date), prenom, reformulation:rf, convenu:rep.convenu ? `\nCe que nous avons convenu : ${rep.convenu}\n` : "", convenuTxt:rep.convenu || "", prochaineClient:act ? act.charAt(0).toUpperCase() + act.slice(1) : "", prochaineClientMin:act, prochaineDate:rep.prochaineDate ? ` le ${dfr(rep.prochaineDate)}` : "", prochaineDateTxt:rep.prochaineDate ? dfr(rep.prochaineDate) : "" };
   let body = fillTplCond(tpl.corps || "{reformulation}", vals, "");
   if (!act) body = body.replace(/\n?Prochaine étape : [^\n]*\n?/, "\n");
-  const subject = fillTpl(tpl.objet || "Partenarium – notre échange du {date}", vals, "");
-  return `mailto:${encodeURIComponent(c?.email || "")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const subject = fillTpl(tpl.objet || "Partenarium - notre échange du {date}", vals, "");
+  return `mailto:${encMail(c?.email || "")}?subject=${encMail(subject)}&body=${encMail(body)}`;
 }
 
 /* ---------- listes, accueil, rapports ---------- */
@@ -2198,7 +2209,7 @@ function scrubContact(cid) {
 function guidesCard() {
   const rec = GREC(), c = rec?.data;
   return `<div class="card" id="gcard"><div class="ch"><h2>Guides d'entretien</h2></div><div class="cb">
-    ${c ? `<div class="kv"><span>Contenu</span><b>version ${esc(c.version || "?")} du ${dfr(c.date)}</b></div><div class="kv"><span>Importé le</span><b>${rec.importe ? new Date(rec.importe).toLocaleString("fr-FR") : "—"}</b></div><div class="kv"><span>Textes modifiés ici</span><b>${JSON.stringify(rec.data) === JSON.stringify(rec.base) ? "non" : "oui"}</b></div>
+    ${c ? `<div class="kv"><span>Contenu</span><b>version ${esc(c.version || "?")} du ${dfr(c.date)}</b></div><div class="kv"><span>Importé le</span><b>${rec.importe ? new Date(rec.importe).toLocaleString("fr-FR") : "-"}</b></div><div class="kv"><span>Textes modifiés ici</span><b>${JSON.stringify(rec.data) === JSON.stringify(rec.base) ? "non" : "oui"}</b></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><a class="btn pri" href="#/reglages/guides">Modifier les textes</a><label class="btn filebtn" tabindex="0" role="button">Réimporter<input type="file" accept="application/json,.json" class="vh-file" id="gimp" tabindex="-1"></label><button class="btn" data-gexport="1">${svg("download")}Exporter</button><button class="btn danger" data-grestore="1">Rétablir les textes d'origine</button>${rec.precedent ? `<button class="btn" data-gprev="1">Revenir à la version précédente</button>` : ""}</div>
       <p class="tiny">« Réimporter » charge une nouvelle version (par exemple les objections définitives du Marketing) ; la version actuelle est gardée et peut être rétablie. « Rétablir » revient au dernier fichier importé. Le contenu est synchronisé avec vos autres appareils et copié dans le dossier Drive (partenarium-crm-guides.json). Il n'est pas dans le code public de l'application.</p>`
       : `<p class="small" style="margin-top:0">Le contenu des guides (questions, relances, objections) n'est pas dans le code public de l'application. Importez une fois le fichier <b>partenarium-guides-…json</b> fourni par le développeur (rangé dans votre dossier Drive « Sauvegardes CRM »).</p><label class="btn pri filebtn" tabindex="0" role="button">Importer le contenu des guides<input type="file" accept="application/json,.json" class="vh-file" id="gimp" tabindex="-1"></label>`}</div></div>`;
@@ -2229,7 +2240,7 @@ function vGuidesEdit() {
   ${["A", "B", "C"].map(g => `<details class="card gsec"><summary>Guide ${g} · ${esc(c.guides[g].titre)}</summary><div class="cb">${c.guides[g].phases.map((p, pi) => `<h3 class="tiny up" style="margin-top:14px">${esc(p.titre)}</h3>${p.aide !== undefined ? row("Aide de la phase", ta(`guides.${g}.phases.${pi}.aide`, p.aide)) : ""}${p.regle !== undefined ? row("Règle affichée", ta(`guides.${g}.phases.${pi}.regle`, p.regle)) : ""}${p.reformulation !== undefined ? row("Modèle de reformulation (les {champs} sont remplis automatiquement)", ta(`guides.${g}.phases.${pi}.reformulation`, p.reformulation, 3)) : ""}
       ${(p.questions || []).map((q, qi) => `<div class="gq-ed">${q.dire !== undefined ? row("À dire", ta(`guides.${g}.phases.${pi}.questions.${qi}.dire`, q.dire, 3)) : ""}${q.relance !== undefined ? row("Exemple de relance", ta(`guides.${g}.phases.${pi}.questions.${qi}.relance`, q.relance)) : ""}${q.aide !== undefined ? row("Aide", ta(`guides.${g}.phases.${pi}.questions.${qi}.aide`, q.aide)) : ""}
         ${(q.champs || []).map((f, fi) => row(`Libellé du champ${f.oblig ? " (obligatoire)" : ""}`, ip(`guides.${g}.phases.${pi}.questions.${qi}.champs.${fi}.l`, f.l)) + (f.type === "multi" && !f.fixe ? row("Réponses rapides (séparées par ;)", `<input class="inp" data-gopts="guides.${g}.phases.${pi}.questions.${qi}.champs.${fi}.options" value="${esc((f.options || []).join(" ; "))}">`) : "")).join("")}</div>`).join("")}`).join("")}</div></details>`).join("")}
-  <details class="card gsec"><summary>Objections (${c.objections.length})</summary><div class="cb">${c.objections.map((o, i) => `<div class="gq-ed">${row(`Objection${o.num ? ` ${o.num}` : ""}`, ip(`objections.${i}.texte`, o.texte))}<div class="fld" style="margin-bottom:8px"><label>Offre</label><select class="inp" data-gpath="objections.${i}.offre"><option value="">—</option>${["Toutes", ...(c.catalogue || []).map(x => x.code)].map(x => `<option${o.offre === x ? " selected" : ""}>${x}</option>`).join("")}</select></div><div class="fld" style="margin-bottom:8px"><label>Public</label><select class="inp" data-gpath="objections.${i}.public">${["porteur", "entreprise", "les deux"].map(x => `<option${o.public === x ? " selected" : ""}>${x}</option>`).join("")}</select></div>${row("Réponse proposée", ta(`objections.${i}.reponse`, o.reponse, 3))}${row("Relance", ta(`objections.${i}.relance`, o.relance))}${row("Note (affichée en orange)", ip(`objections.${i}.note`, o.note))}<button class="btn sm danger" data-gobjrm="${i}">Retirer cette objection</button></div>`).join("")}<button class="btn" data-gobjadd="1">${svg("plus", 2)}Ajouter une objection</button></div></details>
+  <details class="card gsec"><summary>Objections (${c.objections.length})</summary><div class="cb">${c.objections.map((o, i) => `<div class="gq-ed">${row(`Objection${o.num ? ` ${o.num}` : ""}`, ip(`objections.${i}.texte`, o.texte))}<div class="fld" style="margin-bottom:8px"><label>Offre</label><select class="inp" data-gpath="objections.${i}.offre"><option value="">-</option>${["Toutes", ...(c.catalogue || []).map(x => x.code)].map(x => `<option${o.offre === x ? " selected" : ""}>${x}</option>`).join("")}</select></div><div class="fld" style="margin-bottom:8px"><label>Public</label><select class="inp" data-gpath="objections.${i}.public">${["porteur", "entreprise", "les deux"].map(x => `<option${o.public === x ? " selected" : ""}>${x}</option>`).join("")}</select></div>${row("Réponse proposée", ta(`objections.${i}.reponse`, o.reponse, 3))}${row("Relance", ta(`objections.${i}.relance`, o.relance))}${row("Note (affichée en orange)", ip(`objections.${i}.note`, o.note))}<button class="btn sm danger" data-gobjrm="${i}">Retirer cette objection</button></div>`).join("")}<button class="btn" data-gobjadd="1">${svg("plus", 2)}Ajouter une objection</button></div></details>
   <details class="card gsec"><summary>Grille de qualification entreprise</summary><div class="cb">${c.grille.map((l, i) => `<div class="gq-ed">${row("Ligne", ip(`grille.${i}.titre`, l.titre))}${row("Question", ip(`grille.${i}.question`, l.question))}${row("2 points si…", ip(`grille.${i}.deux`, l.deux))}${row("1 point si…", ip(`grille.${i}.un`, l.un))}</div>`).join("")}</div></details>
   <details class="card gsec"><summary>Score de sponsorabilité</summary><div class="cb">${row("Seuil de proposition (sur 100)", ip("sponsorabilite.seuil", c.sponsorabilite.seuil, 1))}${row("Action proposée sous le seuil", ip("sponsorabilite.sousSeuil", c.sponsorabilite.sousSeuil))}${c.sponsorabilite.alerteCritere !== undefined ? row("Point bloquant : critère sous (sur 20)", ip("sponsorabilite.alerteCritere", c.sponsorabilite.alerteCritere, 1)) : ""}
     ${(c.sponsorabilite.controles || []).map((x, i) => `<div class="gq-ed">${row(`Contrôle avant de noter ${i + 1}`, ta(`sponsorabilite.controles.${i}.libelle`, x.libelle))}${row("Pourquoi on s'arrête", ip(`sponsorabilite.controles.${i}.pourquoi`, x.pourquoi))}${row("Que dire au porteur", ip(`sponsorabilite.controles.${i}.dire`, x.dire))}</div>`).join("")}
@@ -2441,7 +2452,8 @@ async function processImage(file, k) {
 }
 
 /* ═════════ fichiers : JSON, CSV ═════════ */
-function downloadFile(name, content, type) { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([content], { type })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
+const encMail = v => encodeURIComponent(noDash(String(v ?? "")));   // e-mails préparés : jamais de tiret long
+function downloadFile(name, content, type) { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([noDash(content)], { type })); a.download = noDash(name); document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
 const backupJson = () => JSON.stringify({ app:CONFIG.key, version:CONFIG.version, exported:new Date().toISOString(), items:S.items, del:S.del, cfg:S.cfg });
 function markBackup() { BK.last = Date.now(); lsSet(CONFIG.key + ":lastbackup", BK.last); }
 async function exportData() {
@@ -2598,7 +2610,7 @@ function importReportHtml() {
 }
 async function copyText(txt) {
   if (!txt) { toast("Rien à copier pour ce mois."); return; }
-  try { await navigator.clipboard.writeText(txt); toast("Texte copié : collez-le dans Gmail."); } catch { downloadFile("registre-presentations.txt", txt, "text/plain"); toast("Copie bloquée : texte enregistré dans vos téléchargements."); }
+  try { await navigator.clipboard.writeText(noDash(txt)); toast("Texte copié : collez-le dans Gmail."); } catch { downloadFile("registre-presentations.txt", txt, "text/plain"); toast("Copie bloquée : texte enregistré dans vos téléchargements."); }
 }
 
 /* ═════════ données d'exemple (fictives) ═════════ */
@@ -2606,7 +2618,7 @@ function loadDemo() {
   if (Object.values(S.items).some(r => r.demo)) { toast("Les exemples sont déjà chargés."); return; }
   const t = today(), id = {}, mk = (k, r) => { id[k] = uid(); putItem(id[k], { ...r, id:id[k], demo:true }); };
   mk("p1", { o:"porteur", nom:"HC Vallée de l'Arve (exemple)", type:"Association / club", discipline:"Hockey sur glace", niveau:"Régional", statutJur:"Association loi 1901", ville:"Cluses", mecenat:"Oui (intérêt général)", objectif:45000, budget:180000, ca:120000, subventions:0.35, membres:240, spectateurs:6000, abonnes:3100, relation:"Mandat signé", offre:"Partenaires+", abo:250, mandatDebut:addMonths(t, -2), mandatFin:addMonths(t, 10), exclusif:true, projet:"Financer la saison et le déplacement de l'équipe U17 en finale nationale.", objectifs:"Trouver 8 partenaires locaux ; rénover la signalétique de la patinoire.", inventaire:[{ type:"Logo sur tenue", desc:"Maillot domicile, épaule", qte:1, valeur:6000 }, { type:"Panneau / banderole", desc:"Bande de patinoire 4 m", qte:6, valeur:1500 }, { type:"Hospitalité / VIP", desc:"Loge 8 places", qte:10, valeur:400 }] });
-  mk("p2", { o:"porteur", nom:"Léa Martin – ski-alpinisme (exemple)", type:"Athlète", discipline:"Ski-alpinisme", niveau:"International", statutJur:"Entreprise individuelle", ville:"Sallanches", mecenat:"Non", objectif:25000, abonnes:18000, relation:"Mandat signé", offre:"Pack Lancement", prixPack:890, mandatDebut:addMonths(t, -1), mandatFin:addMonths(t, 11), objectifs:"Financer la saison de Coupe du monde.", inventaire:[{ type:"Logo sur tenue", desc:"Casque et combinaison", qte:1, valeur:8000 }, { type:"Intervention / conférence", desc:"Conférence en entreprise", qte:2, valeur:1500 }] });
+  mk("p2", { o:"porteur", nom:"Léa Martin - ski-alpinisme (exemple)", type:"Athlète", discipline:"Ski-alpinisme", niveau:"International", statutJur:"Entreprise individuelle", ville:"Sallanches", mecenat:"Non", objectif:25000, abonnes:18000, relation:"Mandat signé", offre:"Pack Lancement", prixPack:890, mandatDebut:addMonths(t, -1), mandatFin:addMonths(t, 11), objectifs:"Financer la saison de Coupe du monde.", inventaire:[{ type:"Logo sur tenue", desc:"Casque et combinaison", qte:1, valeur:8000 }, { type:"Intervention / conférence", desc:"Conférence en entreprise", qte:2, valeur:1500 }] });
   mk("p3", { o:"porteur", nom:"Film « Les Aiguilles » (exemple)", type:"Réalisateur / film", discipline:"Documentaire montagne", statutJur:"Association loi 1901", ville:"Chamonix-Mont-Blanc", mecenat:"À vérifier", objectif:30000, relation:"Échange réalisé" });
   mk("e1", { o:"entreprise", nom:"Décolletage Exemple SAS", secteur:"Décolletage / mécanique", taille:"PME (10 à 249)", effectif:85, ville:"Cluses", caHT:12000000, imposition:"is25", budgetSpon:15000, source:"Pappers", declencheur:"Recrutement de 20 techniciens", interets:["Marque employeur", "Ancrage territorial"] });
   mk("e2", { o:"entreprise", nom:"Boulangerie des Aravis (exemple)", secteur:"Commerce", taille:"TPE (moins de 10 salariés)", effectif:6, ville:"Scionzier", caHT:650000, imposition:"is15", budgetSpon:2000, source:"Réseau personnel", interets:["Visibilité locale"] });
