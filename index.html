@@ -552,8 +552,14 @@ function coutNetEntretien(montant, type, ent, G, P) {
 }
 /* Remplit un modèle de phrase « {champ} » ; un champ vide reste visible pour être complété */
 function fillTpl(tpl, vals, empty) { empty = empty === undefined ? "[…]" : empty; return String(tpl || "").replace(/\{(\w+)\}/g, (_, k) => vals && vals[k] !== undefined && vals[k] !== null && vals[k] !== "" ? String(vals[k]) : empty); }
+/* segments [[ … ]] : gardés seulement si toutes leurs variables sont remplies (ex. « il reste à régler {conditions} ; ») */
+function fillTplCond(tpl, vals, empty) {
+  const has = k => vals && vals[k] !== undefined && vals[k] !== null && vals[k] !== "";
+  const t = String(tpl || "").replace(/\[\[([\s\S]*?)\]\]/g, (_, seg) => (seg.match(/\{(\w+)\}/g) || []).every(m => has(m.slice(1, -1))) ? seg : "");
+  return fillTpl(t, vals, empty);
+}
 
-if (typeof module !== "undefined") module.exports = { TAX, GRID, mecenat, isTax, parrainage, commission, oppCalc, contratCalc, addMonths, addDays, daysBetween, ymd, parseYmd, eligMecenat, qualifPorteur, grilleTotal, grilleNiveau, grilleSuggest, packSuggere, sponsoTotal, sponsoCalc, palierOf, coutNetEntretien, fillTpl };
+if (typeof module !== "undefined") module.exports = { TAX, GRID, mecenat, isTax, parrainage, commission, oppCalc, contratCalc, addMonths, addDays, daysBetween, ymd, parseYmd, eligMecenat, qualifPorteur, grilleTotal, grilleNiveau, grilleSuggest, packSuggere, sponsoTotal, sponsoCalc, palierOf, coutNetEntretien, fillTpl, fillTplCond };
 </script>
 
 <script>
@@ -1674,11 +1680,16 @@ function entVals(r) {
     montantRecherche: rep.montantRecherche ? eur(rep.montantRecherche) : "", echeance: dfr(rep.echeance), projetOuConsequence: rep.projetRepere || rep.consequence || "",
     probleme: rep.probleme || "", critere: rep.critere || "",
     objectif: [rep.objectifTexte, rep.objectifNombre ? `(${nb(rep.objectifNombre)})` : ""].filter(Boolean).join(" "), decideurNom: dec ? [dec.nom, dec.fonction].filter(Boolean).join(", ") : "", moisBudget: rep.moisBudget || "",
-    offre: off ? `${off.code} ${off.nom}` : "", montant: rep.montant ? eur(rep.montant) + " HT" : "", engagement: (rep.engagement || "").toLowerCase(), conditions: rep.conditions ? ` (${rep.conditions})` : "", dateDecision: dfr(rep.dateDecision),
+    offre: off ? `${off.code} ${off.nom}` : "", offreNom: off ? off.nom.charAt(0).toLowerCase() + off.nom.slice(1) : "", montant: rep.montant ? eur(rep.montant) + " HT" : "", engagement: (rep.engagement || "").toLowerCase(), conditions: rep.conditions ? ` (${rep.conditions})` : "", conditionsTxt: rep.conditions || "", dateDecision: dfr(rep.dateDecision),
+    premiereObjection: r.objections?.[0]?.texte || "",
     prochaineDate: dfr(rep.prochaineDate), compte: rname(compte)
   };
 }
-function entReform(r) { const p = gPhases(r.guide).find(x => x.reformulation); return p ? fillTpl(p.reformulation, entVals(r)) : ""; }
+function entReform(r) {             // variantes selon une réponse (ex. guide C : accord / refus), sinon le modèle par défaut
+  const p = gPhases(r.guide).find(x => x.reformulation); if (!p) return "";
+  const v = (p.reformulations || []).find(x => (x.si?.v || []).includes((r.rep || {})[x.si?.k]));
+  return fillTplCond(v ? v.tpl : p.reformulation, entVals(r));
+}
 function entScores(r) {
   const rep = r.rep || {}, out = {}, C0 = GC() || {};
   if (r.guide === "A" || (r.guide === "C" && r.compteO === "porteur")) {
@@ -1720,6 +1731,9 @@ function entPoints(r) {
     if (!c.decideur) out.push("Décideur absent de l'échange.");
     if (!c.capacite) out.push(`Capacité à payer le Pack : ${rep.capacitePack ? `« ${rep.capacitePack} »` : "non renseignée"}.`);
     if (!c.echeance) out.push(rep.echeance ? "Échéance à plus de 9 mois." : "Échéance non renseignée.");
+    const pc = GC()?.petitsContrats;
+    if (pc && rep.montantPartenaire && rep.montantPartenaire < pc.mandatMin) out.push(pc.mandatMsg);
+    if (pc && rep.montantPartenaire && rep.montantPartenaire < pc.conventionMin && ["Probable", "Oui"].some(x => String(sc.elig || "").startsWith(x))) out.push(pc.conventionMsg);
     const sp = GC()?.sponsorabilite || {};
     (sc.sponsoBloque || []).forEach(k => { const c = (sp.controles || []).find(x => x.k === k); if (c) out.push(`Score non calculé : ${c.libelle}. ${c.pourquoi}. À dire au porteur : ${c.dire}.`); });
     if (sc.sponso !== null && sc.sponso < (sp.seuil ?? 50)) out.push(`Score de sponsorabilité sous ${sp.seuil ?? 50}/100 : pas de proposition (${sp.sousSeuil || "conseils et relance"}).`);
@@ -1739,6 +1753,7 @@ function entPoints(r) {
   if (r.guide === "C") {
     if (["Refus", "À revoir"].includes(rep.engagement)) out.push(`Réponse : « ${rep.engagement} ».`);
     if (rep.engagement === "Accord sous conditions" && rep.conditions) out.push(`Conditions à lever : ${rep.conditions}.`);
+    const pc = GC()?.petitsContrats; if (pc && rep.offre === pc.conventionOffre && rep.montant && rep.montant < pc.conventionMin) out.push(pc.conventionMsg);
     const ctl = GC()?.guides?.C?.phases?.find(p => p.k === "avantContrat")?.questions?.[0]?.champs?.[0]?.options || [], ok = rep.controles || [];
     const manque = ctl.filter(x => !ok.includes(x)); if (manque.length && ["Accord", "Accord sous conditions"].includes(rep.engagement)) out.push(`Contrôles avant contractualisation non cochés : ${manque.join(", ")}.`);
   }
@@ -1890,17 +1905,23 @@ function raisedHtml(inline) {
   if (!a.length) return inline ? `<div class="help">Aucune objection enregistrée. Ouvrez le panneau Objections (touche O) et touchez « Soulevée ».</div>` : "";
   return `<div class="raised">${a.map((o, j) => `<div class="ro"><div style="display:flex;gap:8px;align-items:flex-start"><b style="flex:1">« ${esc(o.texte)} »</b><button type="button" class="iconbtn" data-eobjrm="${j}" title="Retirer">${svg("trash")}</button></div><textarea class="inp" data-eobjrep="${j}" rows="2" aria-label="Réponse donnée">${esc(o.reponse || "")}</textarea></div>`).join("")}</div>`;
 }
-function objOffreDefaut(r) { return r.guide === "C" && r.rep?.offre ? r.rep.offre : "Toutes"; }
-function objList(r, offre, q) {      // objections du public de l'entretien, filtrées par offre (« Toutes » = sans filtre) et par mot
-  const pub = pubOf(r), n = norm(q || "");
-  return (GC()?.objections || []).filter(o => [pub, "les deux"].includes(o.public) && (offre === "Toutes" || !o.offre || o.offre === "Toutes" || o.offre === offre) && (!n || norm(o.texte + " " + o.reponse + " " + (o.relance || "")).includes(n)));
+function objDefSet(r) {            // guide C : l'offre présentée ; guides A et B : les offres du guide (contenu), sinon toutes
+  if (r.guide === "C") return r.rep?.offre ? [r.rep.offre] : null;
+  const s = GC()?.guides?.[r.guide]?.objOffres; return s?.length ? s : null;
+}
+const objDefLabel = s => !s ? "Toutes" : s.length === 1 ? s[0] : `${s[0]} à ${s[s.length - 1]}`;
+function objOffreDefaut(r) { return r.guide === "C" ? r.rep?.offre || "Toutes" : objDefSet(r) ? "def" : "Toutes"; }
+function objList(r, offre, q) {      // objections du public de l'entretien, filtrées par offre (« def » = offres proposées, « Toutes » = sans filtre) et par mot
+  const pub = pubOf(r), n = norm(q || ""), set = offre === "def" ? objDefSet(r) || null : offre === "Toutes" ? null : [offre];
+  return (GC()?.objections || []).filter(o => [pub, "les deux"].includes(o.public) && (!set || !o.offre || o.offre === "Toutes" || set.includes(o.offre)) && (!n || norm(o.texte + " " + o.reponse + " " + (o.relance || "")).includes(n)));
 }
 function objDrawer() {
   const pub = pubOf(ENT.r), raisedIds = ENT.r.objections.map(o => o.id), offre = ENT.offre || objOffreDefaut(ENT.r);
   const list = objList(ENT.r, offre, ENT.q), cat = (GC().catalogue || []).filter(c => c.pour === pub), hasOff = (GC().objections || []).some(o => o.offre);
   return `<div class="drawer" role="dialog" aria-label="Objections"><header><h2>Objections</h2><button class="iconbtn" data-eobj="1" aria-label="Fermer">✕</button></header>
     <div class="db"><label class="lsearch" style="color:var(--tx3);margin-bottom:10px">${svg("search", 2)}<input type="search" data-eobjq="1" placeholder="Rechercher un mot" value="${esc(ENT.q || "")}" autocomplete="off"></label>
-    ${hasOff ? `<div class="chips objoff" role="group" aria-label="Offre">${["Toutes", ...cat.map(c => c.code)].map(x => `<button type="button" class="chipbtn${x === offre ? " on" : ""}" data-eobjoff="${esc(x)}" aria-pressed="${x === offre}" title="${esc(x === "Toutes" ? "Toutes les offres" : cat.find(c => c.code === x)?.nom || x)}">${esc(x)}</button>`).join("")}</div>` : ""}
+    ${GC().objectionsAide ? `<p class="tiny" style="margin:0 0 8px">${esc(GC().objectionsAide)}</p>` : ""}
+    ${hasOff ? `<div class="chips objoff" role="group" aria-label="Offre">${[...(ENT.r.guide !== "C" && objDefSet(ENT.r) ? ["def"] : []), "Toutes", ...cat.map(c => c.code)].map(x => { const l = x === "def" ? objDefLabel(objDefSet(ENT.r)) : x === "Toutes" ? "Toutes les objections" : x; return `<button type="button" class="chipbtn${x === offre ? " on" : ""}" data-eobjoff="${esc(x)}" aria-pressed="${x === offre}" title="${esc(x === "def" ? "Offres proposées pour cet entretien" : x === "Toutes" ? "Toutes les offres" : cat.find(c => c.code === x)?.nom || x)}">${esc(l)}</button>`; }).join("")}</div>` : ""}
     ${ENT.r.objections.length ? `<h3 class="tiny up">Soulevées pendant cet entretien (${ENT.r.objections.length})</h3>${raisedHtml(false)}` : ""}
     <h3 class="tiny up">Réponses proposées</h3>
     ${list.map(o => `<div class="obj">${o.offre || o.num ? `<span class="tiny" style="display:block">${esc([o.num, o.offre && o.offre !== "Toutes" ? o.offre : ""].filter(Boolean).join(" · "))}</span>` : ""}<b>« ${esc(o.texte)} »</b><p>${esc(o.reponse)}</p>${o.note ? `<p class="tiny" style="color:var(--orange)">${esc(o.note)}</p>` : ""}${o.relance ? `<p class="small muted"><i>Relance : « ${esc(o.relance)} »</i></p>` : ""}<button class="btn sm ${raisedIds.includes(o.id) ? "" : "pri"}" data-eraise="${esc(o.id)}">${raisedIds.includes(o.id) ? "Enregistrée ✓" : "Soulevée"}</button></div>`).join("") || `<div class="empty">Aucune objection trouvée.</div>`}
@@ -2111,8 +2132,9 @@ function mailtoFor(r) {
   const c = pers.map(p => p.contact && get(p.contact)).find(x => x && x.email) || all("contact").find(x => x.compte === r.compte && x.email);
   const prenom = c?.prenom ? ` ${c.prenom}` : "";
   const reform = r.reformulation || entReform(r), act = C0.actions?.[rep.prochaine]?.client || "";
-  const vals = { date:dfr(r.date), prenom, reformulation:reform.replace(/\s*C'est bien ça \?\s*$/, ""), convenu:rep.convenu ? `\nCe que nous avons convenu : ${rep.convenu}\n` : "", prochaineClient:act ? act.charAt(0).toUpperCase() + act.slice(1) : "", prochaineDate:rep.prochaineDate ? ` le ${dfr(rep.prochaineDate)}` : "" };
-  let body = fillTpl(tpl.corps || "{reformulation}", vals, "");
+  let rf = reform.replace(/\s*C'est bien ça \?\s*$/, "").replace(/^\s*Si je résume\s*:\s*/, ""); rf = rf.charAt(0).toUpperCase() + rf.slice(1);
+  const vals = { date:dfr(r.date), prenom, reformulation:rf, convenu:rep.convenu ? `\nCe que nous avons convenu : ${rep.convenu}\n` : "", convenuTxt:rep.convenu || "", prochaineClient:act ? act.charAt(0).toUpperCase() + act.slice(1) : "", prochaineClientMin:act, prochaineDate:rep.prochaineDate ? ` le ${dfr(rep.prochaineDate)}` : "", prochaineDateTxt:rep.prochaineDate ? dfr(rep.prochaineDate) : "" };
+  let body = fillTplCond(tpl.corps || "{reformulation}", vals, "");
   if (!act) body = body.replace(/\n?Prochaine étape : [^\n]*\n?/, "\n");
   const subject = fillTpl(tpl.objet || "Partenarium – notre échange du {date}", vals, "");
   return `mailto:${encodeURIComponent(c?.email || "")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
