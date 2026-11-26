@@ -1,11 +1,12 @@
 /* Service worker : rend l'application utilisable hors ligne.
    À CHAQUE MISE EN LIGNE, change VERSION (ex. partcrm-1.0.0) ET CONFIG.version dans index.html (ex. partcrm-1.0.1) :
    c'est ce qui déclenche la mise à jour sur le téléphone. */
-const VERSION = "partcrm-1.3.1";
+const VERSION = "partcrm-1.4.0";
 
 // Fichiers de « coquille » mis en cache à l'installation (tout ce qu'il faut pour démarrer sans réseau).
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./fonts/inter.woff2",
-  "./icons/icon.svg", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png", "./icons/icon-180.png"];
+  "./icons/icon.svg", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png", "./icons/icon-180.png",
+  "./js/vendor/pizzip.min.js", "./js/vendor/docxtemplater.min.js"];   // moteur de génération des contrats (licence MIT)
 
 // Fichiers toujours relus sur le réseau d'abord (la page elle-même).
 const FRESH = ["/index.html"];

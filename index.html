@@ -412,7 +412,7 @@ textarea.inp{min-height:64px;resize:vertical}
 <script id="calc">
 /* ═════════ FORMULES MÉTIER (testées automatiquement) ═════════ */
 const TAX = { r1:0.60, r2:0.40, thr:2000000, floor:20000, caRatio:0.005, ctr:0.25, isn:0.25, isr:0.15, iscap:42500, tva:0.20 };
-const GRID = { t1:10000, r1:0.20, t2:50000, r2:0.15, r3:0.10, min:500, nat:0.10, ren:0.50, forfait:900 };
+const GRID = { t1:10000, r1:0.20, t2:50000, r2:0.15, r3:0.10, min:500, nat:0.10, ren:0.50, f1:600, f2:1200 };
 function mecenat(don, ca, P) {
   don = Math.max(0, +don || 0); ca = Math.max(0, +ca || 0);
   const plafond = Math.max(P.floor, P.caRatio * ca), retenu = Math.min(don, plafond);
@@ -438,15 +438,183 @@ function commission(num, nature, renew, G) {
   const cNat = nature * G.nat * (renew ? G.ren : 1);
   return { cNum, cNat, total: cNum + cNat, taux: num + nature ? (cNum + cNat) / (num + nature) : 0 };
 }
+/* ═════════ CONTRATS : génération des documents Word (cahier des charges contrats v1.1 du service Juridique, 26/11/2026) ═════════
+   Fonctions pures, testées dans Node : types et modèles, valeurs par défaut et calculs (section 5), contrôles (section 6),
+   données de fusion (section 10) et fusion du modèle (sections 2 et 3 : notes d'usage retirées, champ vide → « [libellé à compléter] »). */
+const CTYPES = [
+  { t:"Pack Lancement", code:"02", pre:"PCK", fee:1 }, { t:"Mandat porteur", code:"03", pre:"MND", fee:1 },
+  { t:"Abonnement Partenaires+", code:"04", pre:"ABO", fee:1 }, { t:"Mission mécénat", code:"05", pre:"LMM" },
+  { t:"Convention de mécénat", code:"06", pre:"MEC" }, { t:"Parrainage tripartite (délégation)", code:"07", pre:"PAR" },
+  { t:"Parrainage bipartite", code:"08", pre:"PAB" }, { t:"Ambassadeur / influence", code:"09", pre:"AMB" },
+  { t:"Mission entreprise", code:"10", pre:"MIS", fee:1 }, { t:"Mandat annonceur", code:"11", pre:"MAN", fee:1 },
+  { t:"Club d'entreprises", code:"12", pre:"CLB", fee:1 }, { t:"Droit à l'image", code:"13", pre:"IMG" }, { t:"Lettre", code:"14", pre:"LET" }];
+const CTYPE = Object.fromEntries(CTYPES.map(x => [x.t, x]));
+const OLD_CTYPE = { "Tripartite (délégation de paiement)":"Parrainage tripartite (délégation)", "Tripartite (loi Sapin)":"Parrainage bipartite", "Contrat de parrainage":"Parrainage bipartite", "Business club":"Club d'entreprises", "Activation / conseil":"Mission entreprise" };
+const CMODELES = { "01":"Conditions générales de prestation", "02":"Bon de commande Pack Lancement", "03":"Mandat de recherche de partenaires", "04":"Abonnement Partenaires+", "05":"Lettre de mission mécénat", "06":"Convention de mécénat", "07":"Parrainage tripartite", "08":"Parrainage à deux parties", "09":"Ambassadeur et influence", "10":"Mission entreprise", "11":"Mandat de recherche de projets", "12":"Club d'entreprises", "13":"Autorisation de droit à l'image", "14":"Lettres types" };
+const LETTRES = ["L1 - Envoi du registre mensuel des présentations", "L2 - Relance amiable de paiement", "L3 - Mise en demeure de payer", "L4 - Contrepartie non livrée et compensation", "L5 - Proposition de renouvellement", "L6 - Fin de période initiale (Partenaires+)", "L7 - Force majeure", "L8 - Résiliation pour manquement", "L9 - Lancement ou non-lancement du club", "L10 - Procès-verbal de livraison des contreparties", "L11 - Avenant"];
+const NB_PACK = { "Essentiel":30, "Standard":50, "Premium":80, "Pilote":50 };
+const AGENCE0 = { adresse:"2 avenue du Docteur Jacques Arnaud, A24, 74300 Cluses", territoire:"France, Union européenne et Suisse", tva:"TVA non applicable, art. 293 B du CGI", cgv:"01/01/2027", soustraitants:"Google Workspace (Google Cloud France)", assureur:"", police:"", iban:"", mediateur:"" };
+const CLUB0 = { seuil:10, date:"2027-05-31" };
+const FORME_P = { "Association loi 1901":"association déclarée (loi 1901)", "Association reconnue d'utilité publique":"association reconnue d'utilité publique", "Société sportive (SASP, SAOS…)":"société sportive", "Entreprise individuelle":"entrepreneur individuel", "Particulier":"personne physique" };
+const NOTE_RE = /<w:p\b(?:(?!<w:p\b)[\s\S])*?<w:pStyle w:val="NoteUsage"\/>[\s\S]*?<\/w:p>/g;
+const r2 = v => Math.round((+v || 0) * 100) / 100;
+const n0 = v => Math.max(0, +v || 0);
+function frMoney(v) {                       // format français : espace insécable des milliers, virgule, sans symbole
+  if (v === undefined || v === null || v === "" || !isFinite(+v)) return "";
+  const x = r2(Math.abs(+v)), ent = Math.floor(x), dec = Math.round((x - ent) * 100);
+  return (+v < 0 ? "-" : "") + String(ent).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + (dec ? "," + String(dec).padStart(2, "0") : "");
+}
+function frDate(s) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ""); return m ? `${m[3]}/${m[2]}/${m[1]}` : ""; }
+function frSiren(s) { const d = String(s || "").replace(/\D/g, ""); return d.length === 9 ? d.replace(/(\d{3})(\d{3})(\d{3})/, "$1 $2 $3") : String(s || "").trim(); }
+function forfaitMec(don, G) { don = n0(don); G = G || GRID; return don <= 10000 ? (G.f1 ?? 600) : (G.f2 ?? 1200); }
+function tauxReelMin(vise, G) { vise = n0(vise); return vise > 0 && vise < 2500 ? Math.round(G.min / vise * 100) : null; }
+function comCtr(m, nat, renouv, G, viaAnnonceur) { return viaAnnonceur ? 0 : r2(commission(m, nat, renouv, G).total); }
+function cpTotal(lines) { return r2((Array.isArray(lines) ? lines : []).reduce((s, l) => s + n0(l.valeur), 0)); }
+function cpRatio(total, don) { don = n0(don); return don ? Math.round(total / don * 1000) / 10 : null; }
+function echParts(rows, com) {              // part de l'Agence au prorata, arrondie au centime ; la dernière échéance absorbe l'écart
+  const tot = rows.reduce((s, e) => s + n0(e.montant), 0); let acc = 0;
+  return rows.map((e, i) => { const m = n0(e.montant), pa = i === rows.length - 1 ? r2(com - acc) : tot ? r2(com * m / tot) : 0; acc = r2(acc + pa); return { ...e, part_agence:pa, part_porteur:r2(m - pa) }; });
+}
+const MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+function moisLettres(ym) { const m = /^(\d{4})-(\d{2})/.exec(ym || ""); return m ? `${MOIS[+m[2] - 1]} ${m[1]}` : ""; }
+function moisPrecedent(ymd) { return moisLettres(addMonths(String(ymd).slice(0, 7) + "-01", -1)); }
+function penalites(pro) { return pro ? "(trois fois le taux d'intérêt légal) et l'indemnité forfaitaire de 40 € pour frais de recouvrement sera due" : "(intérêts au taux légal à compter de la présente)"; }
+function immatPorteur(rna, siren) { const a = []; if (String(rna || "").trim()) a.push("RNA " + String(rna).replace(/\s/g, "").toUpperCase()); if (String(siren || "").replace(/\D/g, "")) a.push("SIREN " + frSiren(siren)); return a.length ? a.join(", ") : "non immatriculé"; }
+function sirenMention(siren) { return String(siren || "").replace(/\D/g, "") ? "SIREN " + frSiren(siren) : "non immatriculé(e)"; }
+function ageAu(naiss, ymd) { const a = parseYmd(naiss), b = parseYmd(ymd); if (!a || !b) return null; let n = b.getFullYear() - a.getFullYear(); if (b.getMonth() < a.getMonth() || (b.getMonth() === a.getMonth() && b.getDate() < a.getDate())) n--; return n; }
+function moisEntre(d1, d2) { const a = parseYmd(d1), b = parseYmd(d2); return a && b ? (b.getFullYear() - a.getFullYear()) * 12 + b.getMonth() - a.getMonth() : null; }
+const enCours = (k, t) => k && ["Signé", "Actif"].includes(k.statut) && (!k.fin || k.fin >= t);
+/* Données de fusion. x = { c, p, e, opp, sigP, sigE, dest, mandat, mandatAnn, pack, lie, agence, club, G, saisie, today, registre, clubEng, prestations, pro } */
+function ctrData(x) {
+  const c = x.c || {}, p = x.p || {}, e = x.e || {}, o = x.opp || {}, s = x.saisie || {}, G = x.G, t = x.today || "";
+  const a = { ...AGENCE0, ...Object.fromEntries(Object.entries(x.agence || {}).filter(([, v]) => v !== "" && v !== null && v !== undefined)) }, cl = { ...CLUB0, ...(x.club || {}) };
+  const nm = k => k ? [k.prenom, k.nom].filter(Boolean).join(" ") : "", st = v => v === undefined || v === null ? "" : String(v);
+  const m = n0(c.montant), nat = n0(c.nature), don = m + nat;
+  const viaAnn = !!x.mandatAnn && (c.type === "Parrainage bipartite" || c.mandatLie === x.mandatAnn.id);
+  const com = c.commission !== undefined && c.commission !== null && c.commission !== "" ? (viaAnn ? 0 : n0(c.commission)) : comCtr(m, nat, !!c.renouv, G, viaAnn);
+  const cps = Array.isArray(c.contreparties) ? c.contreparties : [], tot = cpTotal(cps);
+  let ech = (Array.isArray(c.echeancier) ? c.echeancier : []).filter(r => r && (r.date || r.montant));
+  if (!ech.length && m) { const n = Math.min(12, Math.max(1, Math.round(+c.echeances || 1))), dur = c.debut && c.fin ? Math.max(0, moisEntre(c.debut, c.fin)) : 0; ech = Array.from({ length:n }, (_, i) => ({ date:c.debut ? addMonths(c.debut, Math.round(i * dur / n)) : "", montant:r2(m / n), nature:"numéraire", observations:"" })); }
+  const parts = echParts(ech, com);
+  const aud = [[p.membres, "membres"], [p.spectateurs, "spectateurs par an"], [p.abonnes, "abonnés sur les réseaux sociaux"]].filter(([v]) => +v > 0).map(([v, l]) => `${frMoney(v)} ${l}`).join(", ");
+  const tr = tauxReelMin(p.montantPartenaire, G), lines = (k, f) => (Array.isArray(c[k]) ? c[k] : []).map(f);
+  const ex = (Array.isArray(p.exclues) ? p.exclues : []).filter(r => r && r.raison_sociale);
+  const d = {
+    agence_adresse:a.adresse, agence_assureur:a.assureur, agence_police:a.police, agence_assurance_territoire:a.territoire, agence_iban:a.iban, mention_tva:a.tva, mediateur_conso:a.mediateur, cgv_version:a.cgv,
+    contrat_numero:st(c.numero), contrat_date:frDate(x.lie?.signature || c.signature), date_signature:s.date_signature ? frDate(s.date_signature) : "____ / ____ / ________", lieu_signature:s.lieu_signature || "________________",
+    date_debut:frDate(c.debut), date_fin:frDate(c.fin), duree_mois:st(c.dureeMois || (c.debut && c.fin ? moisEntre(c.debut, c.fin) : "")),
+    mandat_numero:st(x.mandat?.numero), mandat_date:frDate(x.mandat?.signature), mandat_annonceur_numero:st(x.mandatAnn?.numero), mandat_annonceur_date:frDate(x.mandatAnn?.signature),
+    montant_ht:frMoney(m), commission_ht:frMoney(com), contreparties_total:frMoney(tot), contreparties_ratio:cpRatio(tot, don) === null ? "" : String(cpRatio(tot, don).toFixed(1)).replace(".", ","),
+    formule_choisie:st(c.formule || o.formule), porteur_nom:st(p.nom), porteur_forme_juridique:FORME_P[p.statutJur] || st(p.statutJur).toLowerCase(), porteur_immatriculation:x.p ? immatPorteur(p.rna, p.siren) : "",
+    porteur_adresse:st(p.adresse), porteur_residence_fiscale:x.p ? st(p.paysFiscal || "France") : "", porteur_signataire:nm(x.sigP), porteur_signataire_qualite:st(x.sigP?.fonction).toLowerCase(), porteur_email:st(p.emailPublic || x.sigP?.email),
+    porteur_iban:st(p.iban), porteur_tva_mention:st(p.tvaMention || (p.tva === "Oui" ? "TVA au taux de 20 % en sus" : "")), porteur_eligibilite_mecenat:st(p.mecenat),
+    entreprise_raison_sociale:st(e.nom), entreprise_forme_juridique:st(e.formeJur), entreprise_siren:frSiren(e.siren), entreprise_adresse:st(e.adresse), entreprise_signataire:nm(x.sigE), entreprise_signataire_qualite:st(x.sigE?.fonction).toLowerCase(), entreprise_email:st(x.sigE?.email || e.emailPublic),
+    annonceur_pays:x.e ? st(e.pays || "France") : "", annonceur_residence_fiscale:x.e ? st(e.pays || "France") : "",
+    projet_nom:st(c.projetNom || p.projetNom), projet_description:st(p.description || p.projet), projet_type:st(p.type), projet_discipline:st(p.discipline), projet_dates_lieu:st(c.datesLieu || p.datesLieu), projet_montant_recherche:frMoney(p.objectif), projet_audience:aud,
+    formules_partenariat:st(p.formules), montant_vise_partenaire:frMoney(p.montantPartenaire), taux_reel_minimum:tr === null ? "" : String(tr),
+    nb_entreprises_cibles:st(c.nbEntreprises || NB_PACK[x.pack?.offre] || ""), pack_niveau:st(c.offre), pack_prix_ht:frMoney(m), pack_acompte_ht:frMoney(m / 2), abo_niveau:st(c.offre), abo_prix_mensuel_ht:frMoney(m),
+    mecenat_forfait_ht:frMoney(forfaitMec(don, G)), mission_type:st(c.offre), mission_prix_ht:frMoney(m), objectifs_client:st(c.objectifsClient), public_vise:st(c.publicVise), zone:st(c.zone), budget_envisage:frMoney(e.budgetSpon),
+    valeurs_exclusions:st(c.valeursExcl), delai_semaines:st(c.delaiSemaines || 4), personnes_concernees:st(c.personnes), sous_traitants_ulterieurs:a.soustraitants,
+    club_niveau:st(c.offre), club_cotisation_ht:frMoney(m), club_seuil:st(cl.seuil), club_date_condition:frDate(cl.date), club_nombre_engagements:x.clubEng === undefined ? "" : String(x.clubEng),
+    designation_officielle:st(c.designation), categorie_partenaire:st(c.categorie), territoire_droits:st(c.territoire || "France"), duree_droits_apres:st(c.dureeDroits || "12 mois"), saison_ou_edition:st(c.saison),
+    secteur_exclusivite:st(c.secteurExcl), concurrents:st(c.concurrents), partenaires_preexistants:st(c.partPre), niveau_sportif_reference:st(c.niveauRef), indisponibilite_jours:st(c.indispo ?? 90), reduction_descente:st(c.reducDesc ?? 20),
+    primes_sportives:st(c.primes), prestations_agence_partenaire:st(x.prestations || "Néant"), rescrit_mention:p.rescrit ? `Il a obtenu un rescrit de l'administration fiscale${p.rescritDate ? " le " + frDate(p.rescritDate) : ""}` : "",
+    don_nature:st(c.donNature || (m && !nat ? "don en numéraire" : "")), don_montant:frMoney(don), don_echeancier:st(c.donEcheancier || (parts.length === 1 && parts[0].date ? `en une fois, le ${frDate(parts[0].date)}` : "")),
+    ambassadeur_prenom_nom:st(p.nom), ambassadeur_date_naissance:frDate(p.dateNaissance), ambassadeur_adresse:st(p.adresse), ambassadeur_telephone:st(p.telPublic), ambassadeur_email:st(p.emailPublic), ambassadeur_siren_mention:x.p ? sirenMention(p.siren) : "", ambassadeur_residence_fiscale:x.p ? st(p.paysFiscal || "France") : "",
+    produits_promus:st(c.produits), remuneration_ht:frMoney(m), remuneration_modalites:st(c.remModalites), avantages_nature:st(c.avantages), avantages_valeur:nat ? frMoney(nat) : "", supports_image:st(c.supports),
+    beneficiaire_image:st(p.nom || e.nom), beneficiaire_email:st(p.emailPublic || e.emailPublic), duree_image:"3 ans", destinataire_nom:nm(x.dest),
+    mois_registre:x.moisRegistre || moisPrecedent(t), date_fin_periode:frDate(c.debut ? addMonths(c.debut, 6) : ""), penalites_mention:penalites(!!x.pro),
+    contreparties:cps.map(l => ({ type:st(l.type), quantite:st(l.qte), description:st(l.desc), periode:st(l.periode), valeur_unitaire:frMoney(+l.qte > 0 && l.valeur ? +l.valeur / +l.qte : l.valeur), valeur:frMoney(l.valeur), preuve:st(l.preuve), livree:l.livre ? "oui" : "non", compensation:st(l.compensation) })),
+    echeances:parts.map(r => ({ date:frDate(r.date), montant:frMoney(r.montant), part_agence:frMoney(r.part_agence), part_porteur:frMoney(r.part_porteur), nature:st(r.nature), observations:st(r.observations) })),
+    objectifs:lines("objectifsL", r => ({ objectif:st(r.objectif), cible:st(r.cible), mesure:st(r.mesure), resultat:st(r.resultat) })),
+    registre:(x.registre || []).map(r => ({ raison_sociale:st(r.raison_sociale), siren:frSiren(r.siren), interlocuteur:st(r.interlocuteur), date:frDate(r.date), mode:st(r.mode), montant:frMoney(r.montant) })),
+    entreprises_exclues:ex.length ? ex.map(r => ({ raison_sociale:st(r.raison_sociale), siren:frSiren(r.siren), interlocuteur:st(r.interlocuteur), statut:st(r.statut) })) : [{ raison_sociale:"Néant", siren:"", interlocuteur:"", statut:"" }],
+    missions:lines("missions", r => ({ date:frDate(r.date), format:st(r.format), reseau:st(r.reseau), message:st(r.message), validation:st(r.validation), lien:st(r.lien) })),
+    autres_partenaires:lines("autresPart", r => ({ partenaire:st(r.partenaire), secteur:st(r.secteur), fin:frDate(r.fin), exclusivite:st(r.exclusivite) })),
+    calendrier:lines("calendrier", r => ({ date:frDate(r.date), etape:st(r.etape), responsable:st(r.responsable) }))
+  };
+  for (const [k, v] of Object.entries(s)) if (k !== "date_signature" && k !== "lieu_signature" && v !== undefined && v !== null && String(v).trim() !== "") d[k] = String(v).trim();   // saisies à la génération
+  return cleanDeep(d);
+}
+/* Contrôles avant génération (section 6). x : mêmes données que ctrData + nafExclu, auRegistre, lie09, cfgVides ; tags : champs du modèle */
+function ctrControls(x, code, tags) {
+  const c = x.c || {}, p = x.p || {}, e = x.e || {}, t = x.today, bloq = [], avert = [], tg = new Set(tags || []);
+  const m = n0(c.montant), nat = n0(c.nature), don = m + nat, withE = ["05", "06", "07", "08", "09", "10", "11", "12"].includes(code);
+  if (withE && x.nafExclu) bloq.push(`Entreprise exclue : code NAF ${e.codeNaf} (${x.nafExclu}). Aucun partenariat avec l'alcool, le tabac, le vapotage ou les jeux d'argent.`);
+  if (code === "06") { const ratio = cpRatio(cpTotal(c.contreparties), don); if (ratio !== null && ratio > 25) bloq.push(`Contreparties : ${String(ratio.toFixed(1)).replace(".", ",")} % du don, au-delà du plafond de 25 %.`); }
+  if (["05", "06"].includes(code) && p.mecenat === "Non") bloq.push("Le porteur n'est pas éligible au mécénat (fiche : « Non »).");
+  if (code === "05" && don < 3000) bloq.push(`Don de ${frMoney(don)} € : la lettre de mission n'est proposée qu'à partir de 3 000 €. Remettre le modèle 06 seul au porteur.`);
+  if (code === "09") { const age = ageAu(p.dateNaissance, c.debut || t); if (age !== null && age < 18) bloq.push(`Ambassadeur mineur (${age} ans) : le modèle 09 est réservé à un majeur.`); else if (age === null) avert.push("Date de naissance de l'ambassadeur non renseignée : vérifiez qu'il est majeur."); }
+  if (code === "07") { if (!enCours(x.mandat, t)) bloq.push("Contrat 07 sans mandat porteur en cours : utilisez le modèle 08."); if (!x.auRegistre) bloq.push("L'entreprise n'est pas inscrite au registre des présentations du porteur (renseignez « Présentée au porteur le » sur l'opportunité)."); }
+  if (code === "04" && ["Pro", "Premium"].includes(c.offre) && !enCours(x.mandat, t)) bloq.push(`Partenaires+ ${c.offre} sans mandat en cours : seul le niveau Essentiel est possible.`);
+  const avocat = [];
+  if (m + nat > 50000) avocat.push("montant supérieur à 50 000 €");
+  if (withE && x.e && e.pays && !/^france$/i.test(e.pays.trim())) avocat.push("entreprise établie hors de France");
+  if (code === "09" && p.paysFiscal && !/^france$/i.test(p.paysFiscal.trim())) avocat.push("ambassadeur établi hors de France");
+  if (p.statutJur === "Société sportive (SASP, SAOS…)" || p.niveau === "Professionnel") avocat.push("porteur de niveau professionnel");
+  if (e.formeJur === "Collectivité" || p.statutJur === "Collectivité") avocat.push("partenaire de type collectivité");
+  if (avocat.length) avert.push(`Relecture par un avocat avant signature (${avocat.join(", ")}).`);
+  if (code === "03") { const tr = tauxReelMin(p.montantPartenaire, x.G); if (tr !== null) avert.push(`Montant visé par partenaire inférieur à 2 500 € : taux réel de la commission minimale ${tr} % (écrit dans le mandat).`); }
+  if (["07", "08"].includes(code) && m >= 1000 && (c.contreparties || []).some(l => /influence|ambassad/i.test(l.type || "") || /influence|ambassad/i.test(l.desc || "")) && !x.lie09) avert.push("Contrepartie d'influence d'au moins 1 000 € HT sans contrat 09 lié : le contrat d'influence écrit est obligatoire.");
+  const vides = [["agence_assureur", "assureur RC Pro"], ["agence_police", "n° de police RC Pro"], ["mediateur_conso", "médiateur de la consommation"]].filter(([k]) => tg.has(k) && !String((x.agence || {})[{ agence_assureur:"assureur", agence_police:"police", mediateur_conso:"mediateur" }[k]] || "").trim()).map(([, l]) => l);
+  if (vides.length) avert.push(`Réglages › Agence à compléter : ${vides.join(", ")}.`);
+  if (["05", "06"].includes(code) && ["À vérifier", "Probable (à confirmer)", ""].includes(p.mecenat || "")) avert.push(`Éligibilité au mécénat « ${p.mecenat || "non renseignée"} » : à vérifier (statuts, comptes, rescrit) avant signature.`);
+  return { bloq:bloq.map(noDash), avert:avert.map(noDash) };
+}
+/* Garde une seule lettre du modèle 14 : du titre « Lx - … » jusqu'au titre suivant (saut de page final retiré) */
+function keepLetter(xml, code) {
+  const H = /<w:p\b(?:(?!<w:p\b)[\s\S])*?<w:pStyle w:val="Heading1"\/>[\s\S]*?<\/w:p>/g, txt = p => (p.match(/<w:t[^>]*>([^<]*)<\/w:t>/g) || []).map(t => t.replace(/<[^>]+>/g, "")).join("");
+  const heads = []; let mm; while ((mm = H.exec(xml))) heads.push({ i:mm.index, end:H.lastIndex, t:txt(mm[0]) });
+  const k = heads.findIndex(h => h.t.startsWith(code + " - ")); if (k < 0) return null;
+  const b0 = xml.indexOf("<w:body>") + 8, sp = xml.lastIndexOf("<w:sectPr"), stop = k + 1 < heads.length ? heads[k + 1].i : sp;
+  let part = xml.slice(heads[k].i, stop).replace(/<w:p\b(?:(?!<w:p\b)[\s\S])*?<w:br w:type="page"\/>(?:(?!<w:p\b)[\s\S])*?<\/w:p>\s*$/, "");
+  return xml.slice(0, b0) + part + xml.slice(sp);
+}
+const DOCX_PARTS = /^word\/(document|header\d*|footer\d*)\.xml$/;
+/* Fusion d'un modèle (libs : PizZip et Docxtemplater, injectées pour être testées dans Node et dans le navigateur) */
+function ctrRender(PizZip, Docxtemplater, buf, data, opts = {}) {
+  const zip = new PizZip(buf), labels = opts.labels || {}, manquants = [];
+  let xml = zip.file("word/document.xml").asText().replace(NOTE_RE, "");
+  if (opts.lettre) { const k = keepLetter(xml, opts.lettre); if (!k) throw new Error("Lettre " + opts.lettre + " introuvable dans le modèle 14."); xml = k; }
+  if (opts.sansTauxReel) xml = xml.replace(/\. Lorsque ce montant est inférieur à 2 500 €[\s\S]*?compris et accepté\./, ".");
+  zip.file("word/document.xml", xml);
+  const doc = new Docxtemplater(zip, { paragraphLoop:true, linebreaks:true, nullGetter(part, sm) {
+    if (part.module === "loop") return [];
+    if (sm && sm.scopePath && sm.scopePath.length) return "";
+    const l = labels[part.value] || part.value; if (!manquants.includes(l)) manquants.push(l); return noDash(`[${l} à compléter]`); } });
+  const vals = {}; for (const [k, v] of Object.entries(data || {})) vals[k] = typeof v === "string" ? (v === "" ? undefined : noDash(v)) : v;
+  doc.render(vals);
+  const out = doc.getZip(), restants = [];
+  for (const n of Object.keys(out.files).filter(n => DOCX_PARTS.test(n))) {
+    const x = out.file(n).asText(), t = (x.match(/<w:t[^>]*>([^<]*)<\/w:t>/g) || []).map(s => s.replace(/<[^>]+>/g, "")).join("");
+    if (x.includes("NoteUsage")) restants.push(n + " : note d'usage"); const br = t.match(/\{[^}]*\}?/g); if (br) restants.push(...br.map(b => n + " : " + b));
+    if (hasDash(t)) restants.push(n + " : tiret long");
+  }
+  return { out:out.generate({ type:"uint8array", compression:"DEFLATE" }), manquants, restants };
+}
+/* Tous les champs d'un modèle (pour la saisie à la génération et les contrôles) */
+function ctrTags(PizZip, Docxtemplater, buf) {
+  const zip = new PizZip(buf), tags = new Set(), loops = new Set();
+  zip.file("word/document.xml", zip.file("word/document.xml").asText().replace(NOTE_RE, ""));
+  const doc = new Docxtemplater(zip, { paragraphLoop:true, linebreaks:true, parser:tag => ({ get:(scope, ctx) => { if (!ctx.scopePath.length) tags.add(tag); if (!ctx.scopePath.length && /^[a-z_]+$/.test(tag) && LOOPS.includes(tag)) { loops.add(tag); return [{}]; } return ctx.scopePath.length ? "x" : "X"; } }) });
+  doc.render({});
+  return { tags:[...tags].filter(t => !LOOPS.includes(t)), loops:[...loops] };
+}
+const LOOPS = ["contreparties", "echeances", "objectifs", "registre", "entreprises_exclues", "missions", "autres_partenaires", "calendrier"];
+function ctrFileName(numero, code, nom) {
+  const a = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  const nu = String(numero || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9-]+/g, "-").replace(/^-+|-+$/g, "");
+  return noDash(`${nu || "sans-numero"}_${a(CMODELES[code])}_${a(nom) || "sans-nom"}.docx`).replace(/_+/g, "_");
+}
 const MEC_TYPES = ["Mécénat", "Mécénat de compétences"];
 /* Indicateurs d'une opportunité : commission, pondéré, coût net pour l'entreprise, net pour le porteur */
 function oppCalc(o, ent, G, P, proba) {
   const m = Math.max(0, +o.montant || 0), nat = Math.max(0, +o.nature || 0), renew = !!o.renouv, type = o.type || "Parrainage";
-  const forfait = o.forfait === undefined || o.forfait === null || o.forfait === "" ? G.forfait : +o.forfait;
+  const forfait = o.forfait === undefined || o.forfait === null || o.forfait === "" ? null : +o.forfait, fMec = base => forfait === null ? forfaitMec(base, G) : forfait;
   const pm = type === "Mixte" ? (o.partMec === undefined || o.partMec === null || o.partMec === "" ? 0.5 : +o.partMec) : MEC_TYPES.includes(type) ? 1 : 0;
   let com;
-  if (pm === 1) com = m + nat > 0 ? forfait : 0;                                  // mécénat : forfait, jamais de pourcentage
-  else com = commission(m * (1 - pm), nat, renew, G).total + (pm > 0 && m * pm > 0 ? forfait : 0);
+  if (pm === 1) com = m + nat > 0 ? fMec(m + nat) : 0;                              // mécénat : forfait, jamais de pourcentage
+  else com = commission(m * (1 - pm), nat, renew, G).total + (pm > 0 && m * pm > 0 ? fMec(m * pm) : 0);
   const e = ent || {}, opts = { regime: e.imposition || "is25", benef: e.benef, tmi: e.tmi, soc: e.soc };
   let cout = 0;
   if (e.imposition === "micro") cout = (pm > 0 ? mecenat(m * pm + (pm === 1 ? nat : 0), e.caHT, P).cost : 0) + (pm < 1 ? m * (1 - pm) + nat : 0);
@@ -462,13 +630,14 @@ function addMonths(s, n) { const d = parseYmd(s); if (!d) return ""; const day =
 function addDays(s, n) { const d = parseYmd(s); if (!d) return ""; d.setDate(d.getDate() + n); return ymd(d); }
 function daysBetween(a, b) { const x = parseYmd(a), y = parseYmd(b); if (!x || !y) return null; return Math.round((y - x) / 86400000); }
 /* Contrat : commission due, échéancier, rappels, contreparties */
-const FEE_TYPES = ["Mandat porteur", "Business club", "Mandat annonceur", "Activation / conseil"];
+const FEE_TYPES = CTYPES.filter(x => x.fee).map(x => x.t);
 function contratCalc(c, G, P) {
   const m = Math.max(0, +c.montant || 0), nat = Math.max(0, +c.nature || 0), type = c.type || "";
   let due;
   if (c.commission !== undefined && c.commission !== null && c.commission !== "") due = +c.commission;
   else if (FEE_TYPES.includes(type)) due = m;                                  // honoraires facturés directement par Partenarium
-  else if (type === "Convention de mécénat") due = m + nat > 0 ? G.forfait : 0;
+  else if (type === "Mission mécénat") due = m + nat > 0 ? forfaitMec(m + nat, G) : 0;            // forfait facturé par la lettre de mission (05)
+  else if (["Convention de mécénat", "Droit à l'image", "Lettre", "Parrainage bipartite"].includes(type)) due = 0; // Partenarium n'est pas payé par ce contrat (06 : pas partie ; 08 : mission facturée à part)
   else due = commission(m, nat, !!c.renouv, G).total;
   const enc = Math.max(0, +c.encaisse || 0), n = Math.min(12, Math.max(1, Math.round(+c.echeances || 1)));
   const dur = c.debut && c.fin ? Math.max(0, (parseYmd(c.fin).getFullYear() - parseYmd(c.debut).getFullYear()) * 12 + parseYmd(c.fin).getMonth() - parseYmd(c.debut).getMonth()) : 0;
@@ -569,14 +738,14 @@ function fillTplCond(tpl, vals, empty) {
   return fillTpl(t, vals, empty);
 }
 
-if (typeof module !== "undefined") module.exports = { TAX, GRID, mecenat, isTax, parrainage, commission, oppCalc, contratCalc, addMonths, addDays, daysBetween, ymd, parseYmd, eligMecenat, qualifPorteur, grilleTotal, grilleNiveau, grilleSuggest, packSuggere, sponsoTotal, sponsoCalc, palierOf, coutNetEntretien, fillTpl, fillTplCond, noDash, hasDash, cleanDeep };
+if (typeof module !== "undefined") module.exports = { TAX, GRID, mecenat, isTax, parrainage, commission, oppCalc, contratCalc, addMonths, addDays, daysBetween, ymd, parseYmd, eligMecenat, qualifPorteur, grilleTotal, grilleNiveau, grilleSuggest, packSuggere, sponsoTotal, sponsoCalc, palierOf, coutNetEntretien, fillTpl, fillTplCond, noDash, hasDash, cleanDeep, CTYPES, CTYPE, OLD_CTYPE, CMODELES, LETTRES, AGENCE0, CLUB0, NOTE_RE, frMoney, frDate, frSiren, forfaitMec, tauxReelMin, comCtr, cpTotal, cpRatio, echParts, moisLettres, moisPrecedent, penalites, immatPorteur, sirenMention, ageAu, ctrData, ctrControls, keepLetter, ctrRender, ctrTags, ctrFileName, LOOPS };
 </script>
 
 <script>
 (() => {
 "use strict";
 /* ═════════ CONFIGURATION ═════════ */
-const CONFIG = { name:"Partenarium CRM", key:"partcrm", version:"1.3.1", // à garder identique à VERSION dans sw.js (partcrm-1.3.1)
+const CONFIG = { name:"Partenarium CRM", key:"partcrm", version:"1.4.0", // à garder identique à VERSION dans sw.js (partcrm-1.4.0)
   gh:{ owner:"bastienvidal26-creator", privateRepo:"partenarium-crm-perso" } };
 
 /* ═════════ outils ═════════ */
@@ -646,17 +815,19 @@ function migrateItem(r) {
   if (r.o === "opp" && r.etape === "Négociation" && Math.abs(+r.proba - 0.6) < 1e-9 && !r.v12) { r.proba = PROBA0.opp["Négociation"]; r.v12 = 1; return true; }
   if (r.o === "porteur" && OLD_REL[r.relation]) { r.relation = OLD_REL[r.relation]; return true; }
   let ch = false;            /* v1.3.0 : secteurs du Vaucluse, origines, n° RNA séparé du SIREN */
+  if (r.o === "contrat" && OLD_CTYPE[r.type]) { if (r.type === "Tripartite (loi Sapin)") r.notes = [r.notes, "Ancien type « Tripartite (loi Sapin) », supprimé le 26/11/2026 : mandat annonceur (11) puis contrat 08."].filter(Boolean).join("\n"); r.type = OLD_CTYPE[r.type]; ch = true; }   /* v1.4.0 : types des modèles 2026-11 */
+  if (r.o === "contrat" && r.statut === "Envoyé") { r.statut = "Envoyé pour signature"; ch = true; }
   if (r.o === "entreprise" && OLD_SECTEUR[r.secteur]) { r.secteur = OLD_SECTEUR[r.secteur]; ch = true; }
   if ((r.o === "entreprise" || r.o === "porteur") && OLD_ORIGINE[r.source]) { r.source = OLD_ORIGINE[r.source]; ch = true; }
   if (r.o === "porteur" && !r.rna && /^W\d{9}$/i.test(String(r.siren || "").replace(/\s/g, ""))) { r.rna = String(r.siren).replace(/\s/g, "").toUpperCase(); r.siren = ""; ch = true; }
   return ch;
 }
 function migrateAll(items) { let n = 0; for (const r of Object.values(items || {})) if (migrateItem(r)) { r.updated = Date.now(); n++; } return n; }
-const CST = [{ v:"Brouillon", c:"var(--gray)" }, { v:"Envoyé", c:"var(--blue)" }, { v:"Signé", c:"var(--purple)" }, { v:"Actif", c:"var(--green)" }, { v:"Terminé", c:"var(--brown)" }, { v:"Résilié", c:"var(--red)", closed:1 }];
+const CST = [{ v:"Brouillon", c:"var(--gray)" }, { v:"Généré", c:"var(--teal)" }, { v:"Envoyé pour signature", c:"var(--blue)" }, { v:"Signé", c:"var(--purple)" }, { v:"Actif", c:"var(--green)" }, { v:"Terminé", c:"var(--brown)" }, { v:"Résilié", c:"var(--red)", closed:1 }];
 const ACT_ST = [{ v:"À faire", c:"var(--orange)" }, { v:"Fait", c:"var(--green)" }];
 const PATHS = { opp:["etape", STAGES], porteur:["relation", REL], contrat:["statut", CST] };
 const CP_TYPES = ["Logo sur tenue", "Panneau / banderole", "Naming", "Réseaux sociaux", "Site web", "Hospitalité / VIP", "Invitations", "Photo / vidéo", "Stand / présence événement", "Intervention / conférence", "Activation salariés", "Droit à l'image / ambassadeur", "Relations presse", "Autre"];
-const LINE_COLS = [{ k:"type", l:"Type", t:"select", o:CP_TYPES }, { k:"desc", l:"Description", t:"text" }, { k:"qte", l:"Qté", t:"number" }, { k:"valeur", l:"Valeur €", t:"money" }, { k:"livre", l:"Livrée", t:"bool" }];
+const LINE_COLS = [{ k:"type", l:"Type", t:"select", o:CP_TYPES }, { k:"desc", l:"Description", t:"text" }, { k:"periode", l:"Période", t:"text" }, { k:"qte", l:"Qté", t:"number" }, { k:"valeur", l:"Valeur €", t:"money" }, { k:"preuve", l:"Preuve attendue", t:"text" }, { k:"livre", l:"Livrée", t:"bool" }];
 /* Territoire et prospection (v1.3.0, Vaucluse) : listes utilisées par les fiches et l'import des fichiers du Marketing */
 const SECTEURS = ["Agroalimentaire", "Industrie", "BTP / construction", "Énergie / environnement", "Transport / logistique", "Commerce", "Automobile", "Hôtellerie / restauration", "Tourisme / loisirs", "Immobilier", "Banque / assurance", "Santé / social", "Services aux entreprises", "Services aux particuliers", "Numérique / communication", "Agriculture (hors viticulture)", "Autre"];
 const OLD_SECTEUR = { "Décolletage / mécanique":"Industrie", "Tourisme / montagne":"Tourisme / loisirs", "BTP":"BTP / construction", "Santé":"Santé / social", "Énergie":"Énergie / environnement", "Numérique":"Numérique / communication" };
@@ -696,6 +867,8 @@ const F = {
     { k:"discipline", l:"Discipline ou thème", t:"text", s:"Identité", list:1 },
     { k:"niveau", l:"Niveau", t:"select", s:"Identité", o:["Loisir", "Départemental", "Régional", "National", "International"] },
     { k:"statutJur", l:"Statut juridique", t:"select", s:"Identité", o:["Association loi 1901", "Association reconnue d'utilité publique", "Société sportive (SASP, SAOS…)", "Entreprise individuelle", "Société", "Particulier", "Collectivité", "Autre"] },
+    { k:"adresse", l:"Adresse du siège", t:"text", s:"Identité", help:"Reprise dans les contrats." },
+    { k:"dateNaissance", l:"Date de naissance (athlète)", t:"date", s:"Identité", show:r => ["Athlète", "Particulier", "Entreprise individuelle"].includes(r.type) || ["Particulier", "Entreprise individuelle"].includes(r.statutJur) },
     { k:"rna", l:"N° RNA", t:"text", s:"Identité", help:"Associations : W suivi de 9 chiffres (Répertoire national des associations)." },
     { k:"siren", l:"SIREN", t:"text", s:"Identité" },
     { k:"federation", l:"Fédération", t:"text", s:"Identité" },
@@ -710,8 +883,16 @@ const F = {
     { k:"description", l:"Présentation", t:"textarea", s:"Identité", wide:1 },
     { k:"mecenat", l:"Éligible au mécénat", t:"select", s:"Fiscalité", o:["À vérifier", "Probable (à confirmer)", "Oui (intérêt général)", "Non"], def:"À vérifier", help:"Intérêt général : gestion désintéressée, activité non lucrative, pas de cercle restreint. Une société sportive n'est pas éligible." },
     { k:"rescrit", l:"Rescrit fiscal obtenu", t:"bool", s:"Fiscalité" },
+    { k:"rescritDate", l:"Date du rescrit", t:"date", s:"Fiscalité", show:r => !!r.rescrit },
+    { k:"tvaMention", l:"Régime de TVA (mention des contrats)", t:"text", s:"Fiscalité", help:"Indiqué par le porteur : « TVA au taux de 20 % en sus » ou sa mention d'exonération ou de franchise." },
+    { k:"paysFiscal", l:"Pays de résidence fiscale", t:"text", s:"Fiscalité", def:"France" },
+    { k:"iban", l:"IBAN", t:"text", s:"Fiscalité", help:"Saisi à la contractualisation (contrats 07 et 08)." },
     { k:"tva", l:"Facture la TVA", t:"select", s:"Fiscalité", o:["Non", "Oui"] },
+    { k:"projetNom", l:"Nom du projet", t:"text", s:"Projet et objectifs", help:"Repris dans les contrats (« le projet … »)." },
     { k:"projet", l:"Projet à financer", t:"textarea", s:"Projet et objectifs", wide:1 },
+    { k:"datesLieu", l:"Dates et lieu du projet", t:"text", s:"Projet et objectifs" },
+    { k:"montantPartenaire", l:"Montant visé par partenaire HT", t:"money", s:"Projet et objectifs", help:"Sous 2 500 € : mandat déconseillé (taux réel de la commission minimale)." },
+    { k:"formules", l:"Formules de partenariat proposées", t:"textarea", s:"Projet et objectifs", wide:1 },
     { k:"objectifs", l:"Objectifs", t:"textarea", s:"Projet et objectifs", wide:1 },
     { k:"objectif", l:"Objectif de financement", t:"money", s:"Projet et objectifs", list:1 },
     { k:"budget", l:"Budget annuel", t:"money", s:"Projet et objectifs" },
@@ -734,6 +915,7 @@ const F = {
     { k:"scoreSpon", l:"Score de sponsorabilité (sur 100)", t:"number", s:"Mandat Partenarium", help:"Calculé par le guide d'entretien A. À refaire à chaque renouvellement et au plus tard 12 mois après." },
     { k:"scoreDate", l:"Date du score", t:"date", s:"Mandat Partenarium" },
     { k:"inventaire", l:"Contreparties disponibles", t:"lines", s:"Contreparties disponibles", wide:1, noLivre:1 },
+    { k:"exclues", l:"Entreprises déjà en discussion (annexe du mandat)", t:"lines", s:"Mandat Partenarium", wide:1, cols:[{ k:"raison_sociale", l:"Raison sociale", t:"text" }, { k:"siren", l:"SIREN", t:"text" }, { k:"interlocuteur", l:"Interlocuteur", t:"text" }, { k:"statut", l:"Statut", t:"text" }], addl:"Ajouter une entreprise", help:"Exclues de la commission. Vide : « Néant » dans le mandat." },
     { k:"source", l:"Origine du contact", t:"select", s:"Prospection et RGPD", o:ORIGINES, help:"Comment le porteur a connu Partenarium, ou comment il a été trouvé." },
     { k:"entrant", l:"A contacté Partenarium de lui-même", t:"bool", s:"Prospection et RGPD", help:"Réservation sur la page de rendez-vous, message, appel." },
     { k:"sourceDonnees", l:"Source des données", t:"text", s:"Prospection et RGPD", help:"Ex. RNA, Injep, site de la fédération, site du club." },
@@ -753,6 +935,9 @@ const F = {
     { k:"codeCommune", l:"Code commune", t:"text", s:"Identité", help:"Code officiel géographique (Insee) de l'établissement." },
     { k:"bassin", l:"Bassin", t:"select", s:"Identité", o:BASSINS, list:1 },
     { k:"adresse", l:"Adresse", t:"text", s:"Identité" },
+    { k:"formeJur", l:"Forme juridique", t:"select", s:"Identité", o:["SAS", "SASU", "SARL", "EURL", "SA", "SNC", "SCOP", "Entreprise individuelle", "Micro-entreprise", "Association", "Collectivité", "Autre"] },
+    { k:"pays", l:"Pays d'établissement", t:"text", s:"Identité", def:"France" },
+    { k:"pro", l:"Client professionnel", t:"bool", s:"Identité", def:true, help:"Pénalités de retard : 3 fois le taux légal + 40 € (professionnel) ou taux légal (non professionnel)." },
     { k:"site", l:"Site web", t:"url", s:"Identité" },
     { k:"emailPublic", l:"E-mail publié par l'entreprise", t:"email", s:"Identité" },
     { k:"telPublic", l:"Téléphone publié par l'entreprise", t:"tel", s:"Identité" },
@@ -810,7 +995,11 @@ const F = {
     { k:"notes", l:"Notes", t:"textarea", s:"Notes", wide:1 }],
   contrat:[
     { k:"numero", l:"N° de contrat", t:"text", s:"Contrat", help:"Laissé vide : numéro automatique (AAAA-TYP-NNN)", list:1 },
-    { k:"type", l:"Type", t:"select", s:"Contrat", o:["Mandat porteur", "Tripartite (délégation de paiement)", "Tripartite (loi Sapin)", "Contrat de parrainage", "Convention de mécénat", "Ambassadeur / influence", "Business club", "Mandat annonceur", "Activation / conseil"], req:1, list:1 },
+    { k:"type", l:"Type", t:"select", s:"Contrat", o:CTYPES.map(x => x.t), req:1, list:1, help:"Chaque type correspond à un modèle Word du kit juridique 2026-11 (01 à 14)." },
+    { k:"offre", l:"Niveau ou offre", t:"select", s:"Contrat", o:["Essentiel", "Standard", "Premium", "Pilote", "Pro", "E1 · Diagnostic sponsoring", "E2 · Activation Saison", "E2 · Activation Saison+", "E3 · Bilan sponsor", "E4 · Recherche de projets", "Membre", "Partenaire", "Fondateur"], show:r => ["Pack Lancement", "Abonnement Partenaires+", "Mission entreprise", "Mandat annonceur", "Club d'entreprises"].includes(r.type) },
+    { k:"lettre", l:"Lettre", t:"select", s:"Contrat", o:LETTRES.map(l => l.split(" - ")[0]), lab:Object.fromEntries(LETTRES.map(l => [l.split(" - ")[0], l])), show:r => r.type === "Lettre" },
+    { k:"contratLie", l:"Contrat concerné", t:"ref", ref:["contrat"], s:"Contrat", show:r => r.type === "Lettre", help:"La lettre reprend ses parties, son numéro et ses dates." },
+    { k:"mandatLie", l:"Mandat lié", t:"ref", ref:["contrat"], s:"Contrat", show:r => ["Abonnement Partenaires+", "Parrainage tripartite (délégation)", "Parrainage bipartite", "Ambassadeur / influence"].includes(r.type), help:"Mandat porteur (03) ou mandat annonceur (11). Vide : le mandat en cours du porteur ou de l'entreprise est repris." },
     { k:"statut", l:"Statut", t:"select", s:"Contrat", o:CST.map(x => x.v), def:"Brouillon", list:1 },
     { k:"porteur", l:"Porteur de projet", t:"ref", ref:["porteur"], s:"Contrat", list:1 },
     { k:"entreprise", l:"Entreprise", t:"ref", ref:["entreprise"], s:"Contrat", list:1 },
@@ -825,7 +1014,39 @@ const F = {
     { k:"commission", l:"Revenu Partenarium HT", t:"money", s:"Montants", help:"Vide = calcul automatique (grille, forfait mécénat ou honoraires)." },
     { k:"encaisse", l:"Déjà encaissé par Partenarium", t:"money", s:"Montants" },
     { k:"contreparties", l:"Contreparties", t:"lines", s:"Contreparties", wide:1 },
-    { k:"document", l:"Lien vers le contrat signé", t:"url", s:"Documents", help:"Ex. lien Google Drive" },
+    { k:"formule", l:"Formule choisie", t:"text", s:"Partenariat", show:r => ["Parrainage tripartite (délégation)", "Parrainage bipartite"].includes(r.type) },
+    { k:"designation", l:"Désignation officielle", t:"text", s:"Partenariat", show:r => ["Parrainage tripartite (délégation)", "Parrainage bipartite"].includes(r.type), help:"Ex. Partenaire officiel du Club XY" },
+    { k:"categorie", l:"Catégorie de partenaire", t:"text", s:"Partenariat", show:r => ["Parrainage tripartite (délégation)", "Parrainage bipartite"].includes(r.type) },
+    { k:"saison", l:"Saison ou édition", t:"text", s:"Partenariat", show:r => ["Parrainage tripartite (délégation)", "Parrainage bipartite", "Lettre"].includes(r.type) },
+    { k:"secteurExcl", l:"Secteur d'exclusivité", t:"text", s:"Partenariat", show:r => ["Parrainage tripartite (délégation)", "Parrainage bipartite", "Ambassadeur / influence"].includes(r.type) },
+    { k:"concurrents", l:"Concurrents listés", t:"text", s:"Partenariat", show:r => ["Parrainage tripartite (délégation)", "Parrainage bipartite"].includes(r.type) },
+    { k:"partPre", l:"Partenaires préexistants dans le secteur", t:"text", s:"Partenariat", show:r => ["Parrainage tripartite (délégation)", "Parrainage bipartite"].includes(r.type) },
+    { k:"niveauRef", l:"Niveau sportif de référence", t:"text", s:"Partenariat", show:r => ["Parrainage tripartite (délégation)", "Parrainage bipartite"].includes(r.type), help:"Ex. Régional 1, saison 2027-2028" },
+    { k:"indispo", l:"Indisponibilité déclenchant la renégociation (jours)", t:"number", s:"Partenariat", def:90, show:r => ["Parrainage tripartite (délégation)", "Parrainage bipartite"].includes(r.type) },
+    { k:"reducDesc", l:"Réduction en cas de descente (%)", t:"number", s:"Partenariat", def:20, show:r => ["Parrainage tripartite (délégation)", "Parrainage bipartite"].includes(r.type) },
+    { k:"primes", l:"Primes sportives", t:"text", s:"Partenariat", show:r => ["Parrainage tripartite (délégation)", "Parrainage bipartite"].includes(r.type) },
+    { k:"territoire", l:"Territoire des droits", t:"text", s:"Partenariat", def:"France", show:r => ["Parrainage tripartite (délégation)", "Parrainage bipartite", "Ambassadeur / influence"].includes(r.type) },
+    { k:"dureeDroits", l:"Durée d'utilisation après la fin", t:"text", s:"Partenariat", def:"12 mois", show:r => ["Parrainage tripartite (délégation)", "Parrainage bipartite", "Ambassadeur / influence"].includes(r.type) },
+    { k:"produits", l:"Produits ou services promus", t:"text", s:"Partenariat", show:r => r.type === "Ambassadeur / influence" },
+    { k:"remModalites", l:"Modalités de la rémunération", t:"text", s:"Partenariat", show:r => r.type === "Ambassadeur / influence", help:"Ex. forfait de 3 000 € pour 6 publications et 1 intervention" },
+    { k:"avantages", l:"Avantages en nature (description)", t:"text", s:"Partenariat", show:r => r.type === "Ambassadeur / influence" },
+    { k:"supports", l:"Supports autorisés", t:"text", s:"Partenariat", show:r => r.type === "Ambassadeur / influence", help:"Ex. site, réseaux sociaux, communication interne" },
+    { k:"objectifsClient", l:"Objectifs de l'entreprise", t:"textarea", s:"Partenariat", show:r => ["Mission entreprise", "Mandat annonceur"].includes(r.type) },
+    { k:"publicVise", l:"Public visé", t:"text", s:"Partenariat", show:r => r.type === "Mandat annonceur" },
+    { k:"zone", l:"Zone géographique", t:"text", s:"Partenariat", show:r => r.type === "Mandat annonceur", help:"Ex. Vaucluse" },
+    { k:"valeursExcl", l:"Valeurs et exclusions", t:"text", s:"Partenariat", show:r => r.type === "Mandat annonceur" },
+    { k:"delaiSemaines", l:"Délai de présentation (semaines)", t:"number", s:"Partenariat", def:4, show:r => r.type === "Mandat annonceur" },
+    { k:"personnes", l:"Personnes concernées (RGPD)", t:"text", s:"Partenariat", show:r => r.type === "Mission entreprise", help:"Ex. salariés et clients invités du Client" },
+    { k:"nbEntreprises", l:"Entreprises à démarcher", t:"number", s:"Partenariat", show:r => r.type === "Mandat porteur", help:"Vide : selon le niveau du Pack (30, 50 ou 80)." },
+    { k:"donNature", l:"Nature du don", t:"select", s:"Partenariat", o:["don en numéraire", "don en nature", "mécénat de compétences"], show:r => ["Convention de mécénat", "Mission mécénat"].includes(r.type) },
+    { k:"objectifsL", l:"Objectifs fixés à la signature", t:"lines", s:"Objectifs", wide:1, cols:[{ k:"objectif", l:"Objectif", t:"text" }, { k:"cible", l:"Cible", t:"text" }, { k:"mesure", l:"Mesure", t:"text" }, { k:"resultat", l:"Résultat", t:"text" }], addl:"Ajouter un objectif", show:r => ["Parrainage tripartite (délégation)", "Parrainage bipartite"].includes(r.type) },
+    { k:"echeancier", l:"Échéancier", t:"lines", s:"Échéancier", wide:1, cols:[{ k:"date", l:"Date", t:"date" }, { k:"montant", l:"Montant €", t:"money" }, { k:"nature", l:"Nature", t:"text" }, { k:"observations", l:"Observations", t:"text" }], addl:"Ajouter une échéance", show:r => ["Parrainage tripartite (délégation)", "Parrainage bipartite", "Ambassadeur / influence", "Convention de mécénat"].includes(r.type), help:"Vide : échéances égales selon le « Nombre d'échéances »." },
+    { k:"missions", l:"Missions de l'ambassadeur", t:"lines", s:"Missions", wide:1, cols:[{ k:"date", l:"Date", t:"date" }, { k:"format", l:"Format", t:"text" }, { k:"reseau", l:"Réseau", t:"text" }, { k:"message", l:"Message", t:"text" }, { k:"validation", l:"Validation", t:"text" }, { k:"lien", l:"Lien", t:"text" }], addl:"Ajouter une mission", show:r => r.type === "Ambassadeur / influence" },
+    { k:"autresPart", l:"Autres partenaires de l'ambassadeur", t:"lines", s:"Missions", wide:1, cols:[{ k:"partenaire", l:"Partenaire", t:"text" }, { k:"secteur", l:"Secteur", t:"text" }, { k:"fin", l:"Fin", t:"date" }, { k:"exclusivite", l:"Exclusivité", t:"text" }], addl:"Ajouter un partenaire", show:r => r.type === "Ambassadeur / influence" },
+    { k:"calendrier", l:"Calendrier de la mission", t:"lines", s:"Calendrier", wide:1, cols:[{ k:"date", l:"Date", t:"date" }, { k:"etape", l:"Étape", t:"text" }, { k:"responsable", l:"Responsable", t:"text" }], addl:"Ajouter une étape", show:r => r.type === "Mission entreprise" },
+    { k:"document", l:"Lien vers le document", t:"text", s:"Documents", help:"Rempli à la génération (chemin dans le dossier « Partenarium Contrats ») ; remplacez-le par le lien Google Drive si vous le souhaitez." },
+    { k:"modeleVersion", l:"Version du modèle utilisée", t:"text", s:"Documents" },
+    { k:"genereLe", l:"Généré le", t:"date", s:"Documents" },
     { k:"notes", l:"Notes", t:"textarea", s:"Notes", wide:1 }],
   act:[
     { k:"type", l:"Type", t:"select", s:"Activité", o:["Tâche", "Appel", "E-mail", "Rendez-vous", "Note"], def:"Tâche", list:1 },
@@ -910,13 +1131,17 @@ function fmt(f, v, r) {
     case "tel": return `<a href="tel:${esc(String(v).replace(/\s/g, ""))}">${esc(v)}</a>`;
     case "ref": return link(get(v));
     case "multi": return `<span class="chips">${v.map(x => `<span class="chip">${esc(x)}</span>`).join("")}</span>`;
-    case "lines": return cpChips(v, !f.noLivre);
+    case "lines": return f.cols ? linesTable(f, v) : cpChips(v, !f.noLivre);
     case "image": return `<img src="${esc(v)}" alt="" style="width:64px;height:64px;object-fit:contain;background:#fff;border-radius:10px">`;
     case "select":
       if (PATHS[r?.o] && PATHS[r.o][0] === f.k) return pill(v, pathColor(r.o, v));
       return esc(f.lab ? f.lab[v] || v : v);
     default: return esc(v);
   }
+}
+function linesTable(f, rows) {
+  if (!Array.isArray(rows) || !rows.length) return `<span class="muted">Aucune ligne</span>`;
+  return `<div class="rel"><table><thead><tr>${f.cols.map(c => `<th>${esc(c.l)}</th>`).join("")}</tr></thead><tbody>${rows.map(l => `<tr>${f.cols.map(c => `<td>${c.t === "date" ? dfr(l[c.k]) : c.t === "money" ? (l[c.k] ? eur(l[c.k]) : "") : esc(l[c.k] ?? "")}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
 function cpChips(lines, showLivre) {
   if (!Array.isArray(lines) || !lines.length) return `<span class="muted">Aucune</span>`;
@@ -974,7 +1199,7 @@ function vHome() {
   const signe = won.reduce((s, o) => s + (+o.montant || 0), 0);
   const ctY = cts.filter(c => ["Signé", "Actif", "Terminé"].includes(c.statut) && (c.signature || c.debut || "").startsWith(year));
   const comSign = ctY.reduce((s, c) => s + cc(c).due, 0);
-  const comEnc = cts.reduce((s, c) => s + cc(c).encaisse, 0), comReste = cts.filter(c => !["Brouillon", "Envoyé", "Résilié"].includes(c.statut)).reduce((s, c) => s + Math.max(0, cc(c).reste), 0);
+  const comEnc = cts.reduce((s, c) => s + cc(c).encaisse, 0), comReste = cts.filter(c => !["Brouillon", "Généré", "Envoyé pour signature", "Résilié"].includes(c.statut)).reduce((s, c) => s + Math.max(0, cc(c).reste), 0);
   const obj = +S.cfg.objectif || 0;
   const acts = all("act").filter(a => a.statut !== "Fait" && a.type !== "Note").sort((a, b) => (a.date || "9").localeCompare(b.date || "9"));
   const late = acts.filter(a => a.date && a.date < t), soon = acts.filter(a => !a.date || a.date >= t).slice(0, 8);
@@ -1154,7 +1379,8 @@ function newActions(r) {
   const eg = `<button class="btn pri" data-eguide="${r.id}">${svg("meet", 2)}Mener un entretien</button>`;
   if (o === "porteur") return eg + `<button class="btn" data-new="opp" data-pre="${pre({ porteur:r.id })}">${svg("plus", 2)}Opportunité</button><button class="btn" data-new="contact" data-pre="${pre({ compte:r.id })}">${svg("plus", 2)}Contact</button>`;
   if (o === "entreprise") return eg + `<button class="btn" data-new="opp" data-pre="${pre({ entreprise:r.id })}">${svg("plus", 2)}Opportunité</button><button class="btn" data-new="contact" data-pre="${pre({ compte:r.id })}">${svg("plus", 2)}Contact</button>`;
-  if (o === "opp") return eg + `<button class="btn" data-mkcontrat="${r.id}">${svg("plus", 2)}Contrat</button>`;
+  if (o === "opp") return eg + `<button class="btn" data-mkcontrat="${r.id}">${svg("plus", 2)}Contrat</button>` + (r.etape === "Négociation" ? `<button class="btn pri" data-ctopp="${r.id}">${svg("download")}Générer le contrat</button>` : "");
+  if (o === "contrat") return `<button class="btn pri" data-ctgen="${r.id}">${svg("download")}Générer le document</button>`;
   if (o === "contact") return `<button class="btn" data-export-person="${r.id}" title="Droit d'accès RGPD">${svg("download")}Ses données</button>`;
   return "";
 }
@@ -1345,7 +1571,7 @@ function buildReport(id) {
     const moLab = parseYmd(mo + "-01") ? parseYmd(mo + "-01").toLocaleDateString("fr-FR", { month:"long", year:"numeric" }) : mo;
     const copy = Object.entries(byP).map(([pid, os]) => `Objet : Entreprises présentées en ${moLab} - ${get(pid)?.nom || ""}\n\nBonjour,\n\nConformément à notre mandat, voici la liste des entreprises que Partenarium vous a présentées en ${moLab} :\n${os.map(o => { const e = get(o.entreprise), c = get(o.contact); return `- ${e?.nom || "?"}${e?.siren ? ` (SIREN ${e.siren})` : ""}${c ? `, interlocuteur : ${rname(c)}` : ""}, présentée le ${dfr(o.presente)}${o.montant ? `, proposition de ${eur(o.montant)} HT` : ""}`; }).join("\n")}\n\nMerci de m'accuser réception de ce message.\n\nBastien Vidal - Partenarium`).join("\n\n------\n\n");
     return { title, copy, filters:`<div class="lhead" style="gap:10px"><label class="small muted">Mois <input class="inp" type="month" data-repmonth="1" value="${esc(mo)}" style="width:auto;display:inline-block"></label><label class="small muted">Porteur <select class="inp" data-repporteur="1" style="width:auto;display:inline-block"><option value="">Tous</option>${ports.map(p => `<option value="${p.id}"${p.id === po ? " selected" : ""}>${esc(p.nom)}</option>`).join("")}</select></label></div>`,
-      html:tableHtml(["Porteur", "Entreprise", "SIREN", "Interlocuteur", "Présentée le", "Proposition HT", "Étape"], l.map(o => { const e = get(o.entreprise), c = get(o.contact); return { _href:"#/r/" + o.id, cells:[esc(get(o.porteur)?.nom || ""), esc(e?.nom || ""), esc(e?.siren || ""), esc(c ? rname(c) : ""), dfr(o.presente), eur(o.montant || 0), pill(o.etape, stageOf(o.etape).c)] }; }), [5]),
+      html:l1Btns(byP, mo) + tableHtml(["Porteur", "Entreprise", "SIREN", "Interlocuteur", "Présentée le", "Proposition HT", "Étape"], l.map(o => { const e = get(o.entreprise), c = get(o.contact); return { _href:"#/r/" + o.id, cells:[esc(get(o.porteur)?.nom || ""), esc(e?.nom || ""), esc(e?.siren || ""), esc(c ? rname(c) : ""), dfr(o.presente), eur(o.montant || 0), pill(o.etape, stageOf(o.etape).c)] }; }), [5]),
       rows:[["Porteur", "Entreprise", "SIREN", "Interlocuteur", "Présentée le", "Proposition HT"], ...l.map(o => { const e = get(o.entreprise), c = get(o.contact); return [get(o.porteur)?.nom || "", e?.nom || "", e?.siren || "", c ? rname(c) : "", o.presente, +o.montant || 0]; })],
       note:"Envoyez la liste à chaque porteur avant le 5 du mois et gardez l'accusé de réception : c'est la preuve du droit de suite (12 mois) et du non-contournement (24 mois) après la fin du mandat. Renseignez « Présentée au porteur le » sur chaque opportunité." };
   }
@@ -1377,7 +1603,7 @@ function vPlus() {
   <div class="lcard" data-href="#/rapports"><span class="oico" style="--c:var(--indigo);width:32px;height:32px">${svg("rapport", 2)}</span><div class="t"><b>Rapports</b></div></div>
   <div class="lcard" data-href="#/reglages"><span class="oico" style="--c:var(--gray);width:32px;height:32px">${svg("more", 2)}</span><div class="t"><b>Réglages</b></div></div></div>`;
 }
-const SET_F = [["grid.t1", "Fin de la 1re tranche", "€", 1], ["grid.r1", "Taux 1re tranche", "%", 100], ["grid.t2", "Fin de la 2e tranche", "€", 1], ["grid.r2", "Taux 2e tranche", "%", 100], ["grid.r3", "Taux au-delà", "%", 100], ["grid.min", "Commission minimum", "€", 1], ["grid.nat", "Taux sur dotations en nature", "%", 100], ["grid.ren", "Renouvellement (part des taux)", "%", 100], ["grid.forfait", "Forfait mécénat par défaut", "€", 1], ["objectif", "Objectif annuel de revenus", "€", 1],
+const SET_F = [["grid.t1", "Fin de la 1re tranche", "€", 1], ["grid.r1", "Taux 1re tranche", "%", 100], ["grid.t2", "Fin de la 2e tranche", "€", 1], ["grid.r2", "Taux 2e tranche", "%", 100], ["grid.r3", "Taux au-delà", "%", 100], ["grid.min", "Commission minimum", "€", 1], ["grid.nat", "Taux sur dotations en nature", "%", 100], ["grid.ren", "Renouvellement (part des taux)", "%", 100], ["grid.f1", "Forfait mécénat, don ≤ 10 000 €", "€", 1], ["grid.f2", "Forfait mécénat, don > 10 000 €", "€", 1], ["objectif", "Objectif annuel de revenus", "€", 1],
   ["tax.r1", "Mécénat : réduction", "%", 100], ["tax.r2", "Mécénat au-delà de 2 M€", "%", 100], ["tax.floor", "Plafond mécénat minimal", "€", 1], ["tax.caRatio", "Plafond mécénat (‰ du CA)", "‰", 1000], ["tax.ctr", "Contreparties de mécénat admises", "%", 100], ["tax.isn", "IS taux normal", "%", 100], ["tax.isr", "IS taux réduit PME", "%", 100], ["tax.iscap", "Plafond du taux réduit IS", "€", 1]];
 const cfgGet = p => p.split(".").reduce((o, k) => o?.[k], S.cfg), cfgSet = (p, v) => { const ks = p.split("."); let o = S.cfg; while (ks.length > 1) o = o[ks.shift()]; o[ks[0]] = v; };
 function vSettings() {
@@ -1386,12 +1612,12 @@ function vSettings() {
   const fld = ([p, l, u, m]) => `<div class="fld"><label for="c-${p}">${l} (${u})</label><input id="c-${p}" data-cfg="${p}" data-m="${m}" inputmode="decimal" value="${String(Math.round(cfgGet(p) * m * 100) / 100).replace(".", ",")}"></div>`;
   return `<h1 style="margin-bottom:16px">Réglages</h1><div class="grid2"><div class="col">
   <div class="card"><div class="ch"><h2>Apparence</h2></div><div class="cb"><div class="seg">${[["dark", "Sombre"], ["light", "Clair"], ["auto", "Automatique"]].map(([v, l]) => `<button data-theme-set="${v}" aria-pressed="${th === v}">${l}</button>`).join("")}</div></div></div>
-  <div class="card"><div class="ch"><h2>Grille de commission et objectif</h2></div><div class="cb"><div class="ff">${SET_F.slice(0, 10).map(fld).join("")}</div><p class="tiny">Grille du dossier de référence : 20 % jusqu'à 10 000 €, 15 % de 10 000 à 50 000 €, 10 % au-delà, minimum 500 €, nature 10 %, renouvellement 50 %. Objectif par défaut : CA 2027 du prévisionnel (16 240 €), qui regroupe commissions, packs, abonnements et forfaits de mécénat.</p></div></div>
+  <div class="card"><div class="ch"><h2>Grille de commission et objectif</h2></div><div class="cb"><div class="ff">${SET_F.slice(0, 11).map(fld).join("")}</div><p class="tiny">Grille du dossier de référence : 20 % jusqu'à 10 000 €, 15 % de 10 000 à 50 000 €, 10 % au-delà, minimum 500 €, nature 10 %, renouvellement 50 %. Objectif par défaut : CA 2027 du prévisionnel (16 240 €), qui regroupe commissions, packs, abonnements et forfaits de mécénat.</p></div></div>
   <div class="card"><div class="ch"><h2>Probabilités par étape</h2></div><div class="cb">
     <h3 class="tiny" style="text-transform:uppercase;font-weight:600;margin:0 0 6px">Opportunités (entreprises)</h3><div class="ff">${STAGES.filter(s => !s.closed).map(s => `<div class="fld"><label for="pr-o-${esc(s.v)}">${esc(s.v)} (%)</label><input id="pr-o-${esc(s.v)}" data-proba="opp|${esc(s.v)}" inputmode="decimal" value="${String(Math.round(s.p * 1000) / 10).replace(".", ",")}"></div>`).join("")}</div>
     <h3 class="tiny" style="text-transform:uppercase;font-weight:600;margin:16px 0 6px">Porteurs (vente du Pack)</h3><div class="ff">${REL.filter(s => !s.closed && !s.done).map(s => `<div class="fld"><label for="pr-p-${esc(s.v)}">${esc(s.v)} (%)</label><input id="pr-p-${esc(s.v)}" data-proba="porteur|${esc(s.v)}" inputmode="decimal" value="${String(Math.round(s.p * 1000) / 10).replace(".", ",")}"></div>`).join("")}<div class="fld"><label for="c-packDefaut">Prix du Pack par défaut (€)</label><input id="c-packDefaut" data-cfg="packDefaut" data-m="1" inputmode="decimal" value="${esc(S.cfg.packDefaut ?? 890)}"></div></div>
     <p class="tiny">« Ventes probables » = montant × probabilité de l'étape (modifiable sur chaque opportunité). Porteurs : « Packs probables » du rapport Revenus = prix du Pack (ou prix par défaut) × probabilité. Les nouvelles valeurs s'appliquent aux opportunités qui changent d'étape. <button class="btn sm" data-reset-proba="1">Probabilités par défaut</button></p></div></div>
-  <div class="card"><div class="ch"><h2>Taux fiscaux (coût net des sponsors)</h2></div><div class="cb"><div class="ff">${SET_F.slice(10).map(fld).join("")}</div><p class="tiny">Taux vérifiés le 24/11/2026 (art. 238 bis et 219 CGI). <button class="btn sm" data-reset-tax="1">Revenir aux taux par défaut</button></p></div></div>
+  <div class="card"><div class="ch"><h2>Taux fiscaux (coût net des sponsors)</h2></div><div class="cb"><div class="ff">${SET_F.slice(11).map(fld).join("")}</div><p class="tiny">Taux vérifiés le 24/11/2026 (art. 238 bis et 219 CGI). <button class="btn sm" data-reset-tax="1">Revenir aux taux par défaut</button></p></div></div>
   </div><div class="col">
   <div class="card" id="bkcard"><div class="ch"><h2>Sauvegarde dans Google Drive</h2></div><div class="cb">
     ${BK.can ? `<div class="kv"><span>Dossier de sauvegarde</span><b>${BK.dir ? esc(BK.dirName) : "non choisi"}</b></div>
@@ -1405,6 +1631,7 @@ function vSettings() {
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn" id="exp">${svg("download")}Exporter une sauvegarde</button><label class="btn filebtn" tabindex="0" role="button">Restaurer un fichier<input type="file" accept="application/json,.json" class="vh-file" id="imp" tabindex="-1"></label></div>
     <p class="tiny">Restaurer fusionne le fichier avec les données présentes : pour chaque fiche, la version la plus récente est gardée. Sur un appareil vide (nouveau PC, navigateur effacé), tout est retrouvé.</p></div></div>
   ${guidesCard()}
+  ${contratsCard()}
   <div class="card"><div class="ch"><h2>Données</h2></div><div class="cb">
     <div class="kv"><span>Enregistrements sur cet appareil</span><b>${nb(n)}</b></div>
     <h3 class="tiny" style="text-transform:uppercase;font-weight:600;margin:16px 0 6px">Import CSV</h3>
@@ -1453,9 +1680,9 @@ function inputHtml(f, v) {
     case "ref": return `<select ${n}>${refOptions(f, v)}</select>`;
     case "image": return `<div style="display:flex;gap:10px;align-items:center"><img id="pv-${f.k}" src="${esc(v || "")}" alt="" style="width:56px;height:56px;border-radius:10px;object-fit:contain;background:#fff" ${v ? "" : "hidden"}><label class="btn sm filebtn" tabindex="0" role="button">${v ? "Changer" : "Choisir une image"}<input type="file" accept="image/*" class="vh-file" data-img="${f.k}" tabindex="-1"></label>${v ? `<button type="button" class="btn sm danger" data-noimg="${f.k}">Retirer</button>` : ""}</div>`;
     case "lines": {
-      const rows = Array.isArray(v) ? v : [], cs = LINE_COLS.filter(c => !(f.noLivre && c.k === "livre"));
-      return `<table class="lines"><thead><tr>${cs.map(c => `<th>${c.l}</th>`).join("")}<th></th></tr></thead><tbody>${rows.map((l, i) => `<tr>${cs.map(c => `<td style="${c.k === "desc" ? "width:40%" : c.k === "qte" ? "width:64px" : c.k === "valeur" ? "width:110px" : c.k === "livre" ? "width:52px;text-align:center" : ""}">${c.t === "select" ? `<select name="L|${f.k}|${i}|${c.k}"><option value=""></option>${c.o.map(x => `<option${l[c.k] === x ? " selected" : ""}>${esc(x)}</option>`).join("")}</select>` : c.t === "bool" ? `<input type="checkbox" name="L|${f.k}|${i}|${c.k}" ${l[c.k] ? "checked" : ""}>` : `<input name="L|${f.k}|${i}|${c.k}" ${c.t !== "text" ? 'inputmode="decimal"' : ""} value="${esc(l[c.k] ?? "")}">`}</td>`).join("")}<td><button type="button" class="iconbtn" data-rmline="${f.k}|${i}" title="Retirer">${svg("trash")}</button></td></tr>`).join("")}</tbody></table>
-        <button type="button" class="btn sm" data-addline="${f.k}" style="margin-top:6px">${svg("plus", 2)}Ajouter une contrepartie</button>`;
+      const rows = Array.isArray(v) ? v : [], cs = (f.cols || LINE_COLS).filter(c => !(f.noLivre && c.k === "livre"));
+      return `<table class="lines"><thead><tr>${cs.map(c => `<th>${c.l}</th>`).join("")}<th></th></tr></thead><tbody>${rows.map((l, i) => `<tr>${cs.map(c => `<td style="${c.k === "desc" ? "width:40%" : c.k === "qte" ? "width:64px" : c.k === "valeur" ? "width:110px" : c.k === "livre" ? "width:52px;text-align:center" : ""}">${c.t === "select" ? `<select name="L|${f.k}|${i}|${c.k}"><option value=""></option>${c.o.map(x => `<option${l[c.k] === x ? " selected" : ""}>${esc(x)}</option>`).join("")}</select>` : c.t === "bool" ? `<input type="checkbox" name="L|${f.k}|${i}|${c.k}" ${l[c.k] ? "checked" : ""}>` : c.t === "date" ? `<input type="date" name="L|${f.k}|${i}|${c.k}" value="${esc(l[c.k] ?? "")}">` : `<input name="L|${f.k}|${i}|${c.k}" ${!["text", "date"].includes(c.t) ? 'inputmode="decimal"' : ""} value="${esc(l[c.k] ?? "")}">`}</td>`).join("")}<td><button type="button" class="iconbtn" data-rmline="${f.k}|${i}" title="Retirer">${svg("trash")}</button></td></tr>`).join("")}</tbody></table>
+        <button type="button" class="btn sm" data-addline="${f.k}" style="margin-top:6px">${svg("plus", 2)}${f.addl || "Ajouter une contrepartie"}</button>`;
     }
     default: return `<input ${n} type="${f.t === "email" ? "email" : f.t === "tel" ? "tel" : f.t === "url" ? "url" : "text"}" ${f.t === "url" ? 'placeholder="https://"' : ""} autocomplete="off" value="${esc(v ?? "")}">`;
   }
@@ -1476,7 +1703,7 @@ function collectForm() {
     if (f.t === "image") return;
     if (f.t === "multi") { r[f.k] = [...form.querySelectorAll(`input[name="${f.k}"]:checked`)].map(x => x.value); return; }
     if (f.t === "lines") {
-      const rows = []; form.querySelectorAll(`[name^="L|${f.k}|"]`).forEach(el => { const [, , i, c] = el.name.split("|"); rows[i] = rows[i] || {}; const col = LINE_COLS.find(x => x.k === c); rows[i][c] = el.type === "checkbox" ? el.checked : col.t === "text" || col.t === "select" ? el.value : num(el.value); });
+      const rows = []; form.querySelectorAll(`[name^="L|${f.k}|"]`).forEach(el => { const [, , i, c] = el.name.split("|"); rows[i] = rows[i] || {}; const col = (f.cols || LINE_COLS).find(x => x.k === c); rows[i][c] = el.type === "checkbox" ? el.checked : ["text", "select", "date"].includes(col.t) ? el.value : num(el.value); });
       r[f.k] = rows.filter(Boolean); return;
     }
     const el = form.elements[f.k]; if (!el) return;
@@ -1514,7 +1741,7 @@ function submitForm() {
   putItem(id, r); closeModal(); toast(isNew ? `${OBJ[o].l} créé${["entreprise", "opportunité", "activité"].includes(OBJ[o].l.toLowerCase()) ? "e" : ""}.` : "Modifications enregistrées.");
   if (isNew && o !== "act") location.hash = "#/r/" + id; else render();
 }
-const NUM_CODES = { "Mandat porteur":"MAN", "Tripartite (délégation de paiement)":"PAR", "Tripartite (loi Sapin)":"PAR", "Contrat de parrainage":"PAR", "Convention de mécénat":"MEC", "Ambassadeur / influence":"AMB", "Business club":"CLU", "Mandat annonceur":"ANN", "Activation / conseil":"ACT" };
+const NUM_CODES = Object.fromEntries(CTYPES.map(x => [x.t, x.pre]));
 function nextNumero(r) {
   const y = (r.signature || r.debut || today()).slice(0, 4), code = NUM_CODES[r.type] || "CTR", pre = `${y}-${code}-`;
   const max = all("contrat").map(c => c.numero || "").filter(n => n.startsWith(pre)).map(n => parseInt(n.slice(pre.length), 10) || 0).reduce((a, b) => Math.max(a, b), 0);
@@ -1528,8 +1755,8 @@ function askLoss(id, k) {
   $("#modal").hidden = false; setTimeout(() => $("#lossmotif")?.focus(), 30);
 }
 function contratFromOpp(o) {
-  const typeMap = { "Parrainage":"Tripartite (délégation de paiement)", "Mécénat":"Convention de mécénat", "Mécénat de compétences":"Convention de mécénat", "Mixte":"Tripartite (délégation de paiement)", "Dotation en nature":"Tripartite (délégation de paiement)", "Ambassadeur / influence":"Ambassadeur / influence", "Business club":"Business club" };
-  openForm("contrat", null, { type:typeMap[o.type] || "Contrat de parrainage", porteur:o.porteur, entreprise:o.entreprise, opp:o.id, montant:o.montant, nature:o.nature, renouv:o.renouv, statut:"Brouillon", contreparties:(o.contreparties || []).map(l => ({ ...l, livre:false })), commission:["Mécénat", "Mécénat de compétences"].includes(o.type) && o.forfait ? o.forfait : null });
+  const type = ctSuggestType(o);
+  openForm("contrat", null, { type, porteur:o.porteur, entreprise:o.entreprise, opp:o.id, montant:o.montant, nature:o.nature, renouv:o.renouv, statut:"Brouillon", contreparties:(o.contreparties || []).map(l => ({ ...l, livre:false })), commission:["Mécénat", "Mécénat de compétences"].includes(o.type) && o.forfait ? o.forfait : null });
 }
 
 /* ═════════ changements rapides (Path, Kanban, tâches, contreparties) ═════════ */
@@ -2314,6 +2541,13 @@ document.addEventListener("click", e => {
   if (d.fav) { let f = favs(); f = f.includes(d.fav) ? f.filter(x => x !== d.fav) : [d.fav, ...f]; lsSet(CONFIG.key + ":favs", f); render(); return; }
   if (d.path) { const [id, k, v] = d.path.split("|"); setPath(id, k, v); return; }
   if (d.mkcontrat) { contratFromOpp(get(d.mkcontrat)); return; }
+  if (d.ctgen) { ctDialog(d.ctgen); return; }
+  if (d.ctopp) { ctFromOpp(d.ctopp); return; }
+  if (d.ctexp) { ctExport(); return; }
+  if (d.ctprev) { if (confirm("Revenir à la version précédente des modèles ?")) ctPrev(); return; }
+  if (d.ctdir) { ctChooseDir(); return; }
+  if (d.ctcgv) { ctGenerate({ id:"cgv", o:"contrat", saisie:{} }, "01"); return; }
+  if (d.ctl1) { const [pid, mo] = d.ctl1.split("|"); ctLettreL1(pid, mo); return; }
   if (d.tab) { const [o, k] = d.tab.split(":"); S.ui.tab[o] = k; render(); return; }
   if (d.kan) { S.ui.kanban = d.kan === "1"; location.hash = "#/l/opp?k=" + d.kan; return; }
   if (d.sort) { const [o, k] = d.sort.split(":"); const cur = S.ui.sort[o]; S.ui.sort[o] = { k, d:cur && cur.k === k ? -cur.d : 1 }; render(); return; }
@@ -2321,7 +2555,7 @@ document.addEventListener("click", e => {
   if (d.repcsv) { exportCsv("Rapport " + (REP_DATA?.title || ""), REP_DATA.rows); return; }
   if (d.repcopy) { copyText(REP_DATA.copy || ""); return; }
   if (d.ctype) { const f = el.closest("form"); f.querySelectorAll("[data-ctype]").forEach(b => b.setAttribute("aria-pressed", b === el)); f.elements.type.value = d.ctype; f.elements.statut.value = ["Appel", "E-mail", "Note"].includes(d.ctype) ? "Fait" : "À faire"; f.elements.date.value = ["Appel", "E-mail", "Note"].includes(d.ctype) ? today() : addDays(today(), 2); return; }
-  if (d.addline && FORM) { collectForm(); FORM.r[d.addline] = [...(FORM.r[d.addline] || []), { type:"", desc:"", qte:1, valeur:null, livre:false }]; const sc = $("#modal").scrollTop; renderForm(false); $("#modal").scrollTop = sc; $(`[name="L|${d.addline}|${FORM.r[d.addline].length - 1}|type"]`)?.focus(); return; }
+  if (d.addline && FORM) { collectForm(); const lf = fdef(FORM.o, d.addline); FORM.r[d.addline] = [...(FORM.r[d.addline] || []), lf?.cols ? Object.fromEntries(lf.cols.map(c => [c.k, ""])) : { type:"", desc:"", qte:1, valeur:null, livre:false }]; const sc = $("#modal").scrollTop; renderForm(false); $("#modal").scrollTop = sc; $(`[name="L|${d.addline}|${FORM.r[d.addline].length - 1}|type"]`)?.focus(); return; }
   if (d.rmline && FORM) { collectForm(); const [k, i] = d.rmline.split("|"); FORM.r[k].splice(+i, 1); const sc = $("#modal").scrollTop; renderForm(false); $("#modal").scrollTop = sc; return; }
   if (d.noimg && FORM) { collectForm(); FORM.r[d.noimg] = null; const sc = $("#modal").scrollTop; renderForm(false); $("#modal").scrollTop = sc; return; }
   if (d.themeSet) { lsSet(CONFIG.key + ":theme", d.themeSet); applyTheme(); render(); return; }
@@ -2358,6 +2592,8 @@ document.addEventListener("change", e => {
   if (d.img && FORM) { processImage(t.files && t.files[0], d.img); t.value = ""; return; }
   if (t.id === "imp" && t.files[0]) { importData(t.files[0]); t.value = ""; return; }
   if (t.id === "gimp" && t.files[0]) { guidesImport(t.files[0]); t.value = ""; return; }
+  if (t.id === "ctimp" && t.files[0]) { ctImport(t.files[0]); t.value = ""; return; }
+  if (t.id === "ct-code" || t.id === "ct-lettre") { if (CTD) ctDialog(CTD.id, $("#ct-code").value, $("#ct-lettre")?.value); return; }
   if (d.gbool) { guidesSet(d.gbool, t.checked); return; }
   if (d.gpath && t.tagName === "SELECT") { guidesSet(d.gpath, t.value); return; }
   if (ENT && d.eperspick !== undefined && t.matches("[data-eperspick]")) { const c = get(t.value); if (c) { (ENT.r.rep.interlocuteurs = ENT.r.rep.interlocuteurs || []).push({ nom:rname(c), fonction:c.fonction || "", contact:c.id, decideur:c.role === "Décideur" }); entTouch(); render(); } return; }
@@ -2373,6 +2609,8 @@ document.addEventListener("input", e => {
   const t = e.target, d = t.dataset;
   if (d.lq) { S.ui.q[d.lq] = t.value; const pos = t.selectionStart; render(); const n = $(`[data-lq="${d.lq}"]`); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch {} } return; }
   if (t.id === "sq") { searchRun(t.value); return; }
+  if (d.agence) { const a = AGC(); a.agence[d.agence] = t.value; putItem("cfg-agence", a); return; }
+  if (d.club) { const a = AGC(); a.club[d.club] = d.club === "seuil" ? num(t.value) : t.value; putItem("cfg-agence", a); return; }
   if (ENT && d.ek && t.type !== "checkbox" && t.tagName !== "SELECT") { const v = d.et === "num" ? num(t.value) : d.et === "pct" ? (num(t.value) === null ? null : num(t.value) / 100) : t.value; ENT.r.rep[d.ek] = v; entTouch(); entLive(); return; }
   if (ENT && d.ereform) { ENT.r.rep.reformulation = t.value; ENT.r.rep.reformAuto = false; entTouch(); return; }
   if (ENT && d.epers && t.type !== "checkbox") { const [j, k] = d.epers.split("|"); ENT.r.rep.interlocuteurs[+j][k] = t.value; entTouch(); entLive(); return; }
@@ -2388,6 +2626,7 @@ document.addEventListener("input", e => {
 document.addEventListener("submit", e => {
   e.preventDefault();
   if (e.target.id === "recform") { submitForm(); return; }
+  if (e.target.id === "ctform") { ctSubmit(); return; }
   if (e.target.id === "lossform") { const f = e.target, m = f.elements.motif.value; if (!m) { $("#ferr").textContent = "Choisissez un motif."; return; } closeModal(); setPath(f.dataset.id, f.dataset.k, "Perdu", m); return; }
   if (e.target.id === "composer") {
     const f = e.target, sujet = f.elements.sujet.value.trim(); if (!sujet) { f.elements.sujet.focus(); return; }
@@ -2451,6 +2690,217 @@ async function processImage(file, k) {
   } catch { toast("Image illisible."); } finally { URL.revokeObjectURL(url); }
 }
 
+/* ═════════ CONTRATS : modèles Word et génération (cahier des charges contrats v1.1, v1.4.0) ═════════
+   Les 14 modèles viennent de l'archive privée partenarium-contrats-v2026-11.zip, importée une fois dans Réglages › Contrats.
+   Ils sont gardés dans IndexedDB (clé « contrats »), jamais dans le code public. Le petit enregistrement « cfg-contrats »
+   (version, date) est synchronisé avec le reste ; le fichier lourd contrats.json n'est envoyé dans le dépôt privé
+   qu'après un import, puis téléchargé par les autres appareils quand sa version change. */
+/* Réglages de l'agence et du club pour les contrats : enregistrement synchronisé « cfg-agence » */
+const AGC = () => { const r = S.items["cfg-agence"]; return { id:"cfg-agence", o:"_agence", agence:{ ...(r?.agence || {}) }, club:{ ...(r?.club || {}) }, created:r?.created }; };
+const CTID = "cfg-contrats", CT = { rec:null, prec:null, libs:null, dir:null, dirName:"", perm:"none" };
+const DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+function u8ToB64(u8) { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); }
+function b64ToU8(b) { const s = atob(b), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
+function loadScript(src) { return new Promise((res, rej) => { const el = document.createElement("script"); el.src = src; el.onload = res; el.onerror = () => rej(new Error(src)); document.head.appendChild(el); }); }
+async function ctLibs() {
+  if (!CT.libs) { if (!window.PizZip) await loadScript("./js/vendor/pizzip.min.js"); if (!window.docxtemplater) await loadScript("./js/vendor/docxtemplater.min.js"); CT.libs = { PizZip:window.PizZip, Docxtemplater:window.docxtemplater }; }
+  return CT.libs;
+}
+async function ctInit() {
+  try { CT.rec = await store.get("contrats") || null; CT.prec = await store.get("contrats-prec") || null; } catch {}
+  if (!BK.can) return;
+  try { const h = await store.get("ctdir"); if (h && h.queryPermission) { CT.dir = h; CT.dirName = h.name; CT.perm = await h.queryPermission({ mode:"readwrite" }); } } catch {}
+}
+const LAB_PRECIS = { facture_numero:"numéro", facture_date:"date", facture_montant:"montant", facture_echeance:"échéance", date_relance:"date de relance", contrepartie_manquante:"contrepartie", contrepartie_valeur:"valeur", contrepartie_date:"date prévue", contrepartie_remplacement:"remplacement proposé", evenement_force_majeure:"événement", date_evenement:"date de l'événement", obligations_concernees:"obligations concernées", proposition_report:"report proposé", date_point:"date du point", date_mise_en_demeure:"date de la mise en demeure", manquement:"manquement", sommes_dues:"sommes dues", avenant_numero:"numéro", parties_avenant:"parties", modifications:"modifications", date_effet_avenant:"date d'effet" };
+function ctLabels() {            // libellés du dictionnaire ; ceux qui se répètent (« Données de la facture ») sont précisés
+  const raw = Object.fromEntries(Object.entries(CT.rec?.champs || {}).map(([k, v]) => [k, Array.isArray(v) ? v[0] : (v && v.libelle) || k])), n = {};
+  Object.values(raw).forEach(l => n[l] = (n[l] || 0) + 1);
+  return Object.fromEntries(Object.entries(raw).map(([k, l]) => [k, n[l] > 1 ? `${l} (${LAB_PRECIS[k] || k.replace(/_/g, " ")})` : l]));
+}
+function ctPointer(rec) { putItem(CTID, { id:CTID, o:"_contrats", version:rec.version, stamp:rec.stamp, importe:rec.importe, fichier:rec.fichier, n:Object.keys(rec.files).length }); }
+async function ctImport(file) {
+  let L; try { L = await ctLibs(); } catch { toast("Moteur de génération introuvable : rechargez la page."); return; }
+  let z; try { z = new L.PizZip(await file.arrayBuffer()); } catch { ctReport("Archive illisible", [`« ${file.name} » n'est pas une archive .zip lisible. Choisissez partenarium-contrats-v2026-11.zip (archive privée du service Juridique).`]); return; }
+  const names = Object.keys(z.files).filter(n => !z.files[n].dir).map(n => ({ n, base:n.split("/").pop() })), files = {}, refus = [], notes = {};
+  for (const x of names.filter(x => /^\d\d_.*\.docx$/i.test(x.base))) {
+    const code = x.base.slice(0, 2);
+    if (code === "00") { refus.push(`${x.base} : mode d'emploi, jamais généré (ignoré).`); continue; }
+    if (!CMODELES[code] || code === "01" && files["01"]) { refus.push(`${x.base} : modèle inconnu (ignoré).`); continue; }
+    const buf = z.file(x.n).asUint8Array();
+    try {
+      const zz = new L.PizZip(buf), xml = zz.file("word/document.xml").asText();
+      const parts = Object.keys(zz.files).filter(n => DOCX_PARTS.test(n)).map(n => zz.file(n).asText()).join("");
+      if (hasDash(parts)) { refus.push(`${x.base} : contient un tiret long ou demi-long (règle de forme du 26/11/2026). Demandez une archive corrigée au service Juridique.`); continue; }
+      const tg = ctrTags(L.PizZip, L.Docxtemplater, buf);
+      notes[code] = (xml.match(NOTE_RE) || []).map(p => (p.match(/<w:t[^>]*>([^<]*)<\/w:t>/g) || []).map(t => t.replace(/<[^>]+>/g, "")).join("").replace(/&apos;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/^Note d.usage \(à supprimer avant envoi\) : /, ""));
+      files[code] = { nom:x.base, b64:u8ToB64(buf), tags:tg.tags, loops:tg.loops, notes:notes[code].map(noDash) };
+    } catch (e) { refus.push(`${x.base} : modèle illisible (${noDash(String(e.message || e)).slice(0, 120)}).`); }
+  }
+  const manque = Object.keys(CMODELES).filter(c => !files[c]);
+  const cf = names.find(x => /champs\.json$/i.test(x.base)); let champs = {};
+  if (cf) { try { champs = JSON.parse(z.file(cf.n).asText()); } catch {} }
+  if (manque.length) { ctReport("Archive refusée", [`Modèles manquants ou refusés : ${manque.join(", ")}. Rien n'a été importé ; la version actuelle est gardée.`, ...refus]); return; }
+  const rec = cleanDeep({ version:(/(\d{4}-\d{2})/.exec(file.name) || [])[1] || "2026-11", stamp:Date.now(), importe:Date.now(), fichier:file.name, files, champs });
+  if (CT.rec) { CT.prec = CT.rec; await store.set("contrats-prec", CT.rec); }
+  CT.rec = rec; await store.set("contrats", rec); lsSet(CONFIG.key + ":ctpush", rec.stamp); ctPointer(rec);
+  ctReport("Modèles importés", [`${Object.keys(files).length} modèles de la version ${rec.version} importés (01 à 14), dictionnaire de ${Object.keys(champs).length} champs.`, ...refus, "Ils sont gardés sur cet appareil, envoyés dans votre dépôt privé à la prochaine synchronisation et copiés dans le dossier Drive des sauvegardes. Ils ne sont jamais publiés."]);
+}
+function ctReport(title, lines) {
+  $("#modal").innerHTML = `<div class="dlg" style="max-width:620px"><header><h2>${esc(title)}</h2><button type="button" class="iconbtn" data-close="1" aria-label="Fermer">✕</button></header><div class="db"><ul class="small" style="line-height:22px;padding-left:18px">${lines.map(l => `<li>${esc(l)}</li>`).join("")}</ul></div><footer><button class="btn pri" data-close="1">Fermer</button></footer></div>`;
+  $("#modal").hidden = false; render();
+}
+async function ctPrev() { if (!CT.prec) return; const cur = CT.rec; CT.rec = { ...CT.prec, stamp:Date.now() }; CT.prec = cur; await store.set("contrats", CT.rec); await store.set("contrats-prec", cur); lsSet(CONFIG.key + ":ctpush", CT.rec.stamp); ctPointer(CT.rec); toast(`Version ${CT.rec.version} des modèles rétablie.`); render(); }
+async function ctExport() {
+  if (!CT.rec) return; const L = await ctLibs(), z = new L.PizZip();
+  for (const f of Object.values(CT.rec.files)) z.file(f.nom, b64ToU8(f.b64));
+  z.file("partenarium-contrats-champs.json", JSON.stringify(CT.rec.champs || {}, null, 2));
+  downloadFile(`partenarium-contrats-v${CT.rec.version}.zip`, z.generate({ type:"uint8array", compression:"DEFLATE" }), "application/zip");
+}
+async function ctSync() {                 // appelé après chaque synchronisation réussie
+  const ptr = S.items[CTID];
+  if (CT.rec && lsGet(CONFIG.key + ":ctpush") === CT.rec.stamp) {
+    let sha = null; try { sha = (await gh("/contents/contrats.json")).sha; } catch (e) { if (e.status !== 404) throw e; }
+    await putRemote("contrats.json", CT.rec, sha); lsSet(CONFIG.key + ":ctpush", 0); return;
+  }
+  if (ptr && ptr.stamp && (!CT.rec || (CT.rec.stamp || 0) < ptr.stamp)) {
+    const r = await getRemote("contrats.json");
+    if (r.data && r.data.stamp === ptr.stamp) { if (CT.rec) { CT.prec = CT.rec; await store.set("contrats-prec", CT.rec); } CT.rec = r.data; await store.set("contrats", r.data); if (route().p[0] === "reglages") render(); }
+  }
+}
+async function ctChooseDir() {
+  try { const h = await window.showDirectoryPicker({ id:"partcrm-contrats", mode:"readwrite", startIn:"documents" }); CT.dir = h; CT.dirName = h.name; CT.perm = "granted"; await store.set("ctdir", h); toast(`Les contrats générés seront copiés dans « ${h.name} ».`); }
+  catch (e) { if (e.name !== "AbortError") toast("Ce dossier n'est pas accessible : choisissez-en un autre."); }
+  render();
+}
+async function ctToDrive(name, u8, year) {   // copie dans « Partenarium Contrats/<année>/ » (PC sous Chrome ou Edge)
+  if (!CT.dir) return "";
+  try {
+    if (CT.perm !== "granted") CT.perm = await CT.dir.requestPermission({ mode:"readwrite" });
+    if (CT.perm !== "granted") return "";
+    const y = await CT.dir.getDirectoryHandle(String(year), { create:true }), fh = await y.getFileHandle(name, { create:true }), w = await fh.createWritable();
+    await w.write(u8); await w.close(); return `${CT.dirName}/${year}/${name}`;
+  } catch { return ""; }
+}
+function contratsCard() {
+  const r = CT.rec, a = { ...AGENCE0, ...(AGC().agence) }, cl = { ...CLUB0, ...(AGC().club) }, ptr = S.items[CTID];
+  const af = [["adresse", "Adresse professionnelle", "À changer le jour du déménagement (en même temps que le RNE)."], ["assureur", "Assureur RC Pro", "Après la signature de la RC Pro."], ["police", "N° de contrat RC Pro", ""], ["territoire", "Territoire couvert par la RC Pro", ""], ["iban", "IBAN du compte pro", ""], ["tva", "Mention de TVA", "Mention exacte de la plateforme de facturation."], ["mediateur", "Médiateur de la consommation (nom et site)", "Obligatoire avant le premier client consommateur."], ["cgv", "Version des conditions générales", "Date, ex. 01/01/2027."], ["soustraitants", "Sous-traitants ultérieurs (contrat 10)", ""]];
+  return `<div class="card" id="ctcard"><div class="ch"><h2>Contrats (modèles Word)</h2></div><div class="cb">
+    ${r ? `<div class="kv"><span>Modèles</span><b>version ${esc(r.version)} (${Object.keys(r.files).length} modèles)</b></div><div class="kv"><span>Importés le</span><b>${new Date(r.importe).toLocaleString("fr-FR")}</b></div><div class="kv"><span>Fichier</span><b>${esc(r.fichier || "")}</b></div>`
+      : ptr ? `<p class="small" style="margin-top:0">Les modèles (version ${esc(ptr.version)}) ont été importés sur un autre appareil : ils arrivent à la prochaine synchronisation.</p>`
+      : `<p class="small" style="margin-top:0">Les modèles de contrats ne sont pas dans le code public de l'application. Importez une fois l'archive privée <b>partenarium-contrats-v2026-11.zip</b> (dossier « 3_Pour_le_CRM » du kit juridique, rangé dans Google Drive).</p>`}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><label class="btn ${r ? "" : "pri"} filebtn" tabindex="0" role="button">${r ? "Réimporter" : "Importer les modèles"}<input type="file" id="ctimp" accept=".zip,application/zip" hidden></label>
+      ${r ? `<button class="btn" data-ctexp="1">${svg("download")}Exporter l'archive</button><button class="btn pri" data-ctcgv="1">Générer les conditions générales (01)</button>` : ""}${CT.prec ? `<button class="btn" data-ctprev="1">Revenir à la version précédente (${esc(CT.prec.version)})</button>` : ""}</div>
+    ${BK.can ? `<div class="kv" style="margin-top:12px"><span>Copie des contrats générés</span><b>${CT.dir ? esc(CT.dirName) + " / année" : "dossier non choisi"}</b></div><button class="btn sm" data-ctdir="1" style="margin-top:6px">${CT.dir ? "Changer de dossier" : "Choisir le dossier « Partenarium Contrats »"}</button>` : `<p class="tiny">Sur ce téléphone, le contrat généré est seulement téléchargé ; la copie dans Google Drive se fait depuis le PC (Edge).</p>`}
+    <h3 style="margin:16px 0 6px">Agence (repris dans tous les modèles)</h3><div class="ff">${af.map(([k, l, h]) => `<div class="fld"><label for="ag-${k}">${l}</label><input id="ag-${k}" data-agence="${k}" value="${esc(a[k] || "")}" autocomplete="off">${h ? `<div class="tiny">${h}</div>` : ""}</div>`).join("")}</div>
+    <h3 style="margin:16px 0 6px">Club d'entreprises</h3><div class="ff"><div class="fld"><label for="cl-seuil">Seuil de lancement (engagements)</label><input id="cl-seuil" data-club="seuil" inputmode="decimal" value="${esc(cl.seuil)}"></div><div class="fld"><label for="cl-date">Date limite de la condition</label><input id="cl-date" type="date" data-club="date" value="${esc(cl.date)}"></div></div>
+    <p class="tiny">Le contrat se génère depuis sa fiche (bouton « Générer le document »), ou depuis une opportunité au stade « Négociation ». Le fichier Word est téléchargé, copié dans le dossier choisi, puis relu avant signature. Les notes d'usage sont retirées ; leurs consignes s'affichent après la génération.</p></div></div>`;
+}
+/* Contexte d'un contrat : fiches liées, mandats, registre, signataires */
+function ctCtx(c0, extra = {}) {
+  const t = today(), lie = c0.type === "Lettre" && c0.contratLie ? get(c0.contratLie) : null;
+  const c = lie ? { ...lie, saisie:c0.saisie } : c0, p = get(c.porteur || c0.porteur), e = get(c.entreprise || c0.entreprise), opp = get(c.opp);
+  const sig = id => { if (!id) return null; const l = all("contact").filter(k => k.compte === id); return l.find(k => k.role === "Signataire") || l.find(k => k.role === "Décideur") || l[0] || null; };
+  const cts = all("contrat"), lm = c.mandatLie ? get(c.mandatLie) : null;
+  const pick = (type, key, id) => c.type === type ? c : lm && lm.type === type ? lm : id ? cts.filter(k => k.type === type && k[key] === id && k.id !== c.id && ["Signé", "Actif"].includes(k.statut)).sort((a, b) => (b.signature || "").localeCompare(a.signature || ""))[0] || null : null;
+  const mandat = pick("Mandat porteur", "porteur", p?.id), mandatAnn = pick("Mandat annonceur", "entreprise", e?.id);
+  const pack = p ? cts.filter(k => k.type === "Pack Lancement" && k.porteur === p.id).sort((a, b) => (b.signature || b.created || "").toString().localeCompare((a.signature || a.created || "").toString()))[0] : null;
+  const auRegistre = !!(opp && opp.presente) || (p && e ? all("opp").some(o => o.porteur === p.id && o.entreprise === e.id && o.presente) : false);
+  const lie09 = cts.some(k => k.type === "Ambassadeur / influence" && k.id !== c.id && ((c.opp && k.opp === c.opp) || (e && p && k.entreprise === e.id && k.porteur === p.id)));
+  const prestations = e ? cts.filter(k => k.type === "Mission entreprise" && k.entreprise === e.id && !["Brouillon", "Résilié"].includes(k.statut)).map(k => `${k.offre || "Mission"} (contrat ${k.numero || "sans numéro"})`).join(" ; ") : "";
+  const clientEnt = ["Mission entreprise", "Mandat annonceur", "Club d'entreprises"].includes(c.type) || (!p && !!e);
+  const pro = clientEnt ? e?.pro !== false : ["Société", "Société sportive (SASP, SAOS…)", "Entreprise individuelle"].includes(p?.statutJur);
+  return { c, p, e, opp, sigP:sig(p?.id), sigE:sig(e?.id), dest:extra.dest || (clientEnt ? sig(e?.id) : sig(p?.id) || sig(e?.id)), mandat, mandatAnn, pack, lie, agence:AGC().agence, club:AGC().club, G:S.cfg.grid, saisie:c0.saisie || {}, today:t, registre:extra.registre, moisRegistre:extra.moisRegistre,
+    clubEng:cts.filter(k => k.type === "Club d'entreprises" && ["Signé", "Actif"].includes(k.statut)).length, prestations, pro, nafExclu:e ? nafExclu(e.codeNaf) : "", auRegistre, lie09 };
+}
+const ctCode = c => c.type === "Lettre" ? "14" : CTYPE[c.type]?.code || "";
+function ctSuggestType(o) {
+  if (o.type === "Ambassadeur / influence") return "Ambassadeur / influence";
+  if (o.type === "Business club") return "Club d'entreprises";
+  if (["Mécénat", "Mécénat de compétences"].includes(o.type)) return "Convention de mécénat";
+  const t = today(), cts = all("contrat");
+  if (cts.some(k => k.type === "Mandat annonceur" && k.entreprise === o.entreprise && enCours(k, t))) return "Parrainage bipartite";
+  if (cts.some(k => k.type === "Mandat porteur" && k.porteur === o.porteur && enCours(k, t)) && o.presente) return "Parrainage tripartite (délégation)";
+  return "Parrainage bipartite";
+}
+function ctFromOpp(oid) {
+  const o = get(oid), ex = all("contrat").filter(k => k.opp === oid && k.type !== "Lettre").sort((a, b) => (b.updated || 0) - (a.updated || 0))[0];
+  if (ex) { ctDialog(ex.id); return; }
+  const id = uid(), type = ctSuggestType(o);
+  const r = { id, o:"contrat", type, statut:"Brouillon", porteur:o.porteur, entreprise:o.entreprise, opp:o.id, montant:o.montant, nature:o.nature, renouv:o.renouv, contreparties:(o.contreparties || []).map(l => ({ ...l, livre:false })), indispo:90, reducDesc:20, territoire:"France", dureeDroits:"12 mois" };
+  r.numero = nextNumero(r); putItem(id, r); toast(`Contrat ${r.numero} créé (${type}) : vérifiez-le avant de générer.`); ctDialog(id);
+}
+let CTD = null;   // dialogue de génération en cours
+function ctDialog(id, code, lettre) {
+  const c = get(id); if (!c) return;
+  if (!CT.rec) { ctReport("Modèles absents", ["Importez d'abord l'archive privée des modèles dans Réglages › Contrats (partenarium-contrats-v2026-11.zip)."]); return; }
+  code = code || ctCode(c) || "02"; lettre = lettre || c.lettre || "L1";
+  CTD = { id, code, lettre };
+  const x = ctCtx(c), d = ctrData(x), f = CT.rec.files[code], lab = ctLabels(), ctl = ctrControls(x, code, f.tags);
+  const tags = f.tags.filter(k => !["date_signature", "lieu_signature"].includes(k)), vide = tags.filter(k => !d[k]), plein = tags.filter(k => d[k]);
+  const inp = k => `<div class="fld"><label for="cts-${k}">${esc(lab[k] || k)}</label><input id="cts-${k}" data-cts="${k}" data-calc="${esc(d[k] || "")}" value="${esc((c.saisie || {})[k] ?? d[k] ?? "")}" autocomplete="off"></div>`;
+  const s = c.saisie || {}, sugg = c.type === "Convention de mécénat" && (+c.montant || 0) + (+c.nature || 0) >= 3000 ? `<div class="alert" style="--c:var(--blue);margin:10px 0"><div>Don d'au moins 3 000 € : si la mission est vendue au porteur, générez aussi la lettre de mission mécénat (05) depuis un contrat de type « Mission mécénat ».</div></div>` : "";
+  $("#modal").innerHTML = `<form class="dlg" id="ctform" style="max-width:760px" novalidate><header><h2>Générer le document · ${esc(c.numero || "nouveau numéro")}</h2><button type="button" class="iconbtn" data-close="1" aria-label="Fermer">✕</button></header><div class="db">
+    <div class="ff"><div class="fld"><label for="ct-code">Modèle</label><select id="ct-code">${Object.entries(CMODELES).filter(([k]) => k !== "01").map(([k, l]) => `<option value="${k}"${k === code ? " selected" : ""}>${k} · ${esc(l)}</option>`).join("")}</select></div>
+      ${code === "14" ? `<div class="fld"><label for="ct-lettre">Lettre</label><select id="ct-lettre">${LETTRES.map(l => `<option value="${l.split(" - ")[0]}"${l.startsWith(lettre + " - ") ? " selected" : ""}>${esc(l)}</option>`).join("")}</select></div>` : ""}
+      <div class="fld"><label for="ct-date">Date de signature</label><input type="date" id="ct-date" value="${esc(s.date_signature || "")}"><div class="tiny">Vide : ligne à remplir à la main.</div></div>
+      <div class="fld"><label for="ct-lieu">Lieu de signature</label><input id="ct-lieu" value="${esc(s.lieu_signature || "")}" autocomplete="off"></div></div>
+    ${sugg}
+    ${ctl.bloq.length ? `<div class="alert" style="--c:var(--red);margin:10px 0"><div><b>Génération impossible :</b><ul style="margin:4px 0 0 18px">${ctl.bloq.map(b => `<li>${esc(b)}</li>`).join("")}</ul></div></div>` : ""}
+    ${ctl.avert.length ? `<div class="alert" style="--c:var(--orange);margin:10px 0"><div><b>Avant de générer :</b><ul style="margin:4px 0 0 18px">${ctl.avert.map(b => `<li>${esc(b)}</li>`).join("")}</ul><label style="display:flex;gap:8px;margin-top:8px"><input type="checkbox" id="ct-ack">J'ai pris connaissance de ces avertissements.</label></div></div>` : ""}
+    <h3 style="margin:14px 0 6px">À compléter (${vide.length})</h3>${vide.length ? `<p class="tiny" style="margin-top:0">Laissé vide : « [libellé à compléter] » dans le document.</p><div class="ff">${vide.map(inp).join("")}</div>` : `<p class="small muted" style="margin:0">Tous les champs du modèle sont remplis depuis le CRM.</p>`}
+    <details style="margin-top:12px"><summary class="small">Champs remplis depuis le CRM (${plein.length}) : modifiables pour ce document</summary><div class="ff" style="margin-top:8px">${plein.map(inp).join("")}</div></details>
+    ${f.notes?.length ? `<details style="margin-top:8px"><summary class="small">Consignes du service Juridique pour ce modèle (${f.notes.length})</summary><ul class="small" style="margin:6px 0 0 18px">${f.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul></details>` : ""}
+    <div id="cterr" class="ferr"></div></div>
+    <footer><button type="button" class="btn" data-close="1">Annuler</button><button class="btn pri" ${ctl.bloq.length ? "disabled" : ""}>${svg("download")}Générer le Word</button></footer></form>`;
+  $("#modal").hidden = false; document.body.style.overflow = "hidden";
+}
+async function ctSubmit() {
+  const { id, code } = CTD, c = get(id), form = $("#ctform"), lettre = $("#ct-lettre")?.value || CTD.lettre;
+  if ($("#ct-ack") && !$("#ct-ack").checked) { $("#cterr").textContent = "Cochez la case des avertissements pour continuer."; return; }
+  const sa = { ...(c.saisie || {}) };
+  form.querySelectorAll("[data-cts]").forEach(el => { const k = el.dataset.cts, v = noDash(el.value.trim()); if (v && v !== el.dataset.calc) sa[k] = v; else delete sa[k]; });
+  sa.date_signature = $("#ct-date").value || ""; sa.lieu_signature = noDash($("#ct-lieu").value.trim());
+  const r = { ...c, saisie:sa }; if (code === "14") r.lettre = lettre;
+  await ctGenerate(r, code, lettre);
+}
+async function ctGenerate(c, code, lettre, extra = {}) {
+  const f = CT.rec?.files?.[code]; if (!f) { toast("Modèle absent : importez les modèles (Réglages › Contrats)."); return; }
+  let L; try { L = await ctLibs(); } catch { toast("Moteur de génération introuvable : rechargez la page (connexion nécessaire la première fois)."); return; }
+  if (!c.numero && code !== "01") c.numero = nextNumero(c);
+  const x = ctCtx(c, extra), data = ctrData(x), vise = +x.p?.montantPartenaire || 0;
+  if (code === "01") data.contrat_numero = "CGV du " + (data.cgv_version || "");
+  let res;
+  try { res = ctrRender(L.PizZip, L.Docxtemplater, b64ToU8(f.b64), data, { labels:ctLabels(), lettre:code === "14" ? lettre || "L1" : null, sansTauxReel:code === "03" && !(vise > 0 && vise < 2500) }); }
+  catch (e) { ctReport("Génération impossible", [`Le modèle ${code} n'a pas pu être rempli : ${noDash(String(e.message || e)).slice(0, 200)}.`, "Signalez-le au service Outils avec le nom du modèle."]); return; }
+  const nom = code === "01" ? "Partenarium" : ["10", "11", "12"].includes(code) ? x.e?.nom || x.p?.nom : x.p?.nom || x.e?.nom;
+  const name = code === "01" ? noDash(`CGV-${(data.cgv_version || "").replace(/\//g, "-")}_Conditions_generales_de_prestation.docx`) : ctrFileName(c.numero, code, (code === "14" ? (lettre || "L1") + " " : "") + (nom || rname(c)));
+  downloadFile(name, res.out, DOCX_MIME);
+  const where = await ctToDrive(name, res.out, today().slice(0, 4));
+  if (code !== "01") {
+    const r = get(c.id) ? { ...get(c.id), saisie:c.saisie, lettre:c.lettre, numero:c.numero } : c;
+    r.document = where || `Téléchargements/${name}`; r.modeleVersion = CT.rec.version; r.genereLe = today(); if (!r.statut || r.statut === "Brouillon") r.statut = "Généré";
+    putItem(r.id, r);
+  }
+  const lines = [`Fichier : ${name}${where ? ` (copie dans « ${where.split("/").slice(0, -1).join("/")} »)` : " (dans vos téléchargements)"}.`];
+  if (res.manquants.length) lines.push(`À compléter dans Word (${res.manquants.length}) : ${res.manquants.join(", ")}.`);
+  if (res.restants.length) lines.push(`Contrôle après génération : ${res.restants.join(" ; ")}.`);
+  (f.notes || []).forEach(n => lines.push("Consigne : " + n));
+  lines.push("Relisez le document dans Word ou Google Docs avant de l'envoyer pour signature, puis passez le statut à « Envoyé pour signature ».");
+  ctReport(res.manquants.length || res.restants.length ? "Document généré, à compléter" : "Document généré", lines);
+}
+async function ctLettreL1(pid, mo) {
+  const p = get(pid), t = today(), mandat = all("contrat").filter(k => k.type === "Mandat porteur" && k.porteur === pid && ["Signé", "Actif", "Terminé"].includes(k.statut)).sort((a, b) => (b.signature || "").localeCompare(a.signature || ""))[0];
+  const os = all("opp").filter(o => o.porteur === pid && (o.presente || "").startsWith(mo)).sort((a, b) => a.presente.localeCompare(b.presente));
+  const registre = os.map(o => { const e = get(o.entreprise), k = get(o.contact); return { raison_sociale:e?.nom || "", siren:e?.siren || "", interlocuteur:k ? rname(k) : "", date:o.presente, mode:o.modePresentation || "", montant:o.montant || "" }; });
+  const id = uid(), r = { id, o:"contrat", type:"Lettre", lettre:"L1", statut:"Brouillon", porteur:pid, contratLie:mandat?.id || "", saisie:{}, notes:`Registre des présentations de ${moisLettres(mo)}` };
+  r.numero = nextNumero({ ...r, signature:t }); putItem(id, r);
+  await ctGenerate(r, "14", "L1", { registre, moisRegistre:moisLettres(mo) });
+}
+function l1Btns(byP, mo) {
+  const ids = Object.keys(byP); if (!ids.length) return "";
+  return `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">${ids.map(pid => `<button class="btn sm" data-ctl1="${esc(pid + "|" + mo)}" ${CT.rec ? "" : `disabled title="Importez d'abord les modèles (Réglages › Contrats)"`}>${svg("download")}Lettre L1 (Word) : ${esc(get(pid)?.nom || "")}</button>`).join("")}</div>`;
+}
+
 /* ═════════ fichiers : JSON, CSV ═════════ */
 const encMail = v => encodeURIComponent(noDash(String(v ?? "")));   // e-mails préparés : jamais de tiret long
 function downloadFile(name, content, type) { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([noDash(content)], { type })); a.download = noDash(name); document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
@@ -2494,6 +2944,7 @@ async function bkWrite(manual) {
     await bkFile(`partenarium-crm-${d}.json`, txt);                       // copie du jour (la dernière version de la journée)
     try { await BK.dir.getFileHandle(month); } catch { await bkFile(month, txt); } // copie du mois : écrite une seule fois
     if (GC()) await bkFile("partenarium-crm-guides.json", JSON.stringify(GC(), null, 2));  // contenu des guides, réimportable
+    if (CT.rec && lsGet(CONFIG.key + ":ctbk") !== CT.rec.stamp) { await bkFile("partenarium-crm-modeles-contrats.json", JSON.stringify(CT.rec)); lsSet(CONFIG.key + ":ctbk", CT.rec.stamp); }
     const lim = addDays(d, -90), mNow = +d.slice(0, 4) * 12 + +d.slice(5, 7), old = [];
     for await (const [name, h] of BK.dir.entries()) {
       if (h.kind !== "file") continue;
@@ -2675,7 +3126,9 @@ async function syncNow(manual, retry) {
     if (migrateAll(m.out)) { fl.remote = true; fl.local = true; }
     if (fl.local) { S.items = m.out; S.del = m.del; save("items"); save("del"); bkSoon(3000); if (!FORM && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || "")) render(); }
     if (fl.remote || SYNC.dirty) await putRemote("crm.json", { v:1, updated:Date.now(), items:m.out, del:m.del }, rem.sha);
-    SYNC.dirty = false; SYNC.last = Date.now(); lsSet(CONFIG.key + ":lastsync", SYNC.last); if (manual) toast("Synchronisé.");
+    SYNC.dirty = false; SYNC.last = Date.now(); lsSet(CONFIG.key + ":lastsync", SYNC.last);
+    try { await ctSync(); } catch {}                                            // modèles de contrats (fichier séparé, seulement quand la version change)
+    if (manual) toast("Synchronisé.");
   } catch (e) {
     SYNC.busy = false;
     if ((e.status === 409 || e.status === 422) && !retry) return syncNow(manual, true);
@@ -2697,7 +3150,7 @@ async function boot() {
   if (migrateAll(S.items)) { save("items"); SYNC.dirty = true; }
   const dr = lsGet(CONFIG.key + ":entdraft");                       // brouillon d'entretien non encore enregistré (fermeture brutale)
   if (dr && dr.id && S.items[dr.id] && (dr._saved || 0) > (S.items[dr.id].updated || 0)) { const { _saved, ...x } = dr; S.items[dr.id] = { ...x, updated:Date.now() }; save("items"); SYNC.dirty = true; }
-  await bkInit();
+  await bkInit(); await ctInit();
   applyTheme(); render(); syncNow();
   if ("serviceWorker" in navigator) {
     try {
