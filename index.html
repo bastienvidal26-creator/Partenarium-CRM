@@ -341,6 +341,18 @@ textarea.inp{min-height:64px;resize:vertical}
 .grille .gq{flex:1;min-width:200px;display:flex;flex-direction:column;gap:2px}
 .grille .seg button{min-width:44px;min-height:40px}
 .grille .seg button.sugg{outline:2px dashed var(--acc);outline-offset:-3px}
+.score .sc-crit{border-top:.5px solid var(--line);padding-top:12px;margin-top:14px}
+.score .sc-crit h3{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 4px;font-size:16px}
+.score .sc-sub{display:flex;align-items:center;gap:10px 12px;padding:8px 0;border-bottom:.5px solid var(--line);flex-wrap:wrap}
+.score .sc-sub .gq{flex:1;min-width:220px;display:flex;flex-direction:column;gap:2px}
+.score .seg6 button{min-width:44px;min-height:44px;padding:4px 0}
+.score .seg6 button[aria-pressed=true]{background:var(--acc);color:var(--on-acc);font-weight:700}
+.score .sc-pr{flex:1 1 100%;min-height:36px}
+.sc-sum{margin-top:14px;padding-top:10px;border-top:1px solid var(--line)}
+.sc-fm{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+.persona{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:8px;padding:10px 12px;background:var(--fill);border-radius:10px}
+.persona>div{display:flex;flex-direction:column;gap:2px}
+.objoff{margin:0 0 12px}.objoff .chipbtn{min-height:36px;padding:4px 10px}
 .upd{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:.5px solid var(--line);font-size:14px;cursor:pointer}
 .upd input{margin-top:3px;accent-color:var(--acc);width:18px;height:18px;flex:none}
 .pts{margin:0;padding-left:18px;line-height:22px}
@@ -512,8 +524,23 @@ function packSuggere(montant, pack) {
   const n = pack.niveaux || [];
   return +montant < +pack.seuil1 ? n[0] : +montant <= +pack.seuil2 ? n[1] : n[2];
 }
-/* Score de sponsorabilité : 5 critères sur 20 */
+/* Score de sponsorabilité : 5 critères sur 20 (ancien format v1.0 du contenu) */
 function sponsoTotal(notes) { return Object.values(notes || {}).reduce((s, v) => s + Math.max(0, Math.min(20, +v || 0)), 0); }
+/* Grille du Marketing (26/11/2026) : 5 critères × 4 sous-critères notés de 0 à 5 ; vide = 0 avec avertissement ;
+   un critère sous 6/20 est un point bloquant ; forces = 3 sous-critères les plus hauts, manques = 3 les plus bas. */
+function palierOf(total, def) { return (def?.paliers || []).slice().sort((a, b) => b.min - a.min).find(p => total >= p.min) || null; }
+function sponsoCalc(notes, def) {
+  notes = notes || {}; def = def || {};
+  const crits = def.criteres || [], clip = (v, m) => Math.max(0, Math.min(m, Math.round(+v || 0)));
+  const vide = v => v === undefined || v === null || v === "";
+  if (!crits.length || !crits[0].sous) { const total = Object.values(notes).reduce((s, v) => s + clip(v, 20), 0); return { total, crit:{}, vides:0, alertes:[], forces:[], manques:[], palier:palierOf(total, def) }; }
+  const crit = {}, subs = []; let vides = 0;
+  crits.forEach((c, ci) => { let t = 0; (c.sous || []).forEach((s, si) => { const e = vide(notes[s.k]), n = e ? 0 : clip(notes[s.k], 5); if (e) vides++; t += n; subs.push({ k:s.k, n, ord:ci * 10 + si }); }); crit[c.k] = t; });
+  const total = Object.values(crit).reduce((a, b) => a + b, 0), lim = def.alerteCritere ?? 6;
+  return { total, crit, vides, alertes:crits.filter(c => crit[c.k] < lim).map(c => c.k),
+    forces:subs.filter(x => x.n > 0).sort((a, b) => b.n - a.n || a.ord - b.ord).slice(0, 3).map(x => x.k),
+    manques:subs.filter(x => x.n < 5).sort((a, b) => a.n - b.n || a.ord - b.ord).slice(0, 3).map(x => x.k), palier:palierOf(total, def) };
+}
 /* Coût net pour l'entreprise d'un montant envisagé (mêmes formules que les opportunités et le calculateur) */
 const ENT_TYPES = { "Parrainage":"Parrainage", "Mécénat":"Mécénat", "Mixte":"Mixte", "En nature":"Dotation en nature" };
 const ENT_IMPOS = { "IS 15 %":"is15", "IS 25 %":"is25", "IR":"ir", "Micro-entreprise":"micro" };
@@ -526,14 +553,14 @@ function coutNetEntretien(montant, type, ent, G, P) {
 /* Remplit un modèle de phrase « {champ} » ; un champ vide reste visible pour être complété */
 function fillTpl(tpl, vals, empty) { empty = empty === undefined ? "[…]" : empty; return String(tpl || "").replace(/\{(\w+)\}/g, (_, k) => vals && vals[k] !== undefined && vals[k] !== null && vals[k] !== "" ? String(vals[k]) : empty); }
 
-if (typeof module !== "undefined") module.exports = { TAX, GRID, mecenat, isTax, parrainage, commission, oppCalc, contratCalc, addMonths, addDays, daysBetween, ymd, parseYmd, eligMecenat, qualifPorteur, grilleTotal, grilleNiveau, grilleSuggest, packSuggere, sponsoTotal, coutNetEntretien, fillTpl };
+if (typeof module !== "undefined") module.exports = { TAX, GRID, mecenat, isTax, parrainage, commission, oppCalc, contratCalc, addMonths, addDays, daysBetween, ymd, parseYmd, eligMecenat, qualifPorteur, grilleTotal, grilleNiveau, grilleSuggest, packSuggere, sponsoTotal, sponsoCalc, palierOf, coutNetEntretien, fillTpl };
 </script>
 
 <script>
 (() => {
 "use strict";
 /* ═════════ CONFIGURATION ═════════ */
-const CONFIG = { name:"Partenarium CRM", key:"partcrm", version:"1.2.0", // à garder identique à VERSION dans sw.js (partcrm-1.2.0)
+const CONFIG = { name:"Partenarium CRM", key:"partcrm", version:"1.3.0", // à garder identique à VERSION dans sw.js (partcrm-1.3.0)
   gh:{ owner:"bastienvidal26-creator", privateRepo:"partenarium-crm-perso" } };
 
 /* ═════════ outils ═════════ */
@@ -601,7 +628,11 @@ function migrateItem(r) {
   if (r.o === "opp" && OLD_STAGE[r.etape]) { const old = r.etape; r.etape = OLD_STAGE[old]; if (r.proba === undefined || r.proba === null || r.proba === "" || Math.abs(+r.proba - OLD_P[old]) < 1e-9) r.proba = PROBA0.opp[r.etape]; return true; }
   if (r.o === "opp" && r.etape === "Négociation" && Math.abs(+r.proba - 0.6) < 1e-9 && !r.v12) { r.proba = PROBA0.opp["Négociation"]; r.v12 = 1; return true; }
   if (r.o === "porteur" && OLD_REL[r.relation]) { r.relation = OLD_REL[r.relation]; return true; }
-  return false;
+  let ch = false;            /* v1.3.0 : secteurs du Vaucluse, origines, n° RNA séparé du SIREN */
+  if (r.o === "entreprise" && OLD_SECTEUR[r.secteur]) { r.secteur = OLD_SECTEUR[r.secteur]; ch = true; }
+  if ((r.o === "entreprise" || r.o === "porteur") && OLD_ORIGINE[r.source]) { r.source = OLD_ORIGINE[r.source]; ch = true; }
+  if (r.o === "porteur" && !r.rna && /^W\d{9}$/i.test(String(r.siren || "").replace(/\s/g, ""))) { r.rna = String(r.siren).replace(/\s/g, "").toUpperCase(); r.siren = ""; ch = true; }
+  return ch;
 }
 function migrateAll(items) { let n = 0; for (const r of Object.values(items || {})) if (migrateItem(r)) { r.updated = Date.now(); n++; } return n; }
 const CST = [{ v:"Brouillon", c:"var(--gray)" }, { v:"Envoyé", c:"var(--blue)" }, { v:"Signé", c:"var(--purple)" }, { v:"Actif", c:"var(--green)" }, { v:"Terminé", c:"var(--brown)" }, { v:"Résilié", c:"var(--red)", closed:1 }];
@@ -609,6 +640,28 @@ const ACT_ST = [{ v:"À faire", c:"var(--orange)" }, { v:"Fait", c:"var(--green)
 const PATHS = { opp:["etape", STAGES], porteur:["relation", REL], contrat:["statut", CST] };
 const CP_TYPES = ["Logo sur tenue", "Panneau / banderole", "Naming", "Réseaux sociaux", "Site web", "Hospitalité / VIP", "Invitations", "Photo / vidéo", "Stand / présence événement", "Intervention / conférence", "Activation salariés", "Droit à l'image / ambassadeur", "Relations presse", "Autre"];
 const LINE_COLS = [{ k:"type", l:"Type", t:"select", o:CP_TYPES }, { k:"desc", l:"Description", t:"text" }, { k:"qte", l:"Qté", t:"number" }, { k:"valeur", l:"Valeur €", t:"money" }, { k:"livre", l:"Livrée", t:"bool" }];
+/* Territoire et prospection (v1.3.0, Vaucluse) : listes utilisées par les fiches et l'import des fichiers du Marketing */
+const SECTEURS = ["Agroalimentaire", "Industrie", "BTP / construction", "Énergie / environnement", "Transport / logistique", "Commerce", "Automobile", "Hôtellerie / restauration", "Tourisme / loisirs", "Immobilier", "Banque / assurance", "Santé / social", "Services aux entreprises", "Services aux particuliers", "Numérique / communication", "Agriculture (hors viticulture)", "Autre"];
+const OLD_SECTEUR = { "Décolletage / mécanique":"Industrie", "Tourisme / montagne":"Tourisme / loisirs", "BTP":"BTP / construction", "Santé":"Santé / social", "Énergie":"Énergie / environnement", "Numérique":"Numérique / communication" };
+/* 14 bassins validés le 26/11/2026 (un par intercommunalité, Pertuis compris) */
+const BASSINS = ["Grand Avignon", "Ventoux-Comtat-Venaissin", "Luberon Monts de Vaucluse", "Sorgues du Comtat", "Pays d'Orange en Provence", "Pays des Sorgues et des Monts de Vaucluse", "Rhône Lez Provence", "Pays d'Apt-Luberon", "Aygues-Ouvèze en Provence", "Sud Luberon", "Pertuis", "Vaison Ventoux", "Enclave des Papes-Pays de Grignan", "Ventoux Sud", "Hors Vaucluse"];
+const ORIGINES = ["Fichier du Marketing (données publiques)", "Annuaire des entreprises / Pappers", "Réseau personnel", "Recommandation", "Salon / événement", "LinkedIn", "Instagram", "Facebook", "Recherche internet / site web", "Presse", "Autre"];
+const OLD_ORIGINE = { "Pappers":"Annuaire des entreprises / Pappers", "Site web":"Recherche internet / site web" };
+const RESEAUX = ["LinkedIn", "Instagram", "Facebook"];
+const BASES = ["Intérêt légitime (prospection B2B)", "Consentement", "Contrat ou demande de la personne", "Autre"];
+/* Codes NAF (rév. 2) exclus : alcool, tabac (loi Évin), jeux d'argent. Liste du Marketing (26/11/2026) complétée ; à revoir avec la NAF 2025. */
+const NAF_EXCLUS = { "01.21Z":"culture de la vigne", "11.01Z":"distillation", "11.02A":"vins effervescents", "11.02B":"vinification", "11.03Z":"cidre", "11.04Z":"autres boissons fermentées", "11.05Z":"bière", "12.00Z":"tabac", "46.34Z":"commerce de gros de boissons", "46.35Z":"commerce de gros de tabac", "47.25Z":"commerce de détail de boissons", "47.26Z":"commerce de détail de tabac", "56.30Z":"débits de boissons", "92.00Z":"jeux de hasard et d'argent" };
+const nafNorm = v => { const m = String(v || "").toUpperCase().replace(/\s/g, "").match(/^(\d{2})\.?(\d{2})([A-Z])$/); return m ? `${m[1]}.${m[2]}${m[3]}` : String(v || "").trim(); };
+const nafExclu = v => NAF_EXCLUS[nafNorm(v)] || "";
+function nafSecteur(v) {          // secteur proposé à partir de la division NAF (2 premiers chiffres)
+  const d = parseInt(nafNorm(v).slice(0, 2), 10); if (!d) return "";
+  if (d <= 3) return d === 1 && nafNorm(v) === "01.21Z" ? "Autre" : "Agriculture (hors viticulture)";
+  if (d <= 9) return "Industrie"; if (d <= 12) return "Agroalimentaire"; if (d <= 33) return "Industrie"; if (d <= 39) return "Énergie / environnement";
+  if (d <= 43) return "BTP / construction"; if (d === 45) return "Automobile"; if (d <= 47) return "Commerce"; if (d <= 53) return "Transport / logistique";
+  if (d <= 56) return "Hôtellerie / restauration"; if (d <= 63) return "Numérique / communication"; if (d <= 66) return "Banque / assurance"; if (d === 68) return "Immobilier";
+  if (d <= 82) return "Services aux entreprises"; if (d >= 86 && d <= 88) return "Santé / social"; if (d >= 90 && d <= 93) return "Tourisme / loisirs"; if (d >= 94 && d <= 96) return "Services aux particuliers";
+  return "Autre";
+}
 const REGIMES = { is25:"Société à l'IS, taux normal (25 %)", is15:"PME à l'IS, taux réduit (15 %)", ismix:"PME à l'IS, selon son bénéfice", ir:"Entreprise individuelle au réel (IR)", micro:"Micro-entreprise" };
 const OBJ = {
   porteur:{ l:"Porteur de projet", lp:"Porteurs de projet", nav:"Porteurs", c:"var(--orange)", ic:"porteur" },
@@ -626,10 +679,16 @@ const F = {
     { k:"discipline", l:"Discipline ou thème", t:"text", s:"Identité", list:1 },
     { k:"niveau", l:"Niveau", t:"select", s:"Identité", o:["Loisir", "Départemental", "Régional", "National", "International"] },
     { k:"statutJur", l:"Statut juridique", t:"select", s:"Identité", o:["Association loi 1901", "Association reconnue d'utilité publique", "Société sportive (SASP, SAOS…)", "Entreprise individuelle", "Société", "Particulier", "Collectivité", "Autre"] },
-    { k:"siren", l:"SIREN ou n° RNA", t:"text", s:"Identité" },
+    { k:"rna", l:"N° RNA", t:"text", s:"Identité", help:"Associations : W suivi de 9 chiffres (Répertoire national des associations)." },
+    { k:"siren", l:"SIREN", t:"text", s:"Identité" },
+    { k:"federation", l:"Fédération", t:"text", s:"Identité" },
     { k:"ville", l:"Ville", t:"text", s:"Identité", list:1 },
+    { k:"codeCommune", l:"Code commune", t:"text", s:"Identité", help:"Code officiel géographique (Insee), ex. 84007 pour Avignon." },
+    { k:"bassin", l:"Bassin", t:"select", s:"Identité", o:BASSINS, list:1 },
     { k:"site", l:"Site web", t:"url", s:"Identité" },
     { k:"reseaux", l:"Réseaux sociaux", t:"text", s:"Identité", help:"Ex. Instagram @club" },
+    { k:"emailPublic", l:"E-mail publié par la structure", t:"email", s:"Identité" },
+    { k:"telPublic", l:"Téléphone publié par la structure", t:"tel", s:"Identité" },
     { k:"logo", l:"Logo", t:"image", s:"Identité" },
     { k:"description", l:"Présentation", t:"textarea", s:"Identité", wide:1 },
     { k:"mecenat", l:"Éligible au mécénat", t:"select", s:"Fiscalité", o:["À vérifier", "Probable (à confirmer)", "Oui (intérêt général)", "Non"], def:"À vérifier", help:"Intérêt général : gestion désintéressée, activité non lucrative, pas de cercle restreint. Une société sportive n'est pas éligible." },
@@ -655,17 +714,31 @@ const F = {
     { k:"mandatDebut", l:"Début du mandat", t:"date", s:"Mandat Partenarium" },
     { k:"mandatFin", l:"Fin du mandat", t:"date", s:"Mandat Partenarium" },
     { k:"exclusif", l:"Mandat exclusif", t:"bool", s:"Mandat Partenarium" },
+    { k:"scoreSpon", l:"Score de sponsorabilité (sur 100)", t:"number", s:"Mandat Partenarium", help:"Calculé par le guide d'entretien A. À refaire à chaque renouvellement et au plus tard 12 mois après." },
+    { k:"scoreDate", l:"Date du score", t:"date", s:"Mandat Partenarium" },
     { k:"inventaire", l:"Contreparties disponibles", t:"lines", s:"Contreparties disponibles", wide:1, noLivre:1 },
+    { k:"source", l:"Origine du contact", t:"select", s:"Prospection et RGPD", o:ORIGINES, help:"Comment le porteur a connu Partenarium, ou comment il a été trouvé." },
+    { k:"entrant", l:"A contacté Partenarium de lui-même", t:"bool", s:"Prospection et RGPD", help:"Réservation sur la page de rendez-vous, message, appel." },
+    { k:"sourceDonnees", l:"Source des données", t:"text", s:"Prospection et RGPD", help:"Ex. RNA, Injep, site de la fédération, site du club." },
+    { k:"dateVerif", l:"Date de vérification", t:"date", s:"Prospection et RGPD" },
+    { k:"baseLegale", l:"Base légale de la prospection", t:"select", s:"Prospection et RGPD", o:BASES },
+    { k:"opposition", l:"Opposition à la prospection (RGPD)", t:"bool", s:"Prospection et RGPD" },
+    { k:"oppositionDate", l:"Date de l'opposition", t:"date", s:"Prospection et RGPD", show:r => !!r.opposition },
     { k:"notes", l:"Notes", t:"textarea", s:"Notes", wide:1 }],
   entreprise:[
     { k:"nom", l:"Raison sociale", t:"text", s:"Identité", req:1, list:1 },
     { k:"siren", l:"SIREN", t:"text", s:"Identité" },
-    { k:"secteur", l:"Secteur", t:"select", s:"Identité", o:["Décolletage / mécanique", "Industrie", "BTP", "Automobile", "Commerce", "Hôtellerie / restauration", "Tourisme / montagne", "Immobilier", "Banque / assurance", "Santé", "Services aux entreprises", "Numérique", "Énergie", "Transport / logistique", "Agroalimentaire", "Autre"], list:1 },
+    { k:"codeNaf", l:"Code NAF", t:"text", s:"Identité", help:"Ex. 43.21A. Les codes de l'alcool, du tabac et des jeux d'argent déclenchent une alerte." },
+    { k:"secteur", l:"Secteur", t:"select", s:"Identité", o:SECTEURS, list:1, help:"Proposé à partir du code NAF s'il est vide." },
     { k:"taille", l:"Taille", t:"select", s:"Identité", o:["TPE (moins de 10 salariés)", "PME (10 à 249)", "ETI (250 à 4 999)", "Grande entreprise"] },
     { k:"effectif", l:"Effectif", t:"number", s:"Identité" },
     { k:"ville", l:"Ville", t:"text", s:"Identité", list:1 },
+    { k:"codeCommune", l:"Code commune", t:"text", s:"Identité", help:"Code officiel géographique (Insee) de l'établissement." },
+    { k:"bassin", l:"Bassin", t:"select", s:"Identité", o:BASSINS, list:1 },
     { k:"adresse", l:"Adresse", t:"text", s:"Identité" },
     { k:"site", l:"Site web", t:"url", s:"Identité" },
+    { k:"emailPublic", l:"E-mail publié par l'entreprise", t:"email", s:"Identité" },
+    { k:"telPublic", l:"Téléphone publié par l'entreprise", t:"tel", s:"Identité" },
     { k:"logo", l:"Logo", t:"image", s:"Identité" },
     { k:"caHT", l:"Chiffre d'affaires HT annuel", t:"money", s:"Finances et fiscalité", list:1, help:"Fixe le plafond du mécénat : 20 000 € ou 5 ‰ du CA." },
     { k:"imposition", l:"Imposition", t:"select", s:"Finances et fiscalité", o:Object.keys(REGIMES), lab:REGIMES, def:"is25" },
@@ -673,7 +746,11 @@ const F = {
     { k:"tmi", l:"Tranche marginale d'imposition", t:"select", s:"Finances et fiscalité", o:["0", "0.11", "0.3", "0.41", "0.45"], lab:{ "0":"0 %", "0.11":"11 %", "0.3":"30 %", "0.41":"41 %", "0.45":"45 %" }, show:r => r.imposition === "ir" },
     { k:"soc", l:"Cotisations sociales évitées", t:"pct", s:"Finances et fiscalité", show:r => r.imposition === "ir" },
     { k:"budgetSpon", l:"Budget partenariats estimé", t:"money", s:"Finances et fiscalité" },
-    { k:"source", l:"Source", t:"select", s:"Prospection", o:["Pappers", "LinkedIn", "Réseau personnel", "Recommandation", "Salon / événement", "Presse", "Site web", "Autre"] },
+    { k:"source", l:"Origine du contact", t:"select", s:"Prospection", o:ORIGINES, help:"Comment l'entreprise a connu Partenarium, ou comment elle a été trouvée." },
+    { k:"entrant", l:"A contacté Partenarium d'elle-même", t:"bool", s:"Prospection", help:"Réservation sur la page de rendez-vous, message, appel." },
+    { k:"sourceDonnees", l:"Source des données", t:"text", s:"Prospection", help:"Ex. Annuaire des entreprises (Sirene), site de l'entreprise." },
+    { k:"dateVerif", l:"Date de vérification", t:"date", s:"Prospection" },
+    { k:"baseLegale", l:"Base légale de la prospection", t:"select", s:"Prospection", o:BASES },
     { k:"declencheur", l:"Déclencheur repéré", t:"text", s:"Prospection", help:"Ex. ouverture d'un site, recrutement, anniversaire" },
     { k:"interets", l:"Centres d'intérêt", t:"multi", s:"Prospection", o:["Visibilité locale", "Marque employeur", "RSE", "Hospitalité / relations publiques", "Activation commerciale", "Notoriété / image", "Ancrage territorial"], wide:1 },
     { k:"opposition", l:"Opposition à la prospection (RGPD)", t:"bool", s:"Prospection" },
@@ -690,6 +767,9 @@ const F = {
     { k:"linkedin", l:"LinkedIn", t:"url", s:"Coordonnées" },
     { k:"opposition", l:"Opposition à la prospection (RGPD)", t:"bool", s:"RGPD" },
     { k:"dernierContact", l:"Dernier contact venant de la personne", t:"date", s:"RGPD", help:"Point de départ des 3 ans de conservation (repère CNIL)." },
+    { k:"sourceDonnees", l:"Source des données", t:"text", s:"RGPD", help:"Où ces coordonnées ont été publiées par la structure." },
+    { k:"dateVerif", l:"Date de vérification", t:"date", s:"RGPD", help:"Sans contact venant de la personne, les 3 ans courent à partir de la collecte." },
+    { k:"baseLegale", l:"Base légale de la prospection", t:"select", s:"RGPD", o:BASES },
     { k:"notes", l:"Notes", t:"textarea", s:"Notes", wide:1 }],
   opp:[
     { k:"nom", l:"Nom de l'opportunité", t:"text", s:"Opportunité", help:"Laissé vide : « Entreprise · Porteur »", list:1 },
@@ -943,7 +1023,7 @@ function echeances(t) {
 function rgpdAlerts(t) {
   const lim = addMonths(t, -36), out = [];
   all("contact").forEach(c => {
-    const last = c.dernierContact || (c.created ? ymd(new Date(c.created)) : "");
+    const last = c.dernierContact || c.dateVerif || (c.created ? ymd(new Date(c.created)) : "");
     const acts = all("act").filter(a => a.lie === c.id && a.date).map(a => a.date).sort().pop();
     const ref = [last, c.dernierContact ? "" : acts].filter(Boolean).sort().pop();
     if (ref && ref < lim && !isClient(c)) out.push({ id:c.id, name:rname(c), why:`Aucun contact depuis plus de 3 ans : à supprimer ou anonymiser` });
@@ -1077,7 +1157,9 @@ function pathHtml(r) {
 }
 function alertsFor(r) {
   const out = [], t = today();
-  if ((r.o === "entreprise" || r.o === "contact") && r.opposition) out.push(["var(--red)", `<b>Opposition à la prospection.</b> Ne plus contacter à des fins de prospection${r.oppositionDate ? ` (depuis le ${dfr(r.oppositionDate)})` : ""}.`]);
+  if ((r.o === "entreprise" || r.o === "contact" || r.o === "porteur") && r.opposition) out.push(["var(--red)", `<b>Opposition à la prospection.</b> Ne plus contacter à des fins de prospection${r.oppositionDate ? ` (depuis le ${dfr(r.oppositionDate)})` : ""}.`]);
+  if (r.o === "entreprise" && nafExclu(r.codeNaf)) out.push(["var(--red)", `<b>Code NAF ${esc(nafNorm(r.codeNaf))} (${esc(nafExclu(r.codeNaf))}) :</b> secteur exclu (loi Évin, jeux d'argent). Pas de partenariat sportif possible ; à vérifier si l'activité réelle est différente.`]);
+  if (r.o === "porteur" && r.scoreDate && r.scoreDate < addMonths(t, -12) && !["Perdu", "Terminé"].includes(r.relation)) out.push(["var(--orange)", `<b>Score de sponsorabilité à refaire :</b> le dernier date du ${dfr(r.scoreDate)} (plus de 12 mois).`]);
   if (r.o === "opp") {
     const ent = get(r.entreprise), por = get(r.porteur), k = oc(r);
     if (ent?.opposition) out.push(["var(--red)", `<b>${esc(ent.nom)} s'est opposée à la prospection.</b> Ne pas relancer.`]);
@@ -1194,7 +1276,7 @@ function activityPanel(r) {
 }
 
 /* ═════════ RAPPORTS ═════════ */
-const REPORTS = [["pipeline", "Cycle de vente par étape"], ["objectifs", "Objectifs des porteurs"], ["mois", "Signé par mois"], ["secteurs", "Opportunités par secteur"], ["revenus", "Revenus Partenarium"], ["presentations", "Registre des présentations (droit de suite)"], ["contreparties", "Contreparties à livrer"], ["pertes", "Raisons des pertes"], ["entretiens", "Entretiens"]];
+const REPORTS = [["pipeline", "Cycle de vente par étape"], ["objectifs", "Objectifs des porteurs"], ["mois", "Signé par mois"], ["secteurs", "Opportunités par secteur"], ["revenus", "Revenus Partenarium"], ["presentations", "Registre des présentations (droit de suite)"], ["contreparties", "Contreparties à livrer"], ["pertes", "Raisons des pertes"], ["entretiens", "Entretiens"], ["origines", "Origine des contacts"], ["bassins", "Porteurs et entreprises par bassin"]];
 let REP_DATA = null;
 function vReports(id) {
   id = id || S.ui.report; S.ui.report = id;
@@ -1256,6 +1338,8 @@ function buildReport(id) {
       rows:[["Contrat", "Porteur", "Entreprise", "Contrepartie", "Description", "Qté", "Valeur", "Fin"], ...rows.map(x => [rname(x.c), get(x.c.porteur)?.nom || "", get(x.c.entreprise)?.nom || "", x.l.type, x.l.desc || "", x.l.qte || "", x.l.valeur || "", x.c.fin || ""])] };
   }
   if (id === "entretiens") return reportEntretiens(title);
+  if (id === "origines") return reportOrigines(title);
+  if (id === "bassins") return reportBassins(title);
   if (id === "pertes") {
     const lost = opps.filter(o => o.etape === "Perdu"), m = {}; lost.forEach(o => { const k = o.raisonPerte || "Non renseignée"; m[k] = m[k] || { n:0, v:0 }; m[k].n++; m[k].v += +o.montant || 0; });
     const rows = Object.entries(m).sort((a, b) => b[1].n - a[1].n);
@@ -1308,7 +1392,8 @@ function vSettings() {
     <div class="kv"><span>Enregistrements sur cet appareil</span><b>${nb(n)}</b></div>
     <h3 class="tiny" style="text-transform:uppercase;font-weight:600;margin:16px 0 6px">Import CSV</h3>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><select class="inp" id="csvobj" style="width:auto">${["entreprise", "porteur", "contact"].map(o => `<option value="${o}">${OBJ[o].lp}</option>`).join("")}</select><label class="btn filebtn" tabindex="0" role="button">Choisir un fichier CSV<input type="file" accept=".csv,text/csv" class="vh-file" id="csvfile" tabindex="-1"></label></div>
-    <p class="tiny">Séparateur ; ou , — la première ligne doit contenir les noms des colonnes (ex. Raison sociale, SIREN, Secteur, Ville, Notes). Les doublons (même SIREN ou même nom) sont ignorés.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">${["porteur", "entreprise", "contact"].map(o => `<button class="btn sm" data-csvtpl="${o}">${svg("download")}Modèle ${OBJ[o].lp.toLowerCase()}</button>`).join("")}</div>
+    <p class="tiny">Séparateur ; ou , — la première ligne contient les libellés des colonnes, ceux des modèles (les colonnes inconnues sont ignorées et signalées). Importez les porteurs et les entreprises <b>avant</b> les contacts : la colonne « Rattaché à » d'un contact est reconnue par le n° RNA, le SIREN ou le nom exact. Dates au format JJ/MM/AAAA. Les doublons (même SIREN, même n° RNA ou même nom) sont ignorés.</p>${importReportHtml()}
     <h3 class="tiny" style="text-transform:uppercase;font-weight:600;margin:16px 0 6px">Données d'exemple</h3>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="demo-load">Charger des exemples</button>${demo ? `<button class="btn danger" id="demo-del">Supprimer les ${demo} exemples</button>` : ""}</div>
     <p class="tiny">Porteurs et entreprises fictifs, marqués « (exemple) », pour découvrir l'outil.</p>
@@ -1387,8 +1472,8 @@ function collectForm() {
 }
 function dupOf(r) {
   if (!["entreprise", "porteur"].includes(r.o)) return null;
-  const s = String(r.siren || "").replace(/\s/g, ""), n = norm(r.nom);
-  return all(r.o).find(x => x.id !== FORM.id && ((s && String(x.siren || "").replace(/\s/g, "") === s) || (n && norm(x.nom) === n))) || null;
+  const s = idNorm(r.siren), w = idNorm(r.rna), n = norm(r.nom);
+  return all(r.o).find(x => x.id !== FORM.id && ((s && idNorm(x.siren) === s) || (w && idNorm(x.rna) === w) || (n && norm(x.nom) === n))) || null;
 }
 function submitForm() {
   const r = collectForm(), o = FORM.o, err = [];
@@ -1405,7 +1490,8 @@ function submitForm() {
   }
   if (o === "contrat" && !r.numero) r.numero = nextNumero(r);
   if (o === "contact" && r.opposition && !r.oppositionDate) r.oppositionDate = today();
-  if (o === "entreprise" && r.opposition && !r.oppositionDate) r.oppositionDate = today();
+  if ((o === "entreprise" || o === "porteur") && r.opposition && !r.oppositionDate) r.oppositionDate = today();
+  if (o === "entreprise" && !r.secteur && nafSecteur(r.codeNaf)) r.secteur = nafSecteur(r.codeNaf);
   const id = FORM.id || uid(); r.id = id;
   const isNew = !FORM.id;
   putItem(id, r); closeModal(); toast(isNew ? `${OBJ[o].l} créé${["entreprise", "opportunité", "activité"].includes(OBJ[o].l.toLowerCase()) ? "e" : ""}.` : "Modifications enregistrées.");
@@ -1454,7 +1540,7 @@ function closeSearch() { $("#sov").hidden = true; $("#sov").innerHTML = ""; }
 function searchRun(q) {
   const n = norm(q);
   if (!n) { SRES = (lsGet(CONFIG.key + ":recent") || []).map(get).filter(Boolean).slice(0, 8); }
-  else SRES = Object.values(S.items).filter(r => OBJ[r.o] && (r.o !== "act" || n.length > 2)).map(r => { const hay = norm([rname(r), r.siren, r.email, r.tel, r.ville, r.discipline, r.secteur, r.numero, r.fonction].filter(Boolean).join(" ")); const i = hay.indexOf(n); return i < 0 ? null : { r, s:(norm(rname(r)).startsWith(n) ? 0 : 1) * 1000 + i }; }).filter(Boolean).sort((a, b) => a.s - b.s).slice(0, 30).map(x => x.r);
+  else SRES = Object.values(S.items).filter(r => OBJ[r.o] && (r.o !== "act" || n.length > 2)).map(r => { const hay = norm([rname(r), r.siren, r.rna, r.email, r.tel, r.emailPublic, r.ville, r.bassin, r.federation, r.codeNaf, r.discipline, r.secteur, r.numero, r.fonction].filter(Boolean).join(" ")); const i = hay.indexOf(n); return i < 0 ? null : { r, s:(norm(rname(r)).startsWith(n) ? 0 : 1) * 1000 + i }; }).filter(Boolean).sort((a, b) => a.s - b.s).slice(0, 30).map(x => x.r);
   SSEL = 0;
   const order = ["porteur", "entreprise", "contact", "opp", "contrat", "entretien", "act"];
   const groups = n ? order.map(o => [o, SRES.filter(r => r.o === o)]).filter(g => g[1].length) : [["recent", SRES]];
@@ -1464,7 +1550,7 @@ function searchRun(q) {
 }
 const subOf = r => r.o === "porteur" ? [r.type, r.ville].filter(Boolean).join(" · ") : r.o === "entreprise" ? [r.secteur, r.ville].filter(Boolean).join(" · ") : r.o === "contact" ? rname(get(r.compte)) : r.o === "opp" ? r.etape : r.o === "contrat" ? r.type : r.o === "act" ? r.type : r.o === "entretien" ? dfr(r.date) : "";
 
-/* ═════════ GUIDE D'ENTRETIEN DE VENTE (v1.2.0) ═════════
+/* ═════════ GUIDE D'ENTRETIEN DE VENTE (v1.2.0, grille du score et objections par offre en v1.3.0) ═════════
    Le contenu commercial (questions, relances, objections, règles) n'est pas dans ce code public :
    il est importé une fois (Réglages › Guides d'entretien) dans l'enregistrement « cfg-guides »,
    synchronisé et sauvegardé comme une fiche. */
@@ -1601,7 +1687,10 @@ function entScores(r) {
   }
   if (r.guide === "A") {
     out.qualif = qualifPorteur(rep, r.date);
-    const notes = rep.sponso || {}; out.sponso = Object.keys(notes).some(k => notes[k] !== "" && notes[k] !== null && notes[k] !== undefined) ? sponsoTotal(notes) : null;
+    const sp = C0.sponsorabilite || {}, notes = rep.sponso || {}, ctl = (rep.sponsoCtl || []).filter(k => (sp.controles || []).some(c => c.k === k));
+    if (ctl.length) { out.sponso = null; out.sponsoBloque = ctl; }
+    else if (Object.keys(notes).some(k => notes[k] !== "" && notes[k] !== null && notes[k] !== undefined)) { const d = sponsoCalc(notes, sp); out.sponso = d.total; out.sponsoDet = { crit:d.crit, vides:d.vides, alertes:d.alertes, forces:d.forces, manques:d.manques, palier:d.palier ? d.palier.libelle : "", date:rep.sponsoDate || r.date }; }
+    else out.sponso = null;
     out.pack = packSuggere(rep.montantRecherche, C0.pack);
   }
   if (r.guide === "B") {
@@ -1631,9 +1720,16 @@ function entPoints(r) {
     if (!c.decideur) out.push("Décideur absent de l'échange.");
     if (!c.capacite) out.push(`Capacité à payer le Pack : ${rep.capacitePack ? `« ${rep.capacitePack} »` : "non renseignée"}.`);
     if (!c.echeance) out.push(rep.echeance ? "Échéance à plus de 9 mois." : "Échéance non renseignée.");
-    if (sc.sponso !== null && sc.sponso < (GC()?.sponsorabilite?.seuil ?? 50)) out.push(`Score de sponsorabilité sous ${GC()?.sponsorabilite?.seuil ?? 50}/100 : pas de proposition (${GC()?.sponsorabilite?.sousSeuil || "conseils et relance"}).`);
+    const sp = GC()?.sponsorabilite || {};
+    (sc.sponsoBloque || []).forEach(k => { const c = (sp.controles || []).find(x => x.k === k); if (c) out.push(`Score non calculé : ${c.libelle}. ${c.pourquoi}. À dire au porteur : ${c.dire}.`); });
+    if (sc.sponso !== null && sc.sponso < (sp.seuil ?? 50)) out.push(`Score de sponsorabilité sous ${sp.seuil ?? 50}/100 : pas de proposition (${sp.sousSeuil || "conseils et relance"}).`);
+    if (sc.sponsoDet) {
+      sc.sponsoDet.alertes.forEach(k => { const c = (sp.criteres || []).find(x => x.k === k); if (c) out.push(`Point bloquant à signaler au porteur : ${c.libelle} à ${sc.sponsoDet.crit[k]}/20 (sous ${sp.alerteCritere ?? 6}).`); });
+      if (sc.sponsoDet.vides) out.push(`${sc.sponsoDet.vides} sous-critère${sc.sponsoDet.vides > 1 ? "s" : ""} du score non noté${sc.sponsoDet.vides > 1 ? "s" : ""} (compté${sc.sponsoDet.vides > 1 ? "s" : ""} 0) : à compléter ou à signaler comme manque.`);
+    }
   }
   if (r.guide === "B") {
+    if (rep.naf && nafExclu(rep.naf) && !rep.secteurInterdit) out.push(`Code NAF ${nafNorm(rep.naf)} (${nafExclu(rep.naf)}) : secteur exclu. Cochez « Secteur interdit » si l'activité est confirmée.`);
     if (rep.decideur !== "Oui") out.push("Décideur absent du rendez-vous.");
     if (sc.grilleRemplie < 6) out.push(`Grille de qualification incomplète (${sc.grilleRemplie}/6 lignes notées).`);
     else if (sc.grille < 8) out.push(`Grille de qualification à ${sc.grille}/12 : ${sc.grille >= 5 ? "compléter avant de proposer" : "non prioritaire"}.`);
@@ -1724,8 +1820,14 @@ function fieldHtml(f) {
       return `<div class="fld wide">${lab}${ps.length ? `<div class="chips">${ps.map(p => `<button type="button" class="${choiceCls(a.includes(p.id))}" data-emulti="porteurs" data-ev="${p.id}" aria-pressed="${a.includes(p.id)}">${esc(p.nom)}${p.mecenat === "Oui (intérêt général)" ? " · éligible mécénat" : ""}</button>`).join("")}</div>` : `<div class="help">Aucun porteur sous mandat pour l'instant.</div>`}</div>`;
     }
     case "offre": {
-      const cat = (GC().catalogue || []).filter(c => c.pour === pubOf(ENT.r));
-      return `<div class="fld">${lab}<select id="${id}" data-ek="${f.k}"><option value="">—</option>${cat.map(c => `<option value="${esc(c.code)}"${v === c.code ? " selected" : ""}>${esc(c.code)} · ${esc(c.nom)} (${esc(c.prix)})</option>`).join("")}</select></div>`;
+      const cat = (GC().catalogue || []).filter(c => c.pour === pubOf(ENT.r)), arg = v && GC().argumentaires?.[v];
+      return `<div class="fld">${lab}<select id="${id}" data-ek="${f.k}"><option value="">—</option>${cat.map(c => `<option value="${esc(c.code)}"${v === c.code ? " selected" : ""}>${esc(c.code)} · ${esc(c.nom)} (${esc(c.prix)})</option>`).join("")}</select></div>
+        ${arg ? `<div class="fld wide"><div class="alert" style="--c:var(--blue)"><div><b>Promesse :</b> « ${esc(arg.promesse)} »${(arg.benefices || []).length ? `<ul style="margin:6px 0 0;padding-left:18px">${arg.benefices.map(b => `<li>${esc(b)}</li>`).join("")}</ul>` : ""}${arg.note ? `<p class="tiny" style="margin:6px 0 0">${esc(arg.note)}</p>` : ""}</div></div></div>` : ""}`;
+    }
+    case "persona": {
+      const ps = (GC().personas || []).filter(p => p.pour === pubOf(ENT.r)), cur = ps.find(p => p.k === v);
+      return `<div class="fld wide">${lab}<select id="${id}" data-ek="${f.k}"><option value="">—</option>${ps.map(p => `<option value="${esc(p.k)}"${v === p.k ? " selected" : ""}>${esc(p.k)}. ${esc(p.titre)}</option>`).join("")}</select>
+        ${cur ? `<div class="persona">${[["Profil type", cur.profil], ["Problème principal", cur.probleme], ["Ce qu'il veut", cur.veut], ["Décideur", cur.decideur], ["Offres adaptées", cur.offres]].filter(x => x[1]).map(([k, x]) => `<div><span class="tiny">${k}</span><span class="small">${esc(x)}</span></div>`).join("")}${cur.ton ? `<p class="tiny" style="margin:6px 0 0">${esc(cur.ton)}</p>` : ""}</div>` : ""}</div>`;
     }
     default: return `<div class="fld${wide}">${lab}<input id="${id}" data-ek="${f.k}" autocomplete="off" value="${esc(v ?? "")}"></div>`;
   }
@@ -1735,16 +1837,27 @@ function coutHtml() {
   return `<div id="e-cout">${sc.cout ? `<div class="kv"><span>Coût net pour l'entreprise${rep.imposition === "Micro-entreprise" && rep.typeEnvisage !== "Mécénat" ? " (micro-entreprise : coût brut en parrainage)" : ""}</span><b>${eur(sc.cout.cout)}</b></div><div class="kv"><span>Économie d'impôt estimée</span><b style="color:var(--green)">${eur(sc.cout.economie)}</b></div>` : ""}
       ${bad.map(p => `<div class="alert" style="--c:var(--orange)"><div><b>Mécénat :</b> l'éligibilité de ${esc(p.nom)} est « ${esc(p.mecenat || "À vérifier")} ». Ne proposez pas de mécénat sans porteur éligible.</div></div>`).join("")}</div>`;
 }
+const subOfK = (sp, k) => (sp.criteres || []).flatMap(c => c.sous || []).find(s => s.k === k);
+const palierColor = (tot, sp) => tot >= 65 ? "var(--green)" : tot >= (sp.seuil ?? 50) ? "var(--orange)" : "var(--red)";
 function sponsoTotHtml() {
-  const sp = GC().sponsorabilite || {}, notes = ENT.r.rep.sponso || {}, tot = sponsoTotal(notes), seuil = sp.seuil ?? 50, any = Object.keys(notes).some(k => notes[k] !== null && notes[k] !== "");
-  return `<b id="e-sponso">${any ? `${pill(`${tot}/100`, tot >= seuil ? "var(--green)" : "var(--red)")}${tot < seuil ? ` <span class="small muted">sous ${seuil} : ${esc(sp.sousSeuil || "pas de proposition")}</span>` : ""}` : "—"}</b>`;
+  const sp = GC().sponsorabilite || {}, notes = ENT.r.rep.sponso || {}, seuil = sp.seuil ?? 50, any = Object.keys(notes).some(k => notes[k] !== null && notes[k] !== "" && notes[k] !== undefined);
+  if (!(sp.criteres || [])[0]?.sous) { const tot = sponsoTotal(notes); return `<b id="e-sponso">${any ? `${pill(`${tot}/100`, tot >= seuil ? "var(--green)" : "var(--red)")}${tot < seuil ? ` <span class="small muted">sous ${seuil} : ${esc(sp.sousSeuil || "pas de proposition")}</span>` : ""}` : "—"}</b>`; }
+  if (!any) return `<div id="e-sponso" class="sc-sum"><div class="kv"><span>Total</span><b>—</b></div></div>`;
+  const d = sponsoCalc(notes, sp), lab = k => esc(subOfK(sp, k)?.libelle || k);
+  return `<div id="e-sponso" class="sc-sum"><div class="kv"><span>Total</span><b>${pill(`${d.total}/100`, palierColor(d.total, sp))} ${d.palier ? `<span class="small">${esc(d.palier.libelle)}</span>` : ""}</b></div>
+    ${d.palier?.suite ? `<p class="small" style="margin:4px 0">${esc(d.palier.suite)}</p>` : ""}
+    ${d.alertes.length ? `<div class="alert" style="--c:var(--red)"><div><b>Point bloquant :</b> ${d.alertes.map(k => { const c = sp.criteres.find(x => x.k === k); return `${esc(c.libelle)} à ${d.crit[k]}/20`; }).join(" · ")} (sous ${sp.alerteCritere ?? 6}/20, à signaler même si le total dépasse ${seuil}).</div></div>` : ""}
+    ${d.vides ? `<div class="alert" style="--c:var(--orange)"><div>${d.vides} sous-critère${d.vides > 1 ? "s" : ""} non noté${d.vides > 1 ? "s" : ""} : compté${d.vides > 1 ? "s" : ""} 0 dans le total.</div></div>` : ""}
+    <div class="sc-fm"><div><span class="tiny up">Forces</span>${d.forces.map(k => `<div class="small">✓ ${lab(k)}</div>`).join("") || `<div class="small muted">—</div>`}</div><div><span class="tiny up">Manques</span>${d.manques.map(k => `<div class="small">• ${lab(k)}</div>`).join("") || `<div class="small muted">—</div>`}</div></div></div>`;
 }
 function entLive() {          // met à jour les blocs calculés sans redessiner l'écran (le curseur reste en place)
   if (!ENT) return;
   const rf = $("#e-reform"); if (rf && ENT.r.rep.reformAuto !== false && document.activeElement !== rf) rf.value = entReform(ENT.r);
   const c = $("#e-cout"); if (c) c.outerHTML = coutHtml();
   const sp = $("#e-sponso"); if (sp) sp.outerHTML = sponsoTotHtml();
+  const def = GC()?.sponsorabilite; if (def && (def.criteres || [])[0]?.sous) { const d = sponsoCalc(ENT.r.rep.sponso, def); def.criteres.forEach(c => { const el = $(`#e-sc-${c.k}`); if (el) el.outerHTML = critPill(c, d, def); }); }
 }
+const critPill = (c, d, sp) => `<span id="e-sc-${c.k}">${pill(`${d.crit[c.k]}/20`, d.crit[c.k] < (sp.alerteCritere ?? 6) ? "var(--red)" : d.crit[c.k] >= 12 ? "var(--green)" : "var(--orange)")}</span>`;
 function grilleHtml() {
   const rep = ENT.r.rep, notes = rep.grille || {}, sug = grilleSuggest(rep, all("contact").filter(c => c.compte === ENT.r.compte)), tot = grilleTotal(notes), niv = grilleNiveau(tot);
   return `<div class="grille">${(GC().grille || []).map(l => { const v = notes[l.k], s = sug[l.k]; return `<div class="gl"><div class="gq"><b>${esc(l.titre)}</b><span class="small muted">${esc(l.question)}</span><span class="tiny">2 : ${esc(l.deux)} · 1 : ${esc(l.un)}</span></div>
@@ -1753,7 +1866,22 @@ function grilleHtml() {
     <button type="button" class="btn sm" data-egrillesug="1">Reprendre les suggestions</button></div>`;
 }
 function scoreHtml() {
-  const sp = GC().sponsorabilite || {}, notes = ENT.r.rep.sponso || {};
+  const sp = GC().sponsorabilite || {}, rep = ENT.r.rep, notes = rep.sponso || {};
+  if ((sp.criteres || [])[0]?.sous) {
+    const ctl = rep.sponsoCtl || [], pr = rep.sponsoPreuve || {}, d = sponsoCalc(notes, sp), bloque = (sp.controles || []).filter(c => ctl.includes(c.k));
+    return `<div class="score">
+      ${(sp.controles || []).length ? `<h3 class="tiny up" style="margin:0 0 6px">Contrôles avant de noter</h3><p class="tiny" style="margin:0 0 6px">Si l'une de ces situations se présente, pas de score : on explique pourquoi Partenarium ne peut pas accompagner le projet en l'état.</p>
+      <div class="chips" role="group">${sp.controles.map(c => `<button type="button" class="chipbtn box${ctl.includes(c.k) ? " on" : ""}" data-emulti="sponsoCtl" data-ev="${esc(c.k)}" aria-pressed="${ctl.includes(c.k)}">${ctl.includes(c.k) ? "☑" : "☐"} ${esc(c.libelle)}</button>`).join("")}</div>` : ""}
+      ${bloque.length ? `<div class="alert" style="--c:var(--red);margin-top:10px"><div><b>Pas de score.</b>${bloque.map(c => `<p style="margin:6px 0 0"><b>${esc(c.libelle)}</b><br>Pourquoi : ${esc(c.pourquoi)}.<br>À dire au porteur : ${esc(c.dire)}.</p>`).join("")}</div></div>` : `
+      <div class="ff" style="margin-top:10px"><div class="fld"><label for="e-sponsoDate">Date de notation</label><input type="date" id="e-sponsoDate" data-ek="sponsoDate" value="${esc(rep.sponsoDate || ENT.r.date || "")}"></div></div>
+      ${sp.criteres.map((c, ci) => `<section class="sc-crit"><h3><span>${ci + 1}. ${esc(c.libelle)}</span>${critPill(c, d, sp)}</h3>${c.aide ? `<p class="tiny" style="margin:0 0 6px">${esc(c.aide)}</p>` : ""}
+        ${(c.sous || []).map(s => { const v = notes[s.k], has = !(v === undefined || v === null || v === ""); return `<div class="sc-sub"><div class="gq"><b>${esc(s.libelle)}</b>${s.question ? `<span class="small muted">${esc(s.question)}</span>` : ""}<span class="tiny">${(s.reperes || []).map((x, j) => `${[0, 1, 3, 5][j]} : ${esc(x)}`).join(" · ")}</span></div>
+          <div class="seg seg6" role="group" aria-label="Note de 0 à 5">${[0, 1, 2, 3, 4, 5].map(n => `<button type="button" data-esc="${esc(s.k)}" data-ev="${n}" aria-pressed="${has && +v === n}">${n}</button>`).join("")}</div>
+          <input class="inp sc-pr" data-escp="${esc(s.k)}" placeholder="Preuve : réponse, document, lien" value="${esc(pr[s.k] || "")}" aria-label="Preuve"></div>`; }).join("")}
+        ${c.note ? `<p class="tiny" style="margin:4px 0 0">${esc(c.note)}</p>` : ""}</section>`).join("")}
+      ${sponsoTotHtml()}`}
+      ${sp.regles?.length ? `<ul class="tiny" style="margin:10px 0 0;padding-left:18px">${sp.regles.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}</div>`;
+  }
   return `<div class="grille">${(sp.criteres || []).map(c => `<div class="gl"><div class="gq"><b>${esc(c.libelle)}</b>${c.aide ? `<span class="tiny">${esc(c.aide)}</span>` : ""}</div><input class="inp" style="width:90px" data-esponso="${esc(c.k)}" inputmode="decimal" placeholder="0 à 20" value="${notes[c.k] ?? ""}" aria-label="Note sur 20"></div>`).join("")}
     <div class="kv" style="margin-top:8px"><span>Total</span>${sponsoTotHtml()}</div></div>`;
 }
@@ -1762,14 +1890,20 @@ function raisedHtml(inline) {
   if (!a.length) return inline ? `<div class="help">Aucune objection enregistrée. Ouvrez le panneau Objections (touche O) et touchez « Soulevée ».</div>` : "";
   return `<div class="raised">${a.map((o, j) => `<div class="ro"><div style="display:flex;gap:8px;align-items:flex-start"><b style="flex:1">« ${esc(o.texte)} »</b><button type="button" class="iconbtn" data-eobjrm="${j}" title="Retirer">${svg("trash")}</button></div><textarea class="inp" data-eobjrep="${j}" rows="2" aria-label="Réponse donnée">${esc(o.reponse || "")}</textarea></div>`).join("")}</div>`;
 }
+function objOffreDefaut(r) { return r.guide === "C" && r.rep?.offre ? r.rep.offre : "Toutes"; }
+function objList(r, offre, q) {      // objections du public de l'entretien, filtrées par offre (« Toutes » = sans filtre) et par mot
+  const pub = pubOf(r), n = norm(q || "");
+  return (GC()?.objections || []).filter(o => [pub, "les deux"].includes(o.public) && (offre === "Toutes" || !o.offre || o.offre === "Toutes" || o.offre === offre) && (!n || norm(o.texte + " " + o.reponse + " " + (o.relance || "")).includes(n)));
+}
 function objDrawer() {
-  const pub = pubOf(ENT.r), q = norm(ENT.q || ""), raisedIds = ENT.r.objections.map(o => o.id);
-  const list = (GC().objections || []).filter(o => [pub, "les deux"].includes(o.public) && (!q || norm(o.texte + " " + o.reponse).includes(q)));
+  const pub = pubOf(ENT.r), raisedIds = ENT.r.objections.map(o => o.id), offre = ENT.offre || objOffreDefaut(ENT.r);
+  const list = objList(ENT.r, offre, ENT.q), cat = (GC().catalogue || []).filter(c => c.pour === pub), hasOff = (GC().objections || []).some(o => o.offre);
   return `<div class="drawer" role="dialog" aria-label="Objections"><header><h2>Objections</h2><button class="iconbtn" data-eobj="1" aria-label="Fermer">✕</button></header>
     <div class="db"><label class="lsearch" style="color:var(--tx3);margin-bottom:10px">${svg("search", 2)}<input type="search" data-eobjq="1" placeholder="Rechercher un mot" value="${esc(ENT.q || "")}" autocomplete="off"></label>
+    ${hasOff ? `<div class="chips objoff" role="group" aria-label="Offre">${["Toutes", ...cat.map(c => c.code)].map(x => `<button type="button" class="chipbtn${x === offre ? " on" : ""}" data-eobjoff="${esc(x)}" aria-pressed="${x === offre}" title="${esc(x === "Toutes" ? "Toutes les offres" : cat.find(c => c.code === x)?.nom || x)}">${esc(x)}</button>`).join("")}</div>` : ""}
     ${ENT.r.objections.length ? `<h3 class="tiny up">Soulevées pendant cet entretien (${ENT.r.objections.length})</h3>${raisedHtml(false)}` : ""}
     <h3 class="tiny up">Réponses proposées</h3>
-    ${list.map(o => `<div class="obj"><b>« ${esc(o.texte)} »</b><p>${esc(o.reponse)}</p>${o.relance ? `<p class="small muted"><i>Relance : « ${esc(o.relance)} »</i></p>` : ""}<button class="btn sm ${raisedIds.includes(o.id) ? "" : "pri"}" data-eraise="${esc(o.id)}">${raisedIds.includes(o.id) ? "Enregistrée ✓" : "Soulevée"}</button></div>`).join("") || `<div class="empty">Aucune objection trouvée.</div>`}
+    ${list.map(o => `<div class="obj">${o.offre || o.num ? `<span class="tiny" style="display:block">${esc([o.num, o.offre && o.offre !== "Toutes" ? o.offre : ""].filter(Boolean).join(" · "))}</span>` : ""}<b>« ${esc(o.texte)} »</b><p>${esc(o.reponse)}</p>${o.note ? `<p class="tiny" style="color:var(--orange)">${esc(o.note)}</p>` : ""}${o.relance ? `<p class="small muted"><i>Relance : « ${esc(o.relance)} »</i></p>` : ""}<button class="btn sm ${raisedIds.includes(o.id) ? "" : "pri"}" data-eraise="${esc(o.id)}">${raisedIds.includes(o.id) ? "Enregistrée ✓" : "Soulevée"}</button></div>`).join("") || `<div class="empty">Aucune objection trouvée.</div>`}
     </div></div>`;
 }
 function entGo(i) {
@@ -1787,7 +1921,7 @@ function entProposals(r) {
   const rep = r.rep || {}, compte = get(r.compte), out = [], sc = entScores(r);
   if (compte) gFields(r.guide).filter(f => f.cible).forEach(f => {
     if (out.some(x => x.k === f.cible)) return;
-    const v = rep[f.k]; if (isEmptyV(v)) return;
+    const v = rep[f.k]; if (isEmptyV(v) || (v === false && isEmptyV(compte[f.cible]))) return;
     if (f.cible === "objectifs") { if (!(compte.objectifs || "").includes(v)) out.push({ kind:"fiche", id:compte.id, k:"objectifs", lab:"Objectifs (critère de réussite)", from:compte.objectifs ? "…" : "—", to:`ajouter « ${v} »`, val:[compte.objectifs, `Critère de réussite (entretien du ${dfr(r.date)}) : ${v}`].filter(Boolean).join("\n") }); return; }
     const nv = guideToFiche(f, v); if (nv === undefined || nv === null || nv === "") return;
     if (f.cible === "imposition" && compte.imposition === "ismix" && nv === "is15") return;
@@ -1795,6 +1929,10 @@ function entProposals(r) {
     const fd = fdef(compte.o, f.cible); if (!fd) return;
     out.push({ kind:"fiche", id:compte.id, k:f.cible, lab:fd.l, from:isEmptyV(compte[f.cible]) ? "—" : stripTags(fmt(fd, compte[f.cible], compte)), to:stripTags(fmt(fd, nv, compte)), val:nv });
   });
+  if (compte && r.guide === "A" && sc.sponso !== null && sc.sponso !== undefined) {
+    const dt = rep.sponsoDate || r.date;
+    if (compte.scoreSpon !== sc.sponso || compte.scoreDate !== dt) out.push({ kind:"fiche", id:compte.id, k:"scoreSpon", lab:"Score de sponsorabilité", from:compte.scoreSpon !== undefined && compte.scoreSpon !== null && compte.scoreSpon !== "" ? `${compte.scoreSpon}/100${compte.scoreDate ? ` (${dfr(compte.scoreDate)})` : ""}` : "—", to:`${sc.sponso}/100 (${dfr(dt)})`, val:sc.sponso, also:{ scoreDate:dt } });
+  }
   if (compte && sc.elig) {
     const map = { "Probable":"Probable (à confirmer)", "Non":"Non", "À vérifier":"À vérifier" }, nv = map[sc.elig], cur = compte.mecenat || "À vérifier";
     if (nv !== cur && (["À vérifier", ""].includes(cur) || sc.elig === "Non" || (cur === "Probable (à confirmer)" && sc.elig !== "À vérifier"))) out.push({ kind:"fiche", id:compte.id, k:"mecenat", lab:"Éligible au mécénat", from:cur, to:nv, val:nv, warn:cur === "Oui (intérêt général)" ? "La fiche indique une éligibilité vérifiée." : "" });
@@ -1842,7 +1980,8 @@ function vEntretienFin() {
 function qualifHtml(r, sc) {
   const rep = r.rep || {}, out = [];
   if (sc.qualif) out.push(`<div class="kv"><span>Prêt pour une proposition</span><b>${pill(`${sc.qualif.score}/4`, sc.qualif.score === 4 ? "var(--green)" : sc.qualif.score >= 2 ? "var(--orange)" : "var(--red)")}</b></div><div class="tiny" style="margin:-2px 0 6px">${[["besoin", "besoin chiffré"], ["decideur", "décideur présent"], ["capacite", "capacité à payer le Pack"], ["echeance", "échéance à 9 mois au plus"]].map(([k, l]) => `${sc.qualif.crit[k] ? "✓" : "✗"} ${l}`).join(" · ")}</div>`);
-  if (sc.sponso !== undefined && sc.sponso !== null) out.push(`<div class="kv"><span>Score de sponsorabilité</span><b>${pill(`${sc.sponso}/100`, sc.sponso >= (GC()?.sponsorabilite?.seuil ?? 50) ? "var(--green)" : "var(--red)")}</b></div>`);
+  if (sc.sponso !== undefined && sc.sponso !== null) out.push(`<div class="kv"><span>Score de sponsorabilité</span><b>${pill(`${sc.sponso}/100`, palierColor(sc.sponso, GC()?.sponsorabilite || {}))}${sc.sponsoDet?.palier ? ` <span class="small">${esc(sc.sponsoDet.palier)}</span>` : ""}</b></div>`);
+  if (sc.sponsoBloque?.length) out.push(`<div class="kv"><span>Score de sponsorabilité</span><b>${pill("Non calculé", "var(--red)")}</b></div>`);
   if (sc.grille !== undefined) out.push(`<div class="kv"><span>Grille de qualification</span><b>${pill(`${sc.grille}/12`, sc.grilleNiveau === "vert" ? "var(--green)" : sc.grilleNiveau === "orange" ? "var(--orange)" : "var(--red)")}</b></div>`);
   if (sc.elig) out.push(`<div class="kv"><span>Éligibilité au mécénat</span><b>${pill(sc.elig, sc.elig === "Probable" ? "var(--green)" : sc.elig === "Non" ? "var(--red)" : "var(--orange)")}</b></div>`);
   if (sc.pack) out.push(`<div class="kv"><span>Pack suggéré</span><b>${esc(sc.pack.nom)} · ${nb(sc.pack.entreprises)} entreprises · ${eur(sc.pack.prix)} HT</b></div>`);
@@ -1859,7 +1998,7 @@ function entFinish() {
   const compte = get(r.compte);
   props.forEach((p, j) => {
     if (!checked.has(j)) return;
-    if (p.kind === "fiche") { const cur = get(p.id); if (cur) putItem(p.id, { ...cur, [p.k]:p.val }); }
+    if (p.kind === "fiche") { const cur = get(p.id); if (cur) putItem(p.id, { ...cur, [p.k]:p.val, ...(p.also || {}) }); }
     if (p.kind === "contact") { const pr = rep.interlocuteurs[p.j], cid = uid(); const [prenom, ...rest] = (pr.nom || "").trim().split(/\s+/); putItem(cid, { o:"contact", id:cid, prenom:rest.length ? prenom : "", nom:rest.length ? rest.join(" ") : prenom, compte:r.compte, fonction:pr.fonction || "", role:pr.decideur ? "Décideur" : "", dernierContact:r.date }); pr.contact = cid; }
     if (p.kind === "etape") { const o = get(p.id); if (o) putItem(p.id, { ...o, etape:p.val, proba:stageOf(p.val).p, ...(p.val === "Perdu" ? { raisonPerte:loss } : {}) }); }
     if (p.kind === "relation") { const o = get(p.id); if (o) putItem(p.id, { ...o, relation:p.val, ...(p.val === "Perdu" ? { motifPerte:loss } : {}) }); }
@@ -1907,7 +2046,7 @@ function vEntretienRecap(r) {
   const ind = [];
   if (sc.qualif) ind.push(pill(`Prêt pour une proposition : ${sc.qualif.score}/4`, sc.qualif.score === 4 ? "var(--green)" : "var(--orange)"));
   if (sc.grille !== undefined) ind.push(pill(`Qualification : ${sc.grille}/12`, sc.grilleNiveau === "vert" ? "var(--green)" : sc.grilleNiveau === "orange" ? "var(--orange)" : "var(--red)"));
-  if (sc.sponso !== undefined && sc.sponso !== null) ind.push(pill(`Sponsorabilité : ${sc.sponso}/100`, sc.sponso >= (GC()?.sponsorabilite?.seuil ?? 50) ? "var(--green)" : "var(--red)"));
+  if (sc.sponso !== undefined && sc.sponso !== null) ind.push(pill(`Sponsorabilité : ${sc.sponso}/100${sc.sponsoDet?.palier ? ` · ${sc.sponsoDet.palier}` : ""}`, palierColor(sc.sponso, GC()?.sponsorabilite || {})));
   if (sc.elig) ind.push(pill(`Mécénat : ${sc.elig.toLowerCase()}`, sc.elig === "Probable" ? "var(--green)" : sc.elig === "Non" ? "var(--red)" : "var(--orange)"));
   if (rep.montantRecherche) ind.push(pill(`Recherché : ${eur(rep.montantRecherche)}`, "var(--blue)"));
   if (rep.montantEnvisage) ind.push(pill(`Envisagé : ${eur(rep.montantEnvisage)}`, "var(--blue)"));
@@ -1915,7 +2054,7 @@ function vEntretienRecap(r) {
   if (sc.cout) ind.push(pill(`Coût net : ${eur(sc.cout.cout)}`, "var(--teal)"));
   const sec = (t, lines) => lines.length ? `<section><h3>${t}</h3>${lines.map(x => `<p>${esc(x)}</p>`).join("")}</section>` : "";
   return `<div class="lhead noprint"><div class="t">${oico("entretien", 38)}<div><div class="tiny up">Fiche récapitulative</div><h1 style="font-size:24px">${esc(gTitle(r))}</h1></div></div>
-    <button class="btn" data-eopen="${r.id}">${svg("edit")}Modifier</button><button class="btn" data-ecopy="${r.id}">Copier en texte</button><button class="btn" data-eprint="1">${svg("download")}Imprimer ou PDF</button><a class="btn pri" href="${esc(mailtoFor(r))}">${svg("mail")}Préparer l'e-mail au client</a><button class="btn danger" data-del="${r.id}">${svg("trash")}Supprimer</button></div>
+    <button class="btn" data-eopen="${r.id}">${svg("edit")}Modifier</button><button class="btn" data-ecopy="${r.id}">Copier en texte</button><button class="btn" data-eprint="1">${svg("download")}Imprimer ou PDF</button><a class="btn pri" href="${esc(mailtoFor(r))}">${svg("mail")}Préparer l'e-mail au client</a>${sc.sponso !== undefined && sc.sponso !== null && sc.sponsoDet && GC()?.sponsorabilite?.restitution ? `<a class="btn" href="${esc(mailtoScore(r))}">${svg("mail")}Préparer l'e-mail du score</a>` : ""}<button class="btn danger" data-del="${r.id}">${svg("trash")}Supprimer</button></div>
   ${r.statut !== "terminé" ? `<div class="alert noprint" style="--c:var(--orange)"><div><b>Brouillon.</b> <a href="#/entretien/${r.id}">Reprendre l'entretien</a></div></div>` : ""}
   <article class="card recap"><div class="cb">
     <div class="rc-print"><img src="icons/icon-192.png" alt=""><b>Partenarium</b><span>Fiche récapitulative d'entretien</span></div>
@@ -1925,6 +2064,7 @@ function vEntretienRecap(r) {
     ${ind.length ? `<div class="chips rc-ind">${ind.join("")}</div>` : ""}
     ${d.situ.length ? `<section><h3>Situation</h3><div class="rc-kv">${d.situ.map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("")}</div></section>` : ""}
     ${sec("Problème", d.probleme)}${sec("Implication", d.impl)}${sec("Gain", d.gain)}
+    ${scoreRecapHtml(r, sc)}
     ${(r.objections || []).length ? `<section><h3>Objections soulevées</h3>${r.objections.map(o => `<p><b>« ${esc(o.texte)} »</b><br>${esc(o.reponse || "")}</p>`).join("")}</section>` : ""}
     ${d.offre ? `<section><h3>Offre conseillée</h3><p>${esc(d.offre)}</p></section>` : ""}
     ${(r.points || entPoints(r)).length ? `<section><h3>Points à vérifier</h3><ul>${(r.points || entPoints(r)).map(x => `<li>${esc(x)}</li>`).join("")}</ul></section>` : ""}
@@ -1937,11 +2077,33 @@ function recapText(r) {
   const sc = d.sc; if (sc.qualif) L.push(`Prêt pour une proposition : ${sc.qualif.score}/4`); if (sc.grille !== undefined) L.push(`Qualification : ${sc.grille}/12`); if (sc.sponso !== undefined && sc.sponso !== null) L.push(`Sponsorabilité : ${sc.sponso}/100`); if (sc.elig) L.push(`Éligibilité au mécénat : ${sc.elig}`); if (sc.cout) L.push(`Coût net pour l'entreprise : ${eur(sc.cout.cout)}`);
   if (d.situ.length) L.push("", "SITUATION", ...d.situ.map(([k, v]) => `- ${k} : ${v}`));
   [["PROBLÈME", d.probleme], ["IMPLICATION", d.impl], ["GAIN", d.gain]].forEach(([t, a]) => { if (a.length) L.push("", t, ...a.map(x => `- ${x}`)); });
+  if (sc.sponsoDet) { const sp = GC()?.sponsorabilite || {}; L.push("", `SCORE DE SPONSORABILITÉ : ${sc.sponso}/100${sc.sponsoDet.palier ? ` (${sc.sponsoDet.palier})` : ""}, noté le ${dfr(sc.sponsoDet.date)}`, ...(sp.criteres || []).map(c => `- ${c.libelle} : ${sc.sponsoDet.crit[c.k] ?? 0}/20`), `Forces : ${sc.sponsoDet.forces.map(k => subOfK(sp, k)?.libelle || k).join(", ") || "—"}`, `Manques : ${sc.sponsoDet.manques.map(k => subOfK(sp, k)?.libelle || k).join(", ") || "—"}`); }
   if ((r.objections || []).length) L.push("", "OBJECTIONS", ...r.objections.map(o => `- « ${o.texte} » → ${o.reponse || ""}`));
   if (d.offre) L.push("", `OFFRE CONSEILLÉE : ${d.offre}`);
   const pts = r.points || entPoints(r); if (pts.length) L.push("", "POINTS À VÉRIFIER", ...pts.map(x => `- ${x}`));
   L.push("", `PROCHAINE ACTION : ${rep.prochaine || "—"}${rep.prochaineDate ? ` · ${dfr(rep.prochaineDate)}` : ""}`);
   return L.join("\n");
+}
+function scoreRecapHtml(r, sc) {
+  const det = sc.sponsoDet, sp = GC()?.sponsorabilite || {};
+  if (sc.sponsoBloque?.length) return `<section><h3>Score de sponsorabilité</h3><p>Non calculé : ${sc.sponsoBloque.map(k => esc((sp.controles || []).find(c => c.k === k)?.libelle || k)).join(" ; ")}.</p></section>`;
+  if (!det || !(sp.criteres || [])[0]?.sous) return "";
+  const lab = k => esc(subOfK(sp, k)?.libelle || k), pr = r.rep?.sponsoPreuve || {};
+  return `<section><h3>Score de sponsorabilité · ${sc.sponso}/100</h3><p class="small">${esc(det.palier || "")}${det.date ? ` · noté le ${dfr(det.date)}` : ""}</p>
+    <div class="rc-kv">${sp.criteres.map(c => `<div><span>${esc(c.libelle)}</span><b style="${det.crit[c.k] < (sp.alerteCritere ?? 6) ? "color:var(--red)" : ""}">${det.crit[c.k] ?? 0}/20</b></div>`).join("")}</div>
+    <p class="small"><b>Forces :</b> ${det.forces.map(lab).join(", ") || "—"}<br><b>Manques :</b> ${det.manques.map(lab).join(", ") || "—"}</p>
+    ${Object.values(pr).some(Boolean) ? `<details class="small"><summary>Preuves notées</summary><ul>${(sp.criteres || []).flatMap(c => c.sous || []).filter(s => pr[s.k]).map(s => `<li>${esc(s.libelle)} : ${esc(pr[s.k])}</li>`).join("")}</ul></details>` : ""}</section>`;
+}
+/* e-mail de restitution du score au porteur (modèle du Marketing) : total, sous-totaux, forces et manques ; jamais les notes internes */
+function mailtoScore(r) {
+  const sp = GC()?.sponsorabilite || {}, tpl = sp.restitution || {}, sc = r.scores || entScores(r), det = sc.sponsoDet; if (!det) return "#";
+  const rep = r.rep || {}, pers = rep.interlocuteurs || [], compte = get(r.compte);
+  const c = pers.map(p => p.contact && get(p.contact)).find(x => x && x.email) || all("contact").find(x => x.compte === r.compte && x.email);
+  const lab = k => { const s = subOfK(sp, k); const l = s?.court || s?.libelle || k; return l.charAt(0).toLowerCase() + l.slice(1); };
+  const mois = new Date(addMonths(r.date || today(), 6) + "T12:00:00").toLocaleDateString("fr-FR", { month:"long", year:"numeric" });
+  const vals = { club:rname(compte), prenom:c?.prenom ? ` ${c.prenom}` : "", date:dfr(r.date), total:String(sc.sponso), criteres:(sp.criteres || []).map(x => `${x.libelle} : ${det.crit[x.k] ?? 0}/20`).join("\n"), forces:det.forces.map(lab).join(", "), manques:det.manques.map(lab).join(", "), dateProchaine:rep.prochaineDate ? dfr(rep.prochaineDate) : "[date]", moisRelance:mois };
+  vals.suite = fillTpl(sc.sponso >= (sp.seuil ?? 50) ? tpl.siOK || "" : tpl.siKO || "", vals, "");
+  return `mailto:${encodeURIComponent(c?.email || compte?.emailPublic || "")}?subject=${encodeURIComponent(fillTpl(tpl.objet || "Votre score de sponsorabilité – {club}", vals, ""))}&body=${encodeURIComponent(fillTpl(tpl.corps || "{criteres}", vals, ""))}`;
 }
 /* e-mail au client : reformulation, ce qui a été convenu et prochaine étape. Jamais les notes internes, scores ni points à vérifier. */
 function mailtoFor(r) {
@@ -1977,6 +2139,31 @@ function reportEntretiens(title) {
   return { title, html:tableHtml(["Date", "Structure", "Guide", "Statut", "Qualification", "Prochaine action", "Date"], l.map(e => ({ _href:e.statut === "brouillon" ? "#/entretien/" + e.id : "#/r/" + e.id, cells:[dfr(e.date), esc(rname(get(e.compte))), esc(gTitle(e)), pill(e.statut, ENT_ST[e.statut] || "var(--gray)"), esc(q(e)), esc(e.rep?.prochaine || ""), dfr(e.rep?.prochaineDate)] }))),
     rows:[["Date", "Structure", "Guide", "Statut", "Qualification", "Durée (min)", "Reformulation", "Prochaine action", "Date de la prochaine action"], ...l.map(e => [e.date, rname(get(e.compte)), gTitle(e), e.statut, q(e), Math.round((e.duree || 0) / 60), e.reformulation || "", e.rep?.prochaine || "", e.rep?.prochaineDate || ""])],
     note:"Les entretiens suivent les règles du CRM : synchronisés, sauvegardés dans Drive, inclus dans l'export des données d'une personne, supprimés avec la fiche du porteur ou de l'entreprise." };
+}
+/* Origine des contacts : mesure notamment les échanges réservés depuis les réseaux sociaux (objectif de la Communication) */
+const AVANCE_P = ["Échange réalisé", "Proposition envoyée", "Pack en cours", "Mandat signé", "Terminé"], AVANCE_E = ["Rendez-vous réalisé", "Proposition envoyée", "Négociation", "Signé"];
+function origineStats() {
+  const m = {}, row = k => (m[k] = m[k] || { p:0, e:0, entrants:0, echange:0 });
+  all("porteur").forEach(p => { const x = row(p.source || "Non renseignée"); x.p++; if (p.entrant) x.entrants++; if (AVANCE_P.includes(p.relation) || entretiensFor(p).some(e => e.statut === "terminé")) x.echange++; });
+  all("entreprise").forEach(e => { const x = row(e.source || "Non renseignée"); x.e++; if (e.entrant) x.entrants++; if (all("opp").some(o => o.entreprise === e.id && AVANCE_E.includes(o.etape)) || entretiensFor(e).some(t => t.statut === "terminé")) x.echange++; });
+  return m;
+}
+function reportOrigines(title) {
+  const m = origineStats(), rows = Object.entries(m).sort((a, b) => (b[1].p + b[1].e) - (a[1].p + a[1].e));
+  const soc = rows.filter(([k]) => RESEAUX.includes(k)).reduce((s, [, x]) => ({ entrants:s.entrants + x.entrants, echange:s.echange + x.echange }), { entrants:0, echange:0 });
+  return { title, html:`<div class="kv"><span>Venus des réseaux sociaux (${RESEAUX.join(", ")}) de leur propre initiative</span><b>${nb(soc.entrants)}</b></div><div class="kv" style="margin-bottom:10px"><span>dont échange ou rendez-vous réalisé</span><b>${nb(soc.echange)}</b></div>` + tableHtml(["Origine", "Porteurs", "Entreprises", "Venus d'eux-mêmes", "Échange ou rendez-vous réalisé"], rows.map(([k, x]) => ({ cells:[esc(k), nb(x.p), nb(x.e), nb(x.entrants), nb(x.echange)] })), [1, 2, 3, 4]),
+    rows:[["Origine", "Porteurs", "Entreprises", "Venus d'eux-mêmes", "Échange ou rendez-vous réalisé"], ...rows.map(([k, x]) => [k, x.p, x.e, x.entrants, x.echange])],
+    note:"Renseignez « Origine du contact » et « A contacté Partenarium de lui-même » sur chaque fiche (question « Comment m'avez-vous connu ? » de l'ouverture des guides A et B, et du formulaire de la page de rendez-vous)." };
+}
+function reportBassins(title) {
+  const m = {}; BASSINS.forEach(b => m[b] = { p:0, pm:0, e:0, eo:0 });
+  const row = b => (m[b || "Non renseigné"] = m[b || "Non renseigné"] || { p:0, pm:0, e:0, eo:0 });
+  all("porteur").forEach(p => { const x = row(p.bassin); x.p++; if (MANDAT.includes(p.relation)) x.pm++; });
+  all("entreprise").forEach(e => { const x = row(e.bassin); x.e++; if (all("opp").some(o => o.entreprise === e.id && isOpen(o))) x.eo++; });
+  const rows = Object.entries(m);
+  return { title, html:tableHtml(["Bassin", "Porteurs", "dont sous mandat", "Entreprises", "dont avec opportunité ouverte"], rows.map(([k, x]) => ({ cells:[esc(k), nb(x.p), nb(x.pm), nb(x.e), nb(x.eo)] })), [1, 2, 3, 4]),
+    rows:[["Bassin", "Porteurs", "dont sous mandat", "Entreprises", "dont avec opportunité ouverte"], ...rows.map(([k, x]) => [k, x.p, x.pm, x.e, x.eo])],
+    note:"14 bassins validés le 26/11/2026 (un par intercommunalité, Pertuis compris). Les entreprises des communes gardoises du Grand Avignon sont dans le bassin « Grand Avignon »." };
 }
 const ENT_ST = { brouillon:"var(--orange)", "terminé":"var(--green)" };
 
@@ -2020,9 +2207,14 @@ function vGuidesEdit() {
   ${["A", "B", "C"].map(g => `<details class="card gsec"><summary>Guide ${g} · ${esc(c.guides[g].titre)}</summary><div class="cb">${c.guides[g].phases.map((p, pi) => `<h3 class="tiny up" style="margin-top:14px">${esc(p.titre)}</h3>${p.aide !== undefined ? row("Aide de la phase", ta(`guides.${g}.phases.${pi}.aide`, p.aide)) : ""}${p.regle !== undefined ? row("Règle affichée", ta(`guides.${g}.phases.${pi}.regle`, p.regle)) : ""}${p.reformulation !== undefined ? row("Modèle de reformulation (les {champs} sont remplis automatiquement)", ta(`guides.${g}.phases.${pi}.reformulation`, p.reformulation, 3)) : ""}
       ${(p.questions || []).map((q, qi) => `<div class="gq-ed">${q.dire !== undefined ? row("À dire", ta(`guides.${g}.phases.${pi}.questions.${qi}.dire`, q.dire, 3)) : ""}${q.relance !== undefined ? row("Exemple de relance", ta(`guides.${g}.phases.${pi}.questions.${qi}.relance`, q.relance)) : ""}${q.aide !== undefined ? row("Aide", ta(`guides.${g}.phases.${pi}.questions.${qi}.aide`, q.aide)) : ""}
         ${(q.champs || []).map((f, fi) => row(`Libellé du champ${f.oblig ? " (obligatoire)" : ""}`, ip(`guides.${g}.phases.${pi}.questions.${qi}.champs.${fi}.l`, f.l)) + (f.type === "multi" && !f.fixe ? row("Réponses rapides (séparées par ;)", `<input class="inp" data-gopts="guides.${g}.phases.${pi}.questions.${qi}.champs.${fi}.options" value="${esc((f.options || []).join(" ; "))}">`) : "")).join("")}</div>`).join("")}`).join("")}</div></details>`).join("")}
-  <details class="card gsec"><summary>Objections (${c.objections.length})</summary><div class="cb">${c.objections.map((o, i) => `<div class="gq-ed">${row("Objection", ip(`objections.${i}.texte`, o.texte))}<div class="fld" style="margin-bottom:8px"><label>Public</label><select class="inp" data-gpath="objections.${i}.public">${["porteur", "entreprise", "les deux"].map(x => `<option${o.public === x ? " selected" : ""}>${x}</option>`).join("")}</select></div>${row("Réponse proposée", ta(`objections.${i}.reponse`, o.reponse, 3))}${row("Relance", ta(`objections.${i}.relance`, o.relance))}<button class="btn sm danger" data-gobjrm="${i}">Retirer cette objection</button></div>`).join("")}<button class="btn" data-gobjadd="1">${svg("plus", 2)}Ajouter une objection</button></div></details>
+  <details class="card gsec"><summary>Objections (${c.objections.length})</summary><div class="cb">${c.objections.map((o, i) => `<div class="gq-ed">${row(`Objection${o.num ? ` ${o.num}` : ""}`, ip(`objections.${i}.texte`, o.texte))}<div class="fld" style="margin-bottom:8px"><label>Offre</label><select class="inp" data-gpath="objections.${i}.offre"><option value="">—</option>${["Toutes", ...(c.catalogue || []).map(x => x.code)].map(x => `<option${o.offre === x ? " selected" : ""}>${x}</option>`).join("")}</select></div><div class="fld" style="margin-bottom:8px"><label>Public</label><select class="inp" data-gpath="objections.${i}.public">${["porteur", "entreprise", "les deux"].map(x => `<option${o.public === x ? " selected" : ""}>${x}</option>`).join("")}</select></div>${row("Réponse proposée", ta(`objections.${i}.reponse`, o.reponse, 3))}${row("Relance", ta(`objections.${i}.relance`, o.relance))}${row("Note (affichée en orange)", ip(`objections.${i}.note`, o.note))}<button class="btn sm danger" data-gobjrm="${i}">Retirer cette objection</button></div>`).join("")}<button class="btn" data-gobjadd="1">${svg("plus", 2)}Ajouter une objection</button></div></details>
   <details class="card gsec"><summary>Grille de qualification entreprise</summary><div class="cb">${c.grille.map((l, i) => `<div class="gq-ed">${row("Ligne", ip(`grille.${i}.titre`, l.titre))}${row("Question", ip(`grille.${i}.question`, l.question))}${row("2 points si…", ip(`grille.${i}.deux`, l.deux))}${row("1 point si…", ip(`grille.${i}.un`, l.un))}</div>`).join("")}</div></details>
-  <details class="card gsec"><summary>Score de sponsorabilité</summary><div class="cb">${row("Seuil (sur 100)", ip("sponsorabilite.seuil", c.sponsorabilite.seuil, 1))}${row("Action proposée sous le seuil", ip("sponsorabilite.sousSeuil", c.sponsorabilite.sousSeuil))}${c.sponsorabilite.criteres.map((x, i) => `<div class="gq-ed">${row(`Critère ${i + 1}`, ip(`sponsorabilite.criteres.${i}.libelle`, x.libelle))}${row("Aide", ip(`sponsorabilite.criteres.${i}.aide`, x.aide))}</div>`).join("")}</div></details>
+  <details class="card gsec"><summary>Score de sponsorabilité</summary><div class="cb">${row("Seuil de proposition (sur 100)", ip("sponsorabilite.seuil", c.sponsorabilite.seuil, 1))}${row("Action proposée sous le seuil", ip("sponsorabilite.sousSeuil", c.sponsorabilite.sousSeuil))}${c.sponsorabilite.alerteCritere !== undefined ? row("Point bloquant : critère sous (sur 20)", ip("sponsorabilite.alerteCritere", c.sponsorabilite.alerteCritere, 1)) : ""}
+    ${(c.sponsorabilite.controles || []).map((x, i) => `<div class="gq-ed">${row(`Contrôle avant de noter ${i + 1}`, ta(`sponsorabilite.controles.${i}.libelle`, x.libelle))}${row("Pourquoi on s'arrête", ip(`sponsorabilite.controles.${i}.pourquoi`, x.pourquoi))}${row("Que dire au porteur", ip(`sponsorabilite.controles.${i}.dire`, x.dire))}</div>`).join("")}
+    ${c.sponsorabilite.criteres.map((x, i) => `<div class="gq-ed">${row(`Critère ${i + 1}`, ip(`sponsorabilite.criteres.${i}.libelle`, x.libelle))}${row("Aide", ip(`sponsorabilite.criteres.${i}.aide`, x.aide))}
+      ${(x.sous || []).map((s, j) => `<details class="gsub"><summary>${esc(s.libelle)}</summary>${row("Sous-critère", ip(`sponsorabilite.criteres.${i}.sous.${j}.libelle`, s.libelle))}${row("Question à poser et preuve", ta(`sponsorabilite.criteres.${i}.sous.${j}.question`, s.question))}${(s.reperes || []).map((r, k) => row(`Repère ${[0, 1, 3, 5][k]}`, ip(`sponsorabilite.criteres.${i}.sous.${j}.reperes.${k}`, r))).join("")}</details>`).join("")}</div>`).join("")}
+    ${(c.sponsorabilite.paliers || []).map((p, i) => `<div class="gq-ed">${row(`Palier à partir de ${p.min}/100`, ip(`sponsorabilite.paliers.${i}.libelle`, p.libelle))}${row("Suite à donner", ta(`sponsorabilite.paliers.${i}.suite`, p.suite))}</div>`).join("")}
+    ${c.sponsorabilite.restitution ? `<div class="gq-ed">${row("E-mail du score : objet", ip("sponsorabilite.restitution.objet", c.sponsorabilite.restitution.objet))}${row("Corps ({club}, {prenom}, {date}, {total}, {criteres}, {forces}, {manques}, {suite})", ta("sponsorabilite.restitution.corps", c.sponsorabilite.restitution.corps, 10))}${row("Suite si le score atteint le seuil ({dateProchaine})", ta("sponsorabilite.restitution.siOK", c.sponsorabilite.restitution.siOK))}${row("Suite sous le seuil ({moisRelance})", ta("sponsorabilite.restitution.siKO", c.sponsorabilite.restitution.siKO))}</div>` : ""}</div></details>
   <details class="card gsec"><summary>Niveau de Pack suggéré</summary><div class="cb"><div class="alert" style="--c:var(--orange)"><div>${esc(c.pack.aValider || "")}</div></div><label class="casebox" style="margin-bottom:10px"><input type="checkbox" class="switch" data-gbool="pack.actif" ${c.pack.actif ? "checked" : ""}><span>Activer la suggestion du niveau de Pack</span></label>${row("Seuil 1 (€) : en dessous, Essentiel", ip("pack.seuil1", c.pack.seuil1, 1))}${row("Seuil 2 (€) : au-delà, Premium", ip("pack.seuil2", c.pack.seuil2, 1))}${c.pack.niveaux.map((n, i) => `<div class="gq-ed">${row("Niveau", ip(`pack.niveaux.${i}.nom`, n.nom))}${row("Entreprises ciblées", ip(`pack.niveaux.${i}.entreprises`, n.entreprises, 1))}${row("Prix HT (€)", ip(`pack.niveaux.${i}.prix`, n.prix, 1))}</div>`).join("")}</div></details>
   <details class="card gsec"><summary>Prochaines actions et e-mail au client</summary><div class="cb">${Object.entries(c.actions || {}).map(([k, a]) => row(`« ${k} » : phrase pour le client`, ip(`actions.${k}.client`, a.client))).join("")}${row("Objet de l'e-mail", ip("email.objet", c.email.objet))}${row("Corps de l'e-mail", ta("email.corps", c.email.corps, 8))}<p class="tiny">L'e-mail ne contient que la reformulation, ce qui a été convenu et la prochaine étape : jamais les notes internes, les scores ni les points à vérifier.</p></div></details>`;
 }
@@ -2055,6 +2247,11 @@ document.addEventListener("click", e => {
     if (d.echoice === "prochaine" && GC().actions?.[rep.prochaine]?.j2 && !rep.prochaineDate) rep.prochaineDate = addDays(today(), 2);   // réactivité : sous 48 heures
     entTouch(); const y = scrollY; render(); scrollTo(0, y); return; }
   if (ENT && d.emulti) { const rep = ENT.r.rep, a = Array.isArray(rep[d.emulti]) ? rep[d.emulti] : []; rep[d.emulti] = a.includes(d.ev) ? a.filter(x => x !== d.ev) : [...a, d.ev]; entTouch(); const y = scrollY; render(); scrollTo(0, y); return; }
+  if (ENT && d.esc !== undefined && el.matches("[data-esc]")) {
+    const sp = { ...(ENT.r.rep.sponso || {}) }, n = +d.ev; sp[d.esc] = sp[d.esc] === n ? null : n; ENT.r.rep.sponso = sp; entTouch();
+    el.parentNode.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(sp[d.esc] !== null && +b.dataset.ev === sp[d.esc])));
+    entLive(); return; }
+  if (ENT && d.eobjoff) { ENT.offre = d.eobjoff; const dr = document.querySelector(".drawer"); if (dr) dr.outerHTML = objDrawer(); return; }
   if (ENT && d.egrille) { ENT.r.rep.grille = { ...(ENT.r.rep.grille || {}), [d.egrille]:+d.ev }; entTouch(); const y = scrollY; render(); scrollTo(0, y); return; }
   if (ENT && d.egrillesug) { const sg = grilleSuggest(ENT.r.rep, all("contact").filter(c => c.compte === ENT.r.compte)), gr = { ...(ENT.r.rep.grille || {}) }; Object.entries(sg).forEach(([k, v]) => { if (gr[k] === undefined && v !== null) gr[k] = v; }); ENT.r.rep.grille = gr; entTouch(); const y = scrollY; render(); scrollTo(0, y); return; }
   if (ENT && d.eregen) { ENT.r.rep.reformAuto = true; delete ENT.r.rep.reformulation; entTouch(); const y = scrollY; render(); scrollTo(0, y); return; }
@@ -2068,6 +2265,8 @@ document.addEventListener("click", e => {
     const rec = GREC(); putItem(GID, { ...rec, precedent:rec.data, data:JSON.parse(JSON.stringify(rec.base)) }); toast("Textes d'origine rétablis."); render(); return;
   }
   if (d.gprev) { const rec = GREC(); if (rec?.precedent) { putItem(GID, { ...rec, data:rec.precedent, precedent:rec.data }); toast("Version précédente rétablie."); render(); } return; }
+  if (d.csvtpl) { csvTemplate(d.csvtpl); return; }
+  if (d.impclose) { IMPORT_REPORT = null; render(); return; }
   if (d.gobjadd) { const rec = GREC(); rec.data.objections.push({ id:"o" + uid(), texte:"Nouvelle objection", public:"les deux", reponse:"", relance:"" }); putItem(GID, { ...rec }); render(); return; }
   if (d.gobjrm !== undefined && el.matches("[data-gobjrm]")) { const rec = GREC(); rec.data.objections.splice(+d.gobjrm, 1); putItem(GID, { ...rec }); render(); return; }
   if (d.new) { e.preventDefault(); openForm(d.new, null, d.pre ? JSON.parse(d.pre) : null); return; }
@@ -2130,7 +2329,7 @@ document.addEventListener("change", e => {
   if (d.gpath && t.tagName === "SELECT") { guidesSet(d.gpath, t.value); return; }
   if (ENT && d.eperspick !== undefined && t.matches("[data-eperspick]")) { const c = get(t.value); if (c) { (ENT.r.rep.interlocuteurs = ENT.r.rep.interlocuteurs || []).push({ nom:rname(c), fonction:c.fonction || "", contact:c.id, decideur:c.role === "Décideur" }); entTouch(); render(); } return; }
   if (ENT && d.epers && t.type === "checkbox") { const [j, k] = d.epers.split("|"); ENT.r.rep.interlocuteurs[+j][k] = t.checked; entTouch(); entLive(); return; }
-  if (ENT && d.ek && (t.type === "checkbox" || t.tagName === "SELECT")) { ENT.r.rep[d.ek] = t.type === "checkbox" ? t.checked : t.value; entTouch(); if (["baseLegale", "secteurInterdit"].includes(d.ek)) { const y = scrollY; render(); scrollTo(0, y); } else entLive(); return; }
+  if (ENT && d.ek && (t.type === "checkbox" || t.tagName === "SELECT")) { ENT.r.rep[d.ek] = t.type === "checkbox" ? t.checked : t.value; entTouch(); if (["baseLegale", "secteurInterdit", "persona", "offre"].includes(d.ek)) { const y = scrollY; render(); scrollTo(0, y); } else entLive(); return; }
   if (t.id === "csvfile" && t.files[0]) { importCsv(t.files[0], $("#csvobj").value); t.value = ""; return; }
   if (FORM && t.closest("#recform")) { // affichage conditionnel des champs
     collectForm(); if (FORM.o === "opp" && t.name === "etape") { FORM.r.proba = stageOf(t.value).p; const pi = $("#f-proba"); if (pi) pi.value = String(Math.round(FORM.r.proba * 1000) / 10).replace(".", ","); }
@@ -2145,6 +2344,7 @@ document.addEventListener("input", e => {
   if (ENT && d.ereform) { ENT.r.rep.reformulation = t.value; ENT.r.rep.reformAuto = false; entTouch(); return; }
   if (ENT && d.epers && t.type !== "checkbox") { const [j, k] = d.epers.split("|"); ENT.r.rep.interlocuteurs[+j][k] = t.value; entTouch(); entLive(); return; }
   if (ENT && d.eobjrep !== undefined && t.matches("[data-eobjrep]")) { ENT.r.objections[+d.eobjrep].reponse = t.value; entTouch(); return; }
+  if (ENT && d.escp) { ENT.r.rep.sponsoPreuve = { ...(ENT.r.rep.sponsoPreuve || {}), [d.escp]:t.value }; entTouch(); return; }
   if (ENT && d.eobjq) { ENT.q = t.value; const dr = document.querySelector(".drawer"); if (dr) { dr.outerHTML = objDrawer(); const n = $("[data-eobjq]"); n.focus(); n.setSelectionRange(t.value.length, t.value.length); } return; }
   if (ENT && d.esponso) { const v = num(t.value); ENT.r.rep.sponso = { ...(ENT.r.rep.sponso || {}), [d.esponso]:v === null ? null : Math.max(0, Math.min(20, v)) }; entTouch(); entLive(); return; }
   if (d.gpath && t.tagName !== "SELECT") { guidesSet(d.gpath, d.gnum ? (num(t.value) ?? 0) : t.value); return; }
@@ -2297,24 +2497,82 @@ function parseCsv(text) {
   if (cell || row.length) { row.push(cell); rows.push(row); }
   return rows.filter(r => r.some(c => c.trim()));
 }
-const ALIASES = { entreprise:{ "entreprise":"nom", "raison sociale":"nom", "societe":"nom", "notes":"notes", "chiffre d'affaires":"caHT", "ca":"caHT" }, porteur:{ "porteur":"nom", "nom du porteur":"nom" }, contact:{ "interlocuteur":"nom", "nom":"nom", "telephone":"tel", "e-mail":"email", "mail":"email" } };
+/* Import CSV : une catégorie à la fois (porteurs, entreprises, puis contacts). Les colonnes sont reconnues par leur libellé
+   (celui du formulaire, accents et majuscules indifférents) ou par leur clé ; les colonnes inconnues sont ignorées et listées. */
+const ALIASES = { entreprise:{ "entreprise":"nom", "raison sociale":"nom", "nom":"nom", "societe":"nom", "notes":"notes", "chiffre d'affaires":"caHT", "ca":"caHT", "naf":"codeNaf", "code ape":"codeNaf", "ape":"codeNaf", "code insee":"codeCommune", "commune":"ville", "e-mail":"emailPublic", "email":"emailPublic", "telephone":"telPublic", "source":"sourceDonnees", "origine":"source" },
+  porteur:{ "porteur":"nom", "nom du porteur":"nom", "nom":"nom", "rna":"rna", "numero rna":"rna", "n° rna":"rna", "code insee":"codeCommune", "commune":"ville", "e-mail":"emailPublic", "email":"emailPublic", "telephone":"telPublic", "source":"sourceDonnees", "origine":"source" },
+  contact:{ "interlocuteur":"nom", "nom":"nom", "telephone":"tel", "e-mail":"email", "mail":"email", "structure":"compte", "porteur ou entreprise":"compte", "source":"sourceDonnees" } };
+const idNorm = v => String(v || "").replace(/\s/g, "").toUpperCase();
+/* colonnes proposées dans le modèle CSV (dans cet ordre) */
+const CSV_COLS = {
+  porteur:["nom", "type", "discipline", "niveau", "statutJur", "rna", "siren", "federation", "ville", "codeCommune", "bassin", "site", "reseaux", "emailPublic", "telPublic", "membres", "mecenat", "source", "sourceDonnees", "dateVerif", "baseLegale", "notes"],
+  entreprise:["nom", "siren", "codeNaf", "secteur", "taille", "effectif", "ville", "codeCommune", "bassin", "adresse", "site", "emailPublic", "telPublic", "caHT", "source", "sourceDonnees", "dateVerif", "baseLegale", "declencheur", "notes"],
+  contact:["prenom", "nom", "compte", "fonction", "role", "email", "tel", "linkedin", "sourceDonnees", "dateVerif", "baseLegale", "notes"] };
+function csvTemplate(o) { exportCsv(`modele-import-${OBJ[o].lp}`, [CSV_COLS[o].map(k => fdef(o, k).l)]); }
+function matchOpt(f, v) {          // valeur d'une liste : rapprochée sans accents ni majuscules, sinon gardée telle quelle
+  const opts = f.o || [], n = norm(v), lab = k => norm(f.lab?.[k] ?? k);
+  return opts.find(x => lab(x) === n || norm(x) === n) ?? opts.find(x => lab(x).startsWith(n) || n.startsWith(lab(x))) ?? null;
+}
+function csvDate(v) {              // JJ/MM/AAAA ou AAAA-MM-JJ ; une date impossible (32/13/2026) est refusée
+  const t = String(v).trim(), m = t.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/) || t.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  const [y, mo, da] = m[1].length === 4 ? [+m[1], +m[2], +m[3]] : [+m[3], +m[2], +m[1]], dt = new Date(Date.UTC(y, mo - 1, da));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === mo - 1 && dt.getUTCDate() === da ? `${y}-${pad(mo)}-${pad(da)}` : null;
+}
+function findCompte(v) {           // « Rattaché à » : n° RNA, SIREN ou nom exact d'un porteur ou d'une entreprise déjà importé
+  const id = idNorm(v), n = norm(v), acc = [...all("porteur"), ...all("entreprise")];
+  return acc.find(x => id && (idNorm(x.rna) === id || idNorm(x.siren) === id)) || acc.find(x => norm(x.nom) === n) || null;
+}
+function csvRows(rows, o) {         // transforme les lignes du CSV en fiches (sans les enregistrer) : utilisé par l'import et les tests
+  const head = rows[0].map(h => norm(h)), map = head.map(h => (ALIASES[o] || {})[h] || F[o].find(f => norm(f.l) === h || norm(f.k) === h)?.k || null);
+  const ignored = rows[0].filter((h, i) => !map[i] && h.trim()), warn = [], out = [];
+  rows.slice(1).forEach((cells, li) => {
+    const r = { o };
+    map.forEach((k, i) => {
+      if (!k) return; const f = fdef(o, k), v = (cells[i] || "").trim(); if (!v) return;
+      if (k === "compte") { const acc = findCompte(v); if (acc) r.compte = acc.id; else { r._compte = v; } return; }
+      if (["money", "number"].includes(f.t)) r[k] = num(v);
+      else if (f.t === "pct") r[k] = (num(v) ?? 0) / (v.includes("%") || num(v) > 1 ? 100 : 1);
+      else if (f.t === "bool") r[k] = /^(oui|yes|1|vrai|x)$/i.test(v);
+      else if (f.t === "multi") r[k] = v.split(/[,|]/).map(s => s.trim()).filter(Boolean);
+      else if (f.t === "date") { const d = csvDate(v); if (d) r[k] = d; else warn.push(`ligne ${li + 2} : date « ${v} » non reconnue (${f.l})`); }
+      else if (f.t === "select") { const m = matchOpt(f, v); if (m !== null) r[k] = m; else { r[k] = v; warn.push(`ligne ${li + 2} : « ${v} » n'est pas dans la liste ${f.l}`); } }
+      else r[k] = v;
+    });
+    if (r.codeNaf) { r.codeNaf = nafNorm(r.codeNaf); if (o === "entreprise" && !r.secteur && nafSecteur(r.codeNaf)) r.secteur = nafSecteur(r.codeNaf); }
+    if (r.rna) r.rna = idNorm(r.rna);
+    if (o === "porteur" && !r.rna && /^W\d{9}$/.test(idNorm(r.siren))) { r.rna = idNorm(r.siren); delete r.siren; }
+    if (r._compte) { r.notes = [r.notes, `Rattaché à (non trouvé lors de l'import) : ${r._compte}`].filter(Boolean).join("\n"); warn.push(`ligne ${li + 2} : « ${r._compte} » introuvable parmi les porteurs et entreprises`); delete r._compte; }
+    if (!r.nom) return;
+    out.push(r);
+  });
+  return { recs:out, ignored, warn, hasNom:map.includes("nom") };
+}
 async function importCsv(file, o) {
   try {
     const rows = parseCsv(await file.text()); if (rows.length < 2) throw 0;
-    const head = rows[0].map(h => norm(h)), map = head.map(h => (ALIASES[o] || {})[h] || F[o].find(f => norm(f.l) === h || norm(f.k) === h)?.k || null);
-    if (!map.includes("nom")) { toast(`Colonne du nom introuvable (ex. « ${o === "entreprise" ? "Raison sociale" : "Nom"} »).`); return; }
-    let n = 0, dup = 0;
-    rows.slice(1).forEach(cells => {
-      const r = { o };
-      map.forEach((k, i) => { if (!k) return; const f = fdef(o, k), v = (cells[i] || "").trim(); if (!v) return; r[k] = ["money", "number"].includes(f.t) ? num(v) : f.t === "pct" ? (num(v) ?? 0) / (v.includes("%") || num(v) > 1 ? 100 : 1) : f.t === "bool" ? /^(oui|yes|1|vrai|x)$/i.test(v) : f.t === "multi" ? v.split(/[,|]/).map(s => s.trim()).filter(Boolean) : v; });
-      if (!r.nom) return;
-      const s = String(r.siren || "").replace(/\s/g, "");
-      if (all(o).some(x => (s && String(x.siren || "").replace(/\s/g, "") === s) || norm(x.nom) === norm(r.nom))) { dup++; return; }
+    const res = csvRows(rows, o);
+    if (!res.hasNom) { toast(`Colonne du nom introuvable (ex. « ${o === "entreprise" ? "Raison sociale" : "Nom"} »).`); return; }
+    let n = 0, dup = 0, excl = 0;
+    res.recs.forEach(r => {
+      const s = idNorm(r.siren), w = idNorm(r.rna);
+      if (o !== "contact" && all(o).some(x => (s && idNorm(x.siren) === s) || (w && idNorm(x.rna) === w) || norm(x.nom) === norm(r.nom))) { dup++; return; }
+      if (o === "contact" && all("contact").some(x => x.compte === r.compte && norm(rname(x)) === norm(rname(r)))) { dup++; return; }
+      if (o === "entreprise" && nafExclu(r.codeNaf)) excl++;
       F[o].forEach(f => { if (f.def !== undefined && r[f.k] === undefined) r[f.k] = f.def; });
       const id = uid(); r.id = id; putItem(id, r); n++;
     });
-    toast(`${n} ${OBJ[o].lp.toLowerCase()} importé(e)s${dup ? `, ${dup} doublon(s) ignoré(s)` : ""}.`); render();
+    IMPORT_REPORT = { o, n, dup, excl, ignored:res.ignored, warn:res.warn, at:Date.now() };
+    toast(`${n} ${OBJ[o].lp.toLowerCase()} importé(e)s${dup ? `, ${dup} doublon(s) ignoré(s)` : ""}${res.ignored.length || res.warn.length ? " : voir le compte rendu dans Réglages" : ""}.`); render();
   } catch { toast("Fichier CSV illisible."); }
+}
+let IMPORT_REPORT = null;
+function importReportHtml() {
+  const x = IMPORT_REPORT; if (!x) return "";
+  return `<div class="alert" style="--c:${x.ignored.length || x.warn.length || x.excl ? "var(--orange)" : "var(--green)"};margin-top:10px"><div style="flex:1"><b>Dernier import (${OBJ[x.o].lp.toLowerCase()}) :</b> ${x.n} ajouté(s)${x.dup ? `, ${x.dup} doublon(s) ignoré(s)` : ""}.
+    ${x.excl ? `<br>${x.excl} entreprise(s) avec un code NAF exclu (alcool, tabac, jeux d'argent) : alerte sur leur fiche.` : ""}
+    ${x.ignored.length ? `<br>Colonnes ignorées (libellé inconnu) : ${x.ignored.map(esc).join(", ")}.` : ""}
+    ${x.warn.length ? `<br>À vérifier : ${x.warn.slice(0, 8).map(esc).join(" ; ")}${x.warn.length > 8 ? ` ; et ${x.warn.length - 8} autre(s)` : ""}.` : ""}</div><button class="btn sm" data-impclose="1">OK</button></div>`;
 }
 async function copyText(txt) {
   if (!txt) { toast("Rien à copier pour ce mois."); return; }
