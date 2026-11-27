@@ -489,7 +489,7 @@ function ctrData(x) {
   const c = x.c || {}, p = x.p || {}, e = x.e || {}, o = x.opp || {}, s = x.saisie || {}, G = x.G, t = x.today || "";
   const a = { ...AGENCE0, ...Object.fromEntries(Object.entries(x.agence || {}).filter(([, v]) => v !== "" && v !== null && v !== undefined)) }, cl = { ...CLUB0, ...(x.club || {}) };
   const nm = k => k ? [k.prenom, k.nom].filter(Boolean).join(" ") : "", st = v => v === undefined || v === null ? "" : String(v);
-  const m = n0(c.montant), nat = n0(c.nature), don = m + nat;
+  const m = n0(c.montant), nat = n0(c.nature), don = m + nat, aM = don > 0, fm = v => aM ? frMoney(v) : "";   // sans montant : « [libellé à compléter] », jamais « 0 »
   const viaAnn = !!x.mandatAnn && (c.type === "Parrainage bipartite" || c.mandatLie === x.mandatAnn.id);
   const com = c.commission !== undefined && c.commission !== null && c.commission !== "" ? (viaAnn ? 0 : n0(c.commission)) : comCtr(m, nat, !!c.renouv, G, viaAnn);
   const cps = Array.isArray(c.contreparties) ? c.contreparties : [], tot = cpTotal(cps);
@@ -504,7 +504,7 @@ function ctrData(x) {
     contrat_numero:st(c.numero), contrat_date:frDate(x.lie?.signature || c.signature), date_signature:s.date_signature ? frDate(s.date_signature) : "____ / ____ / ________", lieu_signature:s.lieu_signature || "________________",
     date_debut:frDate(c.debut), date_fin:frDate(c.fin), duree_mois:st(c.dureeMois || (c.debut && c.fin ? moisEntre(c.debut, c.fin) : "")),
     mandat_numero:st(x.mandat?.numero), mandat_date:frDate(x.mandat?.signature), mandat_annonceur_numero:st(x.mandatAnn?.numero), mandat_annonceur_date:frDate(x.mandatAnn?.signature),
-    montant_ht:frMoney(m), commission_ht:frMoney(com), contreparties_total:frMoney(tot), contreparties_ratio:cpRatio(tot, don) === null ? "" : String(cpRatio(tot, don).toFixed(1)).replace(".", ","),
+    montant_ht:fm(m), commission_ht:fm(com), contreparties_total:frMoney(tot), contreparties_ratio:cpRatio(tot, don) === null ? "" : String(cpRatio(tot, don).toFixed(1)).replace(".", ","),
     formule_choisie:st(c.formule || o.formule), porteur_nom:st(p.nom), porteur_forme_juridique:FORME_P[p.statutJur] || st(p.statutJur).toLowerCase(), porteur_immatriculation:x.p ? immatPorteur(p.rna, p.siren) : "",
     porteur_adresse:st(p.adresse), porteur_residence_fiscale:x.p ? st(p.paysFiscal || "France") : "", porteur_signataire:nm(x.sigP), porteur_signataire_qualite:st(x.sigP?.fonction).toLowerCase(), porteur_email:st(p.emailPublic || x.sigP?.email),
     porteur_iban:st(p.iban), porteur_tva_mention:st(p.tvaMention || (p.tva === "Oui" ? "TVA au taux de 20 % en sus" : "")), porteur_eligibilite_mecenat:st(p.mecenat),
@@ -512,16 +512,16 @@ function ctrData(x) {
     annonceur_pays:x.e ? st(e.pays || "France") : "", annonceur_residence_fiscale:x.e ? st(e.pays || "France") : "",
     projet_nom:st(c.projetNom || p.projetNom), projet_description:st(p.description || p.projet), projet_type:st(p.type), projet_discipline:st(p.discipline), projet_dates_lieu:st(c.datesLieu || p.datesLieu), projet_montant_recherche:frMoney(p.objectif), projet_audience:aud,
     formules_partenariat:st(p.formules), montant_vise_partenaire:frMoney(p.montantPartenaire), taux_reel_minimum:tr === null ? "" : String(tr),
-    nb_entreprises_cibles:st(c.nbEntreprises || NB_PACK[x.pack?.offre] || ""), pack_niveau:st(c.offre), pack_prix_ht:frMoney(m), pack_acompte_ht:frMoney(m / 2), abo_niveau:st(c.offre), abo_prix_mensuel_ht:frMoney(m),
-    mecenat_forfait_ht:frMoney(forfaitMec(don, G)), mission_type:st(c.offre), mission_prix_ht:frMoney(m), objectifs_client:st(c.objectifsClient), public_vise:st(c.publicVise), zone:st(c.zone), budget_envisage:frMoney(e.budgetSpon),
+    nb_entreprises_cibles:st(c.nbEntreprises || NB_PACK[x.pack?.offre] || ""), pack_niveau:st(c.offre), pack_prix_ht:fm(m), pack_acompte_ht:fm(m / 2), abo_niveau:st(c.offre), abo_prix_mensuel_ht:fm(m),
+    mecenat_forfait_ht:fm(forfaitMec(don, G)), mission_type:st(c.offre), mission_prix_ht:fm(m), objectifs_client:st(c.objectifsClient), public_vise:st(c.publicVise), zone:st(c.zone), budget_envisage:frMoney(e.budgetSpon),
     valeurs_exclusions:st(c.valeursExcl), delai_semaines:st(c.delaiSemaines || 4), personnes_concernees:st(c.personnes), sous_traitants_ulterieurs:a.soustraitants,
-    club_niveau:st(c.offre), club_cotisation_ht:frMoney(m), club_seuil:st(cl.seuil), club_date_condition:frDate(cl.date), club_nombre_engagements:x.clubEng === undefined ? "" : String(x.clubEng),
+    club_niveau:st(c.offre), club_cotisation_ht:fm(m), club_seuil:st(cl.seuil), club_date_condition:frDate(cl.date), club_nombre_engagements:x.clubEng === undefined ? "" : String(x.clubEng),
     designation_officielle:st(c.designation), categorie_partenaire:st(c.categorie), territoire_droits:st(c.territoire || "France"), duree_droits_apres:st(c.dureeDroits || "12 mois"), saison_ou_edition:st(c.saison),
     secteur_exclusivite:st(c.secteurExcl), concurrents:st(c.concurrents), partenaires_preexistants:st(c.partPre), niveau_sportif_reference:st(c.niveauRef), indisponibilite_jours:st(c.indispo ?? 90), reduction_descente:st(c.reducDesc ?? 20),
     primes_sportives:st(c.primes), prestations_agence_partenaire:st(x.prestations || "Néant"), rescrit_mention:p.rescrit ? `Il a obtenu un rescrit de l'administration fiscale${p.rescritDate ? " le " + frDate(p.rescritDate) : ""}` : "",
-    don_nature:st(c.donNature || (m && !nat ? "don en numéraire" : "")), don_montant:frMoney(don), don_echeancier:st(c.donEcheancier || (parts.length === 1 && parts[0].date ? `en une fois, le ${frDate(parts[0].date)}` : "")),
+    don_nature:st(c.donNature || (m && !nat ? "don en numéraire" : "")), don_montant:fm(don), don_echeancier:st(c.donEcheancier || (parts.length === 1 && parts[0].date ? `en une fois, le ${frDate(parts[0].date)}` : "")),
     ambassadeur_prenom_nom:st(p.nom), ambassadeur_date_naissance:frDate(p.dateNaissance), ambassadeur_adresse:st(p.adresse), ambassadeur_telephone:st(p.telPublic), ambassadeur_email:st(p.emailPublic), ambassadeur_siren_mention:x.p ? sirenMention(p.siren) : "", ambassadeur_residence_fiscale:x.p ? st(p.paysFiscal || "France") : "",
-    produits_promus:st(c.produits), remuneration_ht:frMoney(m), remuneration_modalites:st(c.remModalites), avantages_nature:st(c.avantages), avantages_valeur:nat ? frMoney(nat) : "", supports_image:st(c.supports),
+    produits_promus:st(c.produits), remuneration_ht:fm(m), remuneration_modalites:st(c.remModalites), avantages_nature:st(c.avantages), avantages_valeur:nat ? frMoney(nat) : "", supports_image:st(c.supports),
     beneficiaire_image:st(p.nom || e.nom), beneficiaire_email:st(p.emailPublic || e.emailPublic), duree_image:"3 ans", destinataire_nom:nm(x.dest),
     mois_registre:x.moisRegistre || moisPrecedent(t), date_fin_periode:frDate(c.debut ? addMonths(c.debut, 6) : ""), penalites_mention:penalites(!!x.pro),
     contreparties:cps.map(l => ({ type:st(l.type), quantite:st(l.qte), description:st(l.desc), periode:st(l.periode), valeur_unitaire:frMoney(+l.qte > 0 && l.valeur ? +l.valeur / +l.qte : l.valeur), valeur:frMoney(l.valeur), preuve:st(l.preuve), livree:l.livre ? "oui" : "non", compensation:st(l.compensation) })),
@@ -745,7 +745,7 @@ if (typeof module !== "undefined") module.exports = { TAX, GRID, mecenat, isTax,
 (() => {
 "use strict";
 /* ═════════ CONFIGURATION ═════════ */
-const CONFIG = { name:"Partenarium CRM", key:"partcrm", version:"1.4.0", // à garder identique à VERSION dans sw.js (partcrm-1.4.0)
+const CONFIG = { name:"Partenarium CRM", key:"partcrm", version:"1.4.1", // à garder identique à VERSION dans sw.js (partcrm-1.4.1)
   gh:{ owner:"bastienvidal26-creator", privateRepo:"partenarium-crm-perso" } };
 
 /* ═════════ outils ═════════ */
@@ -1072,7 +1072,7 @@ const store = (() => {
 })();
 
 /* ═════════ état ═════════ */
-const CFG0 = { grid:{ ...GRID }, tax:{ ...TAX }, objectif:16240, packDefaut:890, proba:{ opp:{}, porteur:{} } };
+const CFG0 = { grid:{ ...GRID }, tax:{ ...TAX }, objectif:15840, packDefaut:890, proba:{ opp:{}, porteur:{} } };
 const S = { items:{}, del:{}, cfg:JSON.parse(JSON.stringify(CFG0)), ui:{ sort:{}, view:{}, q:{}, kanban:matchMedia("(min-width:1024px)").matches, tab:{}, report:"pipeline", repMonth:"", repPorteur:"", repYear:"" } };
 const saveT = {};
 function save(key) { clearTimeout(saveT[key]); saveT[key] = setTimeout(() => { if (key === "cfg") cleanDeep(S.cfg); store.set(key, S[key]); }, 200); }
@@ -2873,7 +2873,7 @@ async function ctGenerate(c, code, lettre, extra = {}) {
   try { res = ctrRender(L.PizZip, L.Docxtemplater, b64ToU8(f.b64), data, { labels:ctLabels(), lettre:code === "14" ? lettre || "L1" : null, sansTauxReel:code === "03" && !(vise > 0 && vise < 2500) }); }
   catch (e) { ctReport("Génération impossible", [`Le modèle ${code} n'a pas pu être rempli : ${noDash(String(e.message || e)).slice(0, 200)}.`, "Signalez-le au service Outils avec le nom du modèle."]); return; }
   const nom = code === "01" ? "Partenarium" : ["10", "11", "12"].includes(code) ? x.e?.nom || x.p?.nom : x.p?.nom || x.e?.nom;
-  const name = code === "01" ? noDash(`CGV-${(data.cgv_version || "").replace(/\//g, "-")}_Conditions_generales_de_prestation.docx`) : ctrFileName(c.numero, code, (code === "14" ? (lettre || "L1") + " " : "") + (nom || rname(c)));
+  const name = code === "01" ? noDash(`CGV-${(data.cgv_version || "").replace(/\//g, "-")}_Conditions_generales_de_prestation.docx`) : ctrFileName(c.numero, code, (code === "14" ? (lettre || "L1") + " " : "") + (nom || ""));
   downloadFile(name, res.out, DOCX_MIME);
   const where = await ctToDrive(name, res.out, today().slice(0, 4));
   if (code !== "01") {
@@ -3146,6 +3146,7 @@ async function boot() {
   const [items, del, cfg] = await Promise.all(["items", "del", "cfg"].map(k => store.get(k)));
   S.items = items || {}; S.del = del || {};
   if (cfg) S.cfg = { ...S.cfg, ...cfg, grid:{ ...GRID, ...(cfg.grid || {}) }, tax:{ ...TAX, ...(cfg.tax || {}) }, proba:{ opp:{ ...(cfg.proba?.opp || {}) }, porteur:{ ...(cfg.proba?.porteur || {}) } } };
+  if (S.cfg.objectif === 16240) { S.cfg.objectif = 15840; save("cfg"); }   /* v1.4.1 : objectif 2027 du prévisionnel du 26/11/2026 (l'ancien défaut était 16 240 €) */
   applyProba();
   if (migrateAll(S.items)) { save("items"); SYNC.dirty = true; }
   const dr = lsGet(CONFIG.key + ":entdraft");                       // brouillon d'entretien non encore enregistré (fermeture brutale)
